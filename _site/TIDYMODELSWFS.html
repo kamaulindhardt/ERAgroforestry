@@ -2107,6 +2107,10 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><a href="#loading-necessary-r-packages-and-era-data">Loading necessary R packages and ERA data</a>
 <ul>
 <li><a href="#step-1-getting-the-data">STEP 1: Getting the data</a></li>
+<li><a href="#step-2-splitting-data">STEP 2: Splitting data</a></li>
+<li><a href="#step-3-define-resampling-techniques-on-training-data">STEP 3: Define resampling techniques on training data</a></li>
+<li><a href="#step-4-define-model-metrics">STEP 4: Define model metrics</a></li>
+<li><a href="#step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2171,7 +2175,194 @@ Show code
 </code></pre>
 </div>
 </div>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<p>Agroforestry data with no outliers</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>ml.data.no.outliers.wf</span> <span class='op'>&lt;-</span>  <span class='va'>ml.data.outliers.wf</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>logRR.outlier</span> <span class='op'>==</span> <span class='fl'>9999</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>ERA_Agroforestry</span>, <span class='va'>logRR.outlier</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Notice we do not remove missing values</p>
+<h2 id="step-2-splitting-data">STEP 2: Splitting data</h2>
+<p>Split data in training and testing sets</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>456</span><span class='op'>)</span>
+
+<span class='co'># Splitting data</span>
+<span class='va'>af.split.wf</span> <span class='op'>&lt;-</span> <span class='fu'>initial_split</span><span class='op'>(</span><span class='va'>ml.data.no.outliers.wf</span>, prop <span class='op'>=</span> <span class='fl'>0.80</span>, strata <span class='op'>=</span> <span class='va'>logRR</span><span class='op'>)</span>
+
+<span class='va'>af.train.wf</span> <span class='op'>&lt;-</span> <span class='fu'>training</span><span class='op'>(</span><span class='va'>af.split.wf</span><span class='op'>)</span>
+<span class='va'>af.test.wf</span> <span class='op'>&lt;-</span> <span class='fu'>testing</span><span class='op'>(</span><span class='va'>af.split.wf</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-3-define-resampling-techniques-on-training-data">STEP 3: Define resampling techniques on training data</h2>
+<p>Notice here that we do not have any repeats defined as we did originally. Previously we used an argument: repeats = 10 to specify the number of times to repeat the V-fold partitioning. Instead we are increasing the number of partitions/folds (v) from 10 to 20, for the cv-folds, just as the spatial clustering cv-folds.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>345</span><span class='op'>)</span>
+
+<span class='co'># Re-sample technique(s) </span>
+<span class='va'>boostrap.wf</span> <span class='op'>&lt;-</span> <span class='fu'>bootstraps</span><span class='op'>(</span><span class='va'>af.train.wf</span>, times <span class='op'>=</span> <span class='fl'>20</span>, strata <span class='op'>=</span> <span class='va'>logRR</span><span class='op'>)</span>
+<span class='va'>cv.fold.wf</span> <span class='op'>&lt;-</span> <span class='fu'>vfold_cv</span><span class='op'>(</span><span class='va'>af.train.wf</span>, v <span class='op'>=</span> <span class='fl'>10</span>, repeats <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span>
+<span class='va'>spatial.cv.fold.wf</span> <span class='op'>&lt;-</span> <span class='fu'>spatial_clustering_cv</span><span class='op'>(</span><span class='va'>af.train.wf</span>, coords <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Longitude"</span>, <span class='st'>"Latitude"</span><span class='op'>)</span>, v <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-4-define-model-metrics">STEP 4: Define model metrics</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># Metrics</span>
+<span class='va'>multi.metric.wf</span> <span class='op'>&lt;-</span> <span class='fu'>metric_set</span><span class='op'>(</span><span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/rmse.html'>rmse</a></span>, <span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/rsq.html'>rsq</a></span>, <span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/ccc.html'>ccc</a></span>, <span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/mae.html'>mae</a></span><span class='op'>)</span>
+
+<span class='va'>model.control.wf</span> <span class='op'>&lt;-</span> <span class='fu'>control_stack_grid</span><span class='op'>(</span><span class='op'>)</span> <span class='co'># save_pred = TRUE, save_workflow = TRUE.</span>
+<span class='va'>model.control.linear.wf</span> <span class='op'>&lt;-</span> <span class='fu'>control_resamples</span><span class='op'>(</span>save_pred <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>base_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>recipe</span><span class='op'>(</span>formula <span class='op'>=</span> <span class='va'>logRR</span> <span class='op'>~</span> <span class='va'>.</span>, data <span class='op'>=</span> <span class='va'>af.train.wf</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>update_role</span><span class='op'>(</span><span class='va'>Site.Type</span>, new_role <span class='op'>=</span> <span class='st'>"predictor"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># alters an existing role in the recipe to variables.</span>
+  <span class='fu'>update_role</span><span class='op'>(</span><span class='va'>PrName</span>, <span class='co'># or assigns an initial role to variables that do not yet have a declared role.</span>
+              <span class='va'>Out.SubInd</span>,
+              <span class='va'>Out.SubInd.Code</span>,
+              <span class='va'>Product</span>,
+              <span class='va'>Latitude</span>,
+              <span class='va'>Longitude</span>,
+              <span class='va'>Tree</span>,
+              new_role <span class='op'>=</span> <span class='st'>"sample ID"</span><span class='op'>)</span> 
+<span class='co'># ------------------------------------------------------------------------------------------------------------------------------------------------</span>
+   
+
+<span class='va'>impute_mean_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_mean</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='va'>Site.Type</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='va'>Site.Type</span>, one_hot <span class='op'>=</span> <span class='cn'>TRUE</span>, naming <span class='op'>=</span> <span class='fu'>partial</span><span class='op'>(</span><span class='va'>dummy_names</span>,sep <span class='op'>=</span> <span class='st'>"_"</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+  
+
+<span class='va'>impute_knn_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_knn</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='va'>Site.Type</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='va'>Site.Type</span>, one_hot <span class='op'>=</span> <span class='cn'>TRUE</span>, naming <span class='op'>=</span> <span class='fu'>partial</span><span class='op'>(</span><span class='va'>dummy_names</span>,sep <span class='op'>=</span> <span class='st'>"_"</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> 
+   
+
+<span class='va'>normalize_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='va'>Site.Type</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='va'>Site.Type</span>, one_hot <span class='op'>=</span> <span class='cn'>TRUE</span>, naming <span class='op'>=</span> <span class='fu'>partial</span><span class='op'>(</span><span class='va'>dummy_names</span>,sep <span class='op'>=</span> <span class='st'>"_"</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_normalize</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='co'># normalize numeric data: standard deviation of one and a mean of zero.</span>
+
+<span class='va'>rm_corr_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='va'>Site.Type</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='va'>Site.Type</span>, one_hot <span class='op'>=</span> <span class='cn'>TRUE</span>, naming <span class='op'>=</span> <span class='fu'>partial</span><span class='op'>(</span><span class='va'>dummy_names</span>,sep <span class='op'>=</span> <span class='st'>"_"</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_corr</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, threshold <span class='op'>=</span> <span class='fl'>0.8</span>, method <span class='op'>=</span> <span class='st'>"pearson"</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+
+<span class='va'>interact_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='va'>Site.Type</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='va'>Site.Type</span>, one_hot <span class='op'>=</span> <span class='cn'>TRUE</span>, naming <span class='op'>=</span> <span class='fu'>partial</span><span class='op'>(</span><span class='va'>dummy_names</span>,sep <span class='op'>=</span> <span class='st'>"_"</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_interact</span><span class='op'>(</span><span class='op'>~</span> <span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>:</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p><strong>Noet:</strong> To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>impute_knn_recipe</span> <span class='op'>%&gt;%</span> <span class='fu'>prep</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>juice</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>glimpse</span><span class='op'>(</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>Rows: 3,615
+Columns: 45
+$ PrName                &lt;fct&gt; Agroforestry Pruning, Agroforestry Pru…
+$ Out.SubInd            &lt;fct&gt; Biomass Yield, Biomass Yield, Biomass …
+$ Product               &lt;fct&gt; Maize, Maize, Maize, Maize, Maize, Mai…
+$ Tree                  &lt;fct&gt; Leucaena leucocephala, Gliricidia sepi…
+$ Out.SubInd.Code       &lt;fct&gt; BiY, BiY, BiY, BiY, BiY, BiY, BiY, BiY…
+$ Latitude              &lt;dbl&gt; 8.73400, -15.47300, -15.47300, -15.473…
+$ Longitude             &lt;dbl&gt; 38.9860, 35.4502, 35.4502, 35.4502, 35…
+$ Bio01_MT_Annu         &lt;dbl&gt; 22.19247, 22.12917, 22.12917, 22.12917…
+$ Bio02_MDR             &lt;dbl&gt; 11.75548, 11.75417, 11.75417, 11.75417…
+$ Bio03_Iso             &lt;dbl&gt; 83.89650, 83.66040, 83.66040, 83.66040…
+$ Bio04_TS              &lt;dbl&gt; 62.03211, 62.61968, 62.61968, 62.61968…
+$ Bio05_TWM             &lt;dbl&gt; 29.61383, 29.52500, 29.52500, 29.52500…
+$ Bio06_MinTCM          &lt;dbl&gt; 15.60048, 15.47500, 15.47500, 15.47500…
+$ Bio07_TAR             &lt;dbl&gt; 14.01334, 14.05000, 14.05000, 14.05000…
+$ Bio08_MT_WetQ         &lt;dbl&gt; 22.49166, 22.44167, 22.44167, 22.44167…
+$ Bio09_MT_DryQ         &lt;dbl&gt; 22.55358, 22.67500, 22.67500, 22.67500…
+$ Bio10_MT_WarQ         &lt;dbl&gt; 22.96846, 22.90000, 22.90000, 22.90000…
+$ Bio11_MT_ColQ         &lt;dbl&gt; 21.39976, 21.30833, 21.30833, 21.30833…
+$ Bio12_Pecip_Annu      &lt;dbl&gt; 1525.327, 1629.000, 1629.000, 1629.000…
+$ Bio13_Precip_WetM     &lt;dbl&gt; 238.0945, 248.7500, 248.7500, 248.7500…
+$ Bio14_Precip_DryM     &lt;dbl&gt; 52.88835, 51.50000, 51.50000, 51.50000…
+$ Bio15_Precip_S        &lt;dbl&gt; 42.46361, 41.85934, 41.85934, 41.85934…
+$ Bio16_Precip_WetQ     &lt;dbl&gt; 584.07, 625.25, 625.25, 625.25, 625.25…
+$ Bio17_Precip_DryQ     &lt;dbl&gt; 219.1557, 239.2500, 239.2500, 239.2500…
+$ iSDA_Depth_to_bedrock &lt;dbl&gt; 199.37, 200.00, 200.00, 200.00, 200.00…
+$ iSDA_SAND_conc        &lt;dbl&gt; 34.606, 58.164, 58.164, 58.164, 58.164…
+$ iSDA_CLAY_conc        &lt;dbl&gt; 33.946, 21.706, 21.706, 21.706, 21.706…
+$ iSDA_SILT_conc        &lt;dbl&gt; 27.684, 14.706, 14.706, 14.706, 14.706…
+$ iSDA_FE_Bulk_dens     &lt;dbl&gt; 125.788, 137.686, 137.686, 137.686, 13…
+$ iSDA_log_C_tot        &lt;dbl&gt; 30.250, 31.802, 31.802, 31.802, 31.802…
+$ iSDA_log_Ca           &lt;dbl&gt; 78.846, 69.792, 69.792, 69.792, 69.792…
+$ iSDA_log_eCEC         &lt;dbl&gt; 32.958, 23.772, 23.772, 23.772, 23.772…
+$ iSDA_log_Fe           &lt;dbl&gt; 31.412, 37.594, 37.594, 37.594, 37.594…
+$ iSDA_log_K            &lt;dbl&gt; 56.624, 46.930, 46.930, 46.930, 46.930…
+$ iSDA_log_Mg           &lt;dbl&gt; 63.74, 56.42, 56.42, 56.42, 56.42, 56.…
+$ iSDA_log_N            &lt;dbl&gt; 75.998, 50.764, 50.764, 50.764, 50.764…
+$ iSDA_log_SOC          &lt;dbl&gt; 24.214, 18.410, 18.410, 18.410, 18.410…
+$ iSDA_log_P            &lt;dbl&gt; 27.828, 24.036, 24.036, 24.036, 24.036…
+$ iSDA_log_S            &lt;dbl&gt; 18.43, 13.60, 13.60, 13.60, 13.60, 13.…
+$ iSDA_pH               &lt;dbl&gt; 68.080, 55.762, 55.762, 55.762, 55.762…
+$ ASTER_Altitude        &lt;dbl&gt; 1954.44, 713.24, 713.24, 713.24, 713.2…
+$ ASTER_Slope           &lt;dbl&gt; 5.75, 0.83, 0.83, 0.83, 0.83, 0.83, 0.…
+$ logRR                 &lt;dbl&gt; -0.12386948, -0.10301172, -0.26980672,…
+$ Site.Type_Farm        &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+$ Site.Type_Station     &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…</code></pre>
+</div>
+<p>A recipe object is of the class “recipe” and can also be viewed using the summary() function. This will show the different feature types:</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>impute_knn_recipe</span><span class='op'>)</span> 
+</code></pre>
+</div>
+<pre><code># A tibble: 44 × 4
+   variable        type    role      source  
+   &lt;chr&gt;           &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;   
+ 1 PrName          nominal sample ID original
+ 2 Out.SubInd      nominal sample ID original
+ 3 Product         nominal sample ID original
+ 4 Site.Type       nominal predictor original
+ 5 Tree            nominal sample ID original
+ 6 Out.SubInd.Code nominal sample ID original
+ 7 Latitude        numeric sample ID original
+ 8 Longitude       numeric sample ID original
+ 9 Bio01_MT_Annu   numeric predictor original
+10 Bio02_MDR       numeric predictor original
+# … with 34 more rows</code></pre>
+</div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

@@ -75,4 +75,127 @@ ml.data.outliers.wf <- ml.data.wf %>%
 ```
 
 
+Agroforestry data with no outliers
+
+```{r Agroforestry data withoout outliers workflowsets, code_folding=FALSE}
+ml.data.no.outliers.wf <-  ml.data.outliers.wf %>%
+  dplyr::filter(logRR.outlier == 9999) %>%
+  dplyr::select(-c(ERA_Agroforestry, logRR.outlier))
+```
+
+
+Notice we do not remove missing values
+
+## STEP 2: Splitting data
+
+Split data in training and testing sets
+
+```{r data splitting workflowsets, code_folding=FALSE}
+set.seed(456)
+
+# Splitting data
+af.split.wf <- initial_split(ml.data.no.outliers.wf, prop = 0.80, strata = logRR)
+
+af.train.wf <- training(af.split.wf)
+af.test.wf <- testing(af.split.wf)
+```
+
+## STEP 3: Define resampling techniques on training data
+
+Notice here that we do not have any repeats defined as we did originally. Previously we used an argument: repeats = 10 to specify the number of times to repeat the V-fold partitioning. Instead we are increasing the number of partitions/folds (v) from 10 to 20, for the cv-folds, just as the spatial clustering cv-folds.
+
+```{r Resampling techniques workflowsets, code_folding=FALSE, eval=TRUE}
+set.seed(345)
+
+# Re-sample technique(s) 
+boostrap.wf <- bootstraps(af.train.wf, times = 20, strata = logRR)
+cv.fold.wf <- vfold_cv(af.train.wf, v = 10, repeats = 5)
+spatial.cv.fold.wf <- spatial_clustering_cv(af.train.wf, coords = c("Longitude", "Latitude"), v = 10)
+```
+
+## STEP 4: Define model metrics
+
+```{r Model metrics for workflowsets, code_folding=FALSE, eval=TRUE}
+# Metrics
+multi.metric.wf <- metric_set(yardstick::rmse, yardstick::rsq, yardstick::ccc, yardstick::mae)
+
+model.control.wf <- control_stack_grid() # save_pred = TRUE, save_workflow = TRUE.
+model.control.linear.wf <- control_resamples(save_pred = TRUE)
+```
+
+
+## STEP 5: Create pre-processing recipies
+
+```{r code_folding=FALSE, eval=TRUE}
+base_recipe <- 
+  recipe(formula = logRR ~ ., data = af.train.wf) %>%
+  update_role(Site.Type, new_role = "predictor") %>% # alters an existing role in the recipe to variables.
+  update_role(PrName, # or assigns an initial role to variables that do not yet have a declared role.
+              Out.SubInd,
+              Out.SubInd.Code,
+              Product,
+              Latitude,
+              Longitude,
+              Tree,
+              new_role = "sample ID") 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+   
+
+impute_mean_recipe <- 
+  base_recipe %>%
+  step_impute_mean(all_numeric_predictors(), skip = FALSE) %>%
+  step_novel(Site.Type, skip = FALSE) %>% 
+  step_dummy(Site.Type, one_hot = TRUE, naming = partial(dummy_names,sep = "_"), skip = FALSE) %>%
+  step_zv(all_predictors(), skip = FALSE) %>% # remove any columns with a single unique value
+  step_nzv(all_predictors(), skip = FALSE)
+  
+
+impute_knn_recipe <- 
+  base_recipe %>%
+  step_impute_knn(all_numeric_predictors(), skip = FALSE) %>%
+  step_novel(Site.Type, skip = FALSE) %>% 
+  step_dummy(Site.Type, one_hot = TRUE, naming = partial(dummy_names,sep = "_"), skip = FALSE) %>%
+  step_zv(all_predictors(), skip = FALSE) %>% # remove any columns with a single unique value
+  step_nzv(all_predictors(), skip = FALSE) 
+   
+
+normalize_recipe <- 
+  base_recipe %>%
+  step_impute_linear(all_numeric_predictors(), impute_with = imp_vars(Longitude, Latitude), skip = FALSE) %>% # create linear regression models to impute missing data.
+  step_novel(Site.Type, skip = FALSE) %>% 
+  step_dummy(Site.Type, one_hot = TRUE, naming = partial(dummy_names,sep = "_"), skip = FALSE) %>%
+  step_zv(all_predictors(), skip = FALSE) %>% # remove any columns with a single unique value
+  step_nzv(all_predictors(), skip = FALSE) %>%
+  step_normalize(all_numeric_predictors(), skip = FALSE) # normalize numeric data: standard deviation of one and a mean of zero.
+
+rm_corr_recipe <- 
+  base_recipe %>% 
+  step_impute_linear(all_numeric_predictors(), impute_with = imp_vars(Longitude, Latitude), skip = FALSE) %>% # create linear regression models to impute missing data.
+  step_novel(Site.Type, skip = FALSE) %>% 
+  step_dummy(Site.Type, one_hot = TRUE, naming = partial(dummy_names,sep = "_"), skip = FALSE) %>%
+  step_zv(all_predictors(), skip = FALSE) %>% # remove any columns with a single unique value
+  step_nzv(all_predictors(), skip = FALSE) %>%
+  step_corr(all_numeric_predictors(), threshold = 0.8, method = "pearson", skip = FALSE)
+
+interact_recipe <- 
+  base_recipe %>% 
+  step_impute_linear(all_numeric_predictors(), impute_with = imp_vars(Longitude, Latitude), skip = FALSE) %>% # create linear regression models to impute missing data.
+  step_novel(Site.Type, skip = FALSE) %>% 
+  step_dummy(Site.Type, one_hot = TRUE, naming = partial(dummy_names,sep = "_"), skip = FALSE) %>%
+  step_zv(all_predictors(), skip = FALSE) %>% # remove any columns with a single unique value
+  step_nzv(all_predictors(), skip = FALSE) %>%
+  step_interact(~ all_numeric_predictors():all_numeric_predictors(), skip = FALSE)
+```
+
+**Noet:** To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable. 
+
+```{r  code_folding=FALSE, eval=TRUE}
+impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
+```
+
+A recipe object is of the class "recipe" and can also be viewed using the summary() function. This will show the different feature types:
+
+```{r  code_folding=FALSE, eval=TRUE}
+summary(impute_knn_recipe) 
+```
 
