@@ -2111,6 +2111,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><a href="#step-3-define-resampling-techniques-on-training-data">STEP 3: Define resampling techniques on training data</a></li>
 <li><a href="#step-4-define-model-metrics">STEP 4: Define model metrics</a></li>
 <li><a href="#step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</a></li>
+<li><a href="#step-6-defining-model-specifications">STEP 6: Defining model specifications</a></li>
+<li><a href="#step-7-integrating-pre-processing-and-model-specification-into-a-workflowset">STEP 7: Integrating pre-processing and model specification into a workflowset</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2361,6 +2363,100 @@ $ Site.Type_Station     &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…</c
  9 Bio01_MT_Annu   numeric predictor original
 10 Bio02_MDR       numeric predictor original
 # … with 34 more rows</code></pre>
+</div>
+<h2 id="step-6-defining-model-specifications">STEP 6: Defining model specifications</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>lm_spec</span> <span class='op'>&lt;-</span> <span class='fu'>linear_reg</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"lm"</span><span class='op'>)</span> 
+
+<span class='va'>glm_spec</span> <span class='op'>&lt;-</span> <span class='fu'>linear_reg</span><span class='op'>(</span>
+  penalty <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>,
+  mixture <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"glmnet"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>cart_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>decision_tree</span><span class='op'>(</span>cost_complexity <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+                 min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"rpart"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>mars_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>mars</span><span class='op'>(</span>prod_degree <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>  <span class='co'>#&lt;- use GCV to choose terms</span>
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"earth"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>knn_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>nearest_neighbor</span><span class='op'>(</span>neighbors <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+                    weight_func <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"kknn"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>svm_p_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>svm_poly</span><span class='op'>(</span>cost <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+            degree <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"kernlab"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>cubist_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>cubist_rules</span><span class='op'>(</span>committees <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+                neighbors <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"Cubist"</span><span class='op'>)</span> 
+
+<span class='va'>nnet_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>mlp</span><span class='op'>(</span>hidden_units <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+       penalty <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+       epochs <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"nnet"</span>, MaxNWts <span class='op'>=</span> <span class='fl'>2600</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>rf_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>rand_forest</span><span class='op'>(</span>mtry <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+               min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+               trees <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"ranger"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+
+<span class='va'>xgb_spec</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>boost_tree</span><span class='op'>(</span>tree_depth <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+              learn_rate <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+              loss_reduction <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+              min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+              sample_size <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, 
+              trees <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"xgboost"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+   <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"regression"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-7-integrating-pre-processing-and-model-specification-into-a-workflowset">STEP 7: Integrating pre-processing and model specification into a workflowset</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>wflwset_setup</span> <span class='op'>&lt;-</span> 
+   <span class='fu'>workflow_set</span><span class='op'>(</span>
+      preproc <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>impute_mean <span class='op'>=</span> <span class='va'>impute_mean_recipe</span>,
+                     impute_knn <span class='op'>=</span> <span class='va'>impute_knn_recipe</span>,
+                     normalized <span class='op'>=</span> <span class='va'>normalize_recipe</span>,
+                     rm_corr <span class='op'>=</span> <span class='va'>rm_corr_recipe</span>,
+                     interaction <span class='op'>=</span> <span class='va'>interact_recipe</span><span class='op'>)</span>,
+      models <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>lm <span class='op'>=</span> <span class='va'>lm_spec</span>,
+                    glm <span class='op'>=</span> <span class='va'>glm_spec</span>, 
+                    cart <span class='op'>=</span> <span class='va'>cart_spec</span>, 
+                    mars <span class='op'>=</span> <span class='va'>mars_spec</span>,
+                    knn <span class='op'>=</span> <span class='va'>knn_spec</span>,
+                    svm_p <span class='op'>=</span> <span class='va'>svm_p_spec</span>,
+                    cubist <span class='op'>=</span> <span class='va'>cubist_spec</span>,
+                    nnet <span class='op'>=</span> <span class='va'>nnet_spec</span>,
+                    RF <span class='op'>=</span> <span class='va'>rf_spec</span>,
+                    XGB <span class='op'>=</span> <span class='va'>xgb_spec</span><span class='op'>)</span>,
+      cross <span class='op'>=</span> <span class='cn'>TRUE</span>
+   <span class='op'>)</span>
+
+<span class='va'>wflwset_setup</span>
+</code></pre>
+</div>
 </div>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->

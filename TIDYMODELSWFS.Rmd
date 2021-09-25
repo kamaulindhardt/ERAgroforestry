@@ -195,7 +195,159 @@ impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
 
 A recipe object is of the class "recipe" and can also be viewed using the summary() function. This will show the different feature types:
 
-```{r  code_folding=FALSE, eval=TRUE}
+```{r code_folding=FALSE, eval=TRUE}
 summary(impute_knn_recipe) 
 ```
+
+## STEP 6: Defining model specifications
+
+```{r code_folding=FALSE, eval=FALSE}
+lm_spec <- linear_reg() %>% 
+  set_mode("regression") %>% 
+  set_engine("lm") 
+
+glm_spec <- linear_reg(
+  penalty = tune(),
+  mixture = tune()) %>%
+  set_engine("glmnet") %>% 
+  set_mode("regression")
+
+cart_spec <- 
+   decision_tree(cost_complexity = tune(), 
+                 min_n = tune()) %>% 
+   set_engine("rpart") %>% 
+   set_mode("regression")
+
+mars_spec <- 
+   mars(prod_degree = tune()) %>%  #<- use GCV to choose terms
+   set_engine("earth") %>% 
+   set_mode("regression")
+
+knn_spec <- 
+   nearest_neighbor(neighbors = tune(), 
+                    weight_func = tune()) %>% 
+   set_engine("kknn") %>% 
+   set_mode("regression")
+
+svm_p_spec <- 
+   svm_poly(cost = tune(), 
+            degree = tune()) %>% 
+   set_engine("kernlab") %>% 
+   set_mode("regression")
+
+cubist_spec <- 
+   cubist_rules(committees = tune(), 
+                neighbors = tune()) %>% 
+   set_engine("Cubist") 
+
+nnet_spec <- 
+   mlp(hidden_units = tune(), 
+       penalty = tune(), 
+       epochs = tune()) %>% 
+   set_engine("nnet", MaxNWts = 2600) %>% 
+   set_mode("regression")
+
+rf_spec <- 
+   rand_forest(mtry = tune(), 
+               min_n = tune(), 
+               trees = tune()) %>% 
+   set_engine("ranger") %>% 
+   set_mode("regression")
+
+xgb_spec <- 
+   boost_tree(tree_depth = tune(), 
+              learn_rate = tune(), 
+              loss_reduction = tune(), 
+              min_n = tune(), 
+              sample_size = tune(), 
+              trees = tune()) %>% 
+   set_engine("xgboost") %>% 
+   set_mode("regression")
+```
+
+
+## STEP 7: Integrating pre-processing and model specification into a workflowset
+
+```{r code_folding=FALSE, eval=FALSE}
+wflwset_setup <- 
+   workflow_set(
+      preproc = list(impute_mean = impute_mean_recipe,
+                     impute_knn = impute_knn_recipe,
+                     normalized = normalize_recipe,
+                     rm_corr = rm_corr_recipe,
+                     interaction = interact_recipe),
+      models = list(lm = lm_spec,
+                    glm = glm_spec, 
+                    cart = cart_spec, 
+                    mars = mars_spec,
+                    knn = knn_spec,
+                    svm_p = svm_p_spec,
+                    cubist = cubist_spec,
+                    nnet = nnet_spec,
+                    RF = rf_spec,
+                    XGB = xgb_spec),
+      cross = TRUE
+   )
+
+wflwset_setup
+```
+
+## STEP 8: Tuning workflowsets using tune_grid()
+
+```{r code_folding=FALSE, eval=FALSE}
+ # Initializing parallel processing 
+ doParallel::registerDoParallel()
+
+set.seed(123)
+
+wflwset_setup_res <- 
+   wflwset_setup %>% 
+   # The first argument is a function name from the {{tune}} package such as `tune_grid()`, `fit_resamples()`, etc.
+   workflow_map(fn        = "tune_grid", 
+                resamples = cv.fold.wf, 
+                grid      = 5, 
+                metrics   = multi.metric.wf, 
+                verbose   = TRUE)
+
+# Terminating parallel session
+parallelStop()
+```
+
+## STEP 9: Assessing results of the tuned workflowsets
+
+```{r}
+autoplot(wflwset_setup_res)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
