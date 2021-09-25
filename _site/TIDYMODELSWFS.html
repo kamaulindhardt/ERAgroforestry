@@ -2100,8 +2100,77 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 
 <div class="d-article">
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#loading-necessary-r-packages-and-era-data">Loading necessary R packages and ERA data</a>
+<ul>
+<li><a href="#step-1-getting-the-data">STEP 1: Getting the data</a></li>
+</ul></li>
+</ul>
+</nav>
+</div>
 <p>Here we are going to explore Machine Learning with Tidymodels on the ERA agroforestry data</p>
 <p>These objects can be created by crossing all combinations of pre-processors (e.g., formula, recipe, etc) and model specifications. This different model toolkit in the arsenal of</p>
+<h1 id="loading-necessary-r-packages-and-era-data">Loading necessary R packages and ERA data</h1>
+<p><strong>Loading general R packages</strong></p>
+<p>This part of the document is where we actually get to the nitty-gritty of the ERA agroforestry data and therefore it requires us to load a number of R packages for both general Explorortive Data Analysis and Machine Learning.</p>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># Using the pacman functions to load required packages</span>
+
+        <span class='kw'>if</span><span class='op'>(</span><span class='op'>!</span><span class='kw'><a href='https://rdrr.io/r/base/library.html'>require</a></span><span class='op'>(</span><span class='st'><a href='https://github.com/trinker/pacman'>"pacman"</a></span>, character.only <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+          <span class='fu'><a href='https://rdrr.io/r/utils/install.packages.html'>install.packages</a></span><span class='op'>(</span><span class='st'>"pacman"</span>,dependencies <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>
+          <span class='op'>}</span>
+
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='co'># General packages</span>
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='va'>required.packages</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"tidyverse"</span>, <span class='st'>"tidymodels"</span>, <span class='st'>"finetune"</span>, <span class='st'>"kernlab"</span>, <span class='st'>"here"</span>, <span class='st'>"hablar"</span>, <span class='st'>"spatialsample"</span>, 
+                       <span class='st'>"stacks"</span>, <span class='st'>"rules"</span>, <span class='st'>"baguette"</span>, <span class='st'>"viridis"</span>, <span class='st'>"yardstick"</span>, <span class='st'>"DALEXtra"</span>, 
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='co'># Parallel computing packages</span>
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+                      <span class='st'>"parallelMap"</span>, <span class='st'>"parallelly"</span>, <span class='st'>"parallel"</span>, <span class='st'>"doParallel"</span>
+<span class='op'>)</span>
+
+<span class='fu'>p_load</span><span class='op'>(</span>char<span class='op'>=</span><span class='va'>required.packages</span>, install <span class='op'>=</span> <span class='cn'>T</span>,character.only <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<h2 id="step-1-getting-the-data">STEP 1: Getting the data</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>agrofor.biophys.modelling.data.wf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span>file <span class='op'>=</span> <span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"agrofor.biophys.modelling.data.RDS"</span><span class='op'>)</span><span class='op'>)</span>
+
+<span class='va'>ml.data.wf</span> <span class='op'>&lt;-</span>  <span class='va'>agrofor.biophys.modelling.data.wf</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RR"</span>, <span class='st'>"ID"</span>, <span class='st'>"AEZ16s"</span>, <span class='st'>"Country"</span>, <span class='st'>"MeanC"</span>, <span class='st'>"MeanT"</span>, <span class='st'>"PrName.Code"</span>, <span class='st'>"SubPrName"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Removing outliers from logRR</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>is_outlier</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span>
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>x</span> <span class='op'>&lt;</span> <span class='fu'><a href='https://rdrr.io/r/stats/quantile.html'>quantile</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.25</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>3</span> <span class='op'>*</span> <span class='fu'><a href='https://rdrr.io/r/stats/IQR.html'>IQR</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>|</span> <span class='va'>x</span> <span class='op'>&gt;</span> <span class='fu'><a href='https://rdrr.io/r/stats/quantile.html'>quantile</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.75</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>3</span> <span class='op'>*</span> <span class='fu'><a href='https://rdrr.io/r/stats/IQR.html'>IQR</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>
+
+<span class='va'>ml.data.outliers.wf</span> <span class='op'>&lt;-</span> <span class='va'>ml.data.wf</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>rationalize</span><span class='op'>(</span><span class='va'>logRR</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>drop_na</span><span class='op'>(</span><span class='va'>logRR</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>ERA_Agroforestry <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>ERA_Agroforestry</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR.outlier <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span><span class='op'>(</span><span class='fu'>is_outlier</span><span class='op'>(</span><span class='va'>logRR</span><span class='op'>)</span>, <span class='va'>logRR</span>, <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='fl'>9999</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>ungroup</span><span class='op'>(</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->

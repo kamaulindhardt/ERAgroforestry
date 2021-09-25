@@ -22,3 +22,57 @@ Here we are going to explore Machine Learning with Tidymodels on the ERA agrofor
 
 These objects can be created by crossing all combinations of pre-processors (e.g., formula, recipe, etc) and model specifications. This different model toolkit in the arsenal of 
 
+# Loading necessary R packages and ERA data
+
+**Loading general R packages**
+
+This part of the document is where we actually get to the nitty-gritty of the ERA agroforestry data and therefore it requires us to load a number of R packages for both general Explorortive Data Analysis and Machine Learning. 
+
+```{r Loading packages needed, comment=NA, code_folding=TRUE}
+# Using the pacman functions to load required packages
+
+        if(!require("pacman", character.only = TRUE)){
+          install.packages("pacman",dependencies = T)
+          }
+
+# ------------------------------------------------------------------------------------------
+# General packages
+# ------------------------------------------------------------------------------------------
+required.packages <- c("tidyverse", "tidymodels", "finetune", "kernlab", "here", "hablar", "spatialsample", 
+                       "stacks", "rules", "baguette", "viridis", "yardstick", "DALEXtra", 
+# ------------------------------------------------------------------------------------------
+# Parallel computing packages
+# ------------------------------------------------------------------------------------------
+                      "parallelMap", "parallelly", "parallel", "doParallel"
+)
+
+p_load(char=required.packages, install = T,character.only = T)
+```
+
+## STEP 1: Getting the data
+
+```{r Getting the data, eval=TRUE, code_folding=FALSE}
+agrofor.biophys.modelling.data.wf <- readRDS(file = here::here("agrofor.biophys.modelling.data.RDS"))
+
+ml.data.wf <-  agrofor.biophys.modelling.data.wf %>%
+  dplyr::select(-c("RR", "ID", "AEZ16s", "Country", "MeanC", "MeanT", "PrName.Code", "SubPrName"))
+```
+
+Removing outliers from logRR
+
+```{r Outliers in outcome logRR workflowsets, eval=TRUE, code_folding=FALSE}
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25) - 3 * IQR(x) | x > quantile(x, 0.75) + 3 * IQR(x))
+}
+
+ml.data.outliers.wf <- ml.data.wf %>%
+  rationalize(logRR) %>%
+  drop_na(logRR) %>%
+  mutate(ERA_Agroforestry = 1) %>%
+  group_by(ERA_Agroforestry) %>%
+  mutate(logRR.outlier = ifelse(is_outlier(logRR), logRR, as.numeric(9999))) %>%
+  ungroup()
+```
+
+
+
