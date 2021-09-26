@@ -38,6 +38,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "here", "see", "ggplot2", "hablar", "kableExtra", "RColorBrewer", 
                        "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally", "DataExplorer", "corrr",
+                       "ggridges",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -2319,7 +2320,276 @@ agroforest.network.corr.cont.pred.plot
 
 We see that there is clearly some of the biophysical predictor features that requires some serious attention to reduce the high correlation there is between some of them. Some features are obviously highly correlated, e.g. sand, clay and silts content, because they are expressed as percentage they are directly proportional to one another. For other features it is less obvious, e.g. clay and soil organic carbon or mean temperature of wettest month (Bio05_TWM) and mean temperature of warmest quarter (Bio10_MT_WarQ). Note that this correlation matrix only shows us linear relationships of features, and ignores other types of (more complex) relational patterns, that our machine learning algorithms might take advantage of.
 
+**Correlation between categorical variables**
 
+With colpair_map(), we have a way of comparing categorical columns with one another. Let's try this with a few categorical columns from our agroforestry data
+
+There are a few different ways of finding the strength of the relationship between two categorical variables. One useful measure is called Cramer's V, which takes on values between 0 and 1 depending on how closely associated the variables are. Cramer's V is used to examine the association between two categorical variables when there is more than a 2 X 2 contingency (e.g., 2 X 3) 
+
+Having the ability to use arbitrary functions like this opens up intriguing possibilities for analyzing data. One limitation of using only correlations is they will only work for continuous features. It is clear that there a several of the predictors that have a strong correlation (either positive of negative) and we would have to deal with this in our preprocessing steps.
+
+```{r Generating Cramers V data and plot, code_folding=TRUE, eval=FALSE}
+agroforest.categorical.cramerV <- agrofor.biophys.modelling.data %>%
+  dplyr::select(AEZ16s,            
+                PrName,            
+                #PrName.Code,       
+                SubPrName,        
+                Product,           
+                Out.SubInd,        
+                #Out.SubInd.Code,   
+                Country,
+                Site.Type,         
+                Tree) %>%             
+  rationalize() %>%
+  drop_na() %>%
+  colpair_map(rcompanion::cramerV, digits = 2)
+
+agroforest.categorical.cramerV.plot <- agroforest.categorical.cramerV %>%
+  shave() %>% 
+  corrr::rplot(colours = c("#C6B18B","white","#66C2A5")) +
+  labs(title = "Correlation between categorical features", 
+       subtitle = "Cramer's V correlation - for all ERA agroforestry practices with crop and biomass yield outcomes") +
+    expand_limits(x = c(-0.2, 0.2), y = c(-0.2, 0.2)) +
+    theme_lucid(plot.title.size = 25,
+                axis.title.size = 20,
+                axis.text.angle = 45,
+                legend.position = "right",
+                tags.size = 20,
+                legend.text.size = 15)
+
+# SAVING CRAMERS V DATA AND PLOT
+saveRDS(agroforest.categorical.cramerV, here::here("TidyMod_OUTPUT", "agroforest.categorical.cramerV.RDS")) 
+saveRDS(agroforest.categorical.cramerV.plot, here::here("TidyMod_OUTPUT", "agroforest.categorical.cramerV.plot.RDS")) 
+```
+
+Cramer's V for association/correlation between categorical features
+
+```{r Cramers V correlation matrix of selected catagorical variables, layout = "l-body-outset", results = 'asis'}
+agroforest.categorical.cramerV <- readRDS( here::here("TidyMod_OUTPUT","agroforest.categorical.cramerV.RDS"))
+
+rmarkdown::paged_table(agroforest.categorical.cramerV)  
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Cramers V correlation plot of selected catagorical variables"}
+agroforest.categorical.cramerV.plot <- readRDS( here::here("TidyMod_OUTPUT","agroforest.categorical.cramerV.plot.RDS"))
+
+agroforest.categorical.cramerV.plot
+```
+
+**Scatter and Marginal Box and Density plots** 
+
+With the combined use of scatter and marginal box or density plots we can get a good understanding of the the (linear) relationship between pairs of predictors and outcome (logRR). Lets have a look at the linear relationship between logRR and the biophysical predictor with the highest correlation coefficients, sand content () and total soil carbon (iSDA_log_C_tot). First we will make use of the wrapper package ggExtra, to create marginal density plots, and next use to package cowplot for generating scatter plots with marginal boxplots for multiple
+groups.
+
+Scatter and density plot of total soil C and logRR
+
+```{r Generating combined scatter and density plot of total soil C and logRR, code_folding=TRUE, eval=FALSE}
+logRR_tot.soil.C <- ggscatter(agrofor.biophys.modelling.data, x = "iSDA_log_C_tot", y = "logRR",
+              alpha = 0, add = "reg.line", add.params = list(color = "#EBC97B"), conf.int = TRUE, cor.coef = TRUE,    # adding confidence
+                cor.coeff.args = list(method = "pearson", label.x = -5, label.y = 2.8, label.sep = "\n")) +           # correlation method
+  geom_jitter(size = 2, shape = 16, alpha = 0.1, width = 3, height = 0.5) +                                           # adding jitter effect
+  labs(title = "Scatter and density plot of total soil C and logRR",
+       subtitle = "Scatter and marginal density plot with Pearson's correlation derived p-value and R coeffecient",
+       x = "Total soil organic carbon (log_C_tot)",
+       y = "Response ratio [log(RR)]")
+
+scatter_density_totC_logRR <- ggExtra::ggMarginal(logRR_tot.soil.C, type = "density") 
+
+# SAVING PLOT
+saveRDS(scatter_density_totC_logRR, here::here("TidyMod_OUTPUT", "scatter_density_totC_logRR.RDS")) 
+```
+
+Scatter and density plot of sand content and logRR
+
+```{r Generating combined scatter and density plot of sand content and logRR, code_folding=TRUE, eval=FALSE}
+logRR_sand.cont <- ggscatter(agrofor.biophys.modelling.data, x = "iSDA_SAND_conc", y = "logRR",
+              alpha = 0, add = "reg.line", add.params = list(color = "#EBC97B"), conf.int = TRUE, cor.coef = TRUE, 
+              cor.coeff.args = list(method = "pearson", label.x = -5, label.y = 4, label.sep = "\n")) +              # correlation method
+  geom_jitter(size = 2, shape = 16, alpha = 0.1, width = 3, height = 0.5) +                                          # adding jitter effect 
+  labs(title = "Scatter and density plot of sand content and logRR",
+       subtitle = "Scatter and marginal density plot with Pearson's correlation derived p-value and R coeffecient",
+       x = "Sand content [%]",
+       y = "Response ratio [log(RR)]")
+
+scatter_density_sand_logRR <- ggExtra::ggMarginal(logRR_sand.cont, type = "density") 
+
+# SAVING PLOT
+saveRDS(scatter_density_sand_logRR, here::here("TidyMod_OUTPUT", "scatter_density_sand_logRR.RDS")) 
+```
+
+Scatter and density plot of Bio02 mean diurnal
+
+$temperature$ range (Bio02_MDR) and logRR
+
+```{r Generating combined scatter and density plot of BIO.02 and logRR, code_folding=TRUE, eval=FALSE}
+logRR_Bio02_MDR <- ggscatter(agrofor.biophys.modelling.data, x = "Bio02_MDR", y = "logRR",
+              alpha = 0, add = "reg.line", add.params = list(color = "#EBC97B"), conf.int = TRUE, cor.coef = TRUE, 
+              cor.coeff.args = list(method = "pearson", label.x = 5, label.y = 4, label.sep = "\n")) +              # correlation method
+  geom_jitter(size = 2, shape = 16, alpha = 0.1, width = 3, height = 0.5) +                                         # adding jitter effect
+  labs(title = "Scatter and density plot of Bio02_MDR and logRR",  
+       subtitle = "Scatter and marginal density plot with Pearson's correlation derived p-value and R coeffecient",
+       x = "Mean Diurnal Temperature Range",
+       y = "Response ratio [log(RR)]")
+
+scatter_density_BIO.02_logRR <- ggExtra::ggMarginal(logRR_Bio02_MDR, type = "density") 
+
+# SAVING PLOT
+saveRDS(scatter_density_BIO.02_logRR, here::here("TidyMod_OUTPUT", "scatter_density_BIO.02_logRR.RDS")) 
+```
+
+The general relationship between logRR and these selected biphysical predictors is quite poor for all of these examples, even though they are the highest scoring predictors in the correlation matrix we did before. We just have to remain faithful that our machine learning algorithms can find more useful patterns in the collective set of predictors. One limitation of ggExtra package is that it can't cope with multiple groups in the scatter plot and the marginal plots. Hence, bellow we are going to make use of the cowplot package. A package specifically designed as a simple add-on to ggplot. It provides various features that will help us with creating aligned plots awith multiple groups and arrange them in a neat way.
+
+Lets make a cowplot with a scatter plot of logRR vs sand content and add two marginal plots = a boxplot that shows the differences between the outcomes crop and biomass yield and a density plot on the right side of the cowplot showing the well-known density distribution of the logRR response variable.
+
+**Ridge plots**
+
+This is interesting as we see how temperatures are distributed differently across agroforestry practices. Most noticably is that agroforestry parklands are generally represented in environments with higher temperatures. Contrary is that agroforestry noundary planting practices are mostly represented in environments that have lower temperatures.
+
+BIO 1 - Mean Annual Temperature
+
+```{r Generating ridge plot for the BIO.1 temperature distribution across agroforestry practices, code_folding=TRUE, eval=FALSE}
+dens.ridge.points.qq.bio1 <- 
+  agrofor.biophys.modelling.data %>%
+  ggplot(aes(x = Bio01_MT_Annu, y = PrName, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3,
+                               bandwidth = 1.60,
+                               rel_min_height = 0.01,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 0.2, height = 0),
+                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+  theme_lucid(plot.title.size = 25) +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.2, "lines"),
+        strip.text.x = element_text(size = 8)) +
+  labs(title = "BIO.1 - Mean Annual Temperature distribution for all agroforestry practices with crop and biomass yield outcomes", 
+       x = "BIO 1 - Mean Annual Temperature",
+       y = "ERA Agroforestry practice") +
+  scale_fill_viridis(option = "D") 
+
+# SAVING PLOT
+saveRDS(dens.ridge.points.qq.bio1, here::here("TidyMod_OUTPUT", "dens.ridge.points.qq.bio1.RDS")) 
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Density ridge plot for BIO.01 Mean Annual Temperature distribution across all agroforestry practices"}
+dens.ridge.points.qq.bio1 <- readRDS( here::here("TidyMod_OUTPUT","dens.ridge.points.qq.bio1.RDS"))
+
+dens.ridge.points.qq.bio1
+```
+Soil Organic Carbon
+
+```{r Generating ridge plot for the soil organic carbon distribution across agroforestry practices, code_folding=TRUE, eval=FALSE}
+dens.ridge.points.qq.soilC <- 
+  agrofor.biophys.modelling.data %>%
+  ggplot(aes(x = iSDA_log_SOC, y = PrName, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3,
+                               bandwidth = 1.60,
+                               rel_min_height = 0.01,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 0.2, height = 0),
+                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+  theme_lucid(plot.title.size = 25) +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.2, "lines"),
+        strip.text.x = element_text(size = 8)) +
+  labs(title = "Soil organic carbon distribution for all agroforestry practices with crop and biomass yield outcomes", 
+       x = "log SOC",
+       y = "ERA Agroforestry practice") +
+  scale_fill_viridis(option = "D") 
+
+# SAVING PLOT
+saveRDS(dens.ridge.points.qq.soilC, here::here("TidyMod_OUTPUT", "dens.ridge.points.qq.soilC.RDS")) 
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Density ridge plot forsoil organic carbon distribution across all agroforestry practices"}
+dens.ridge.points.qq.soilC <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.points.qq.soilC.RDS"))
+
+dens.ridge.points.qq.soilC
+```
+Sand content
+
+```{r Generating ridge plot for the sand content distribution across agroforestry practices, code_folding=TRUE, eval=FALSE}
+dens.ridge.points.qq.sand <- 
+  agrofor.biophys.modelling.data %>%
+  ggplot(aes(x = iSDA_SAND_conc, y = PrName, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3,
+                               bandwidth = 1.60,
+                               rel_min_height = 0.01,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 0.2, height = 0),
+                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+  theme_lucid(plot.title.size = 25) +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.2, "lines"),
+        strip.text.x = element_text(size = 8)) +
+  labs(title = "Soil organic carbon distribution for all agroforestry practices with crop and biomass yield outcomes", 
+       x = "Sand content",
+       y = "ERA Agroforestry practice") +
+  scale_fill_viridis(option = "D") 
+
+# SAVING PLOT
+saveRDS(dens.ridge.points.qq.sand, here::here("TidyMod_OUTPUT", "dens.ridge.points.qq.sand.RDS")) 
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Density ridge plot for sand content distribution across all agroforestry practices"}
+dens.ridge.points.qq.sand <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.points.qq.sand.RDS"))
+
+dens.ridge.points.qq.sand
+```
+```{r}
+par.coord.data.EQNo
+```
+
+
+```{r}
+dens.ridge.discritized.logRR.BIO1 <- 
+  par.coord.data.EQNo %>%
+  ggplot(aes(x = iSDA_SAND_conc, y = logRR_EQNo_group, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3,
+                               
+                               rel_min_height = 0.01,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 0.2, height = 0),
+                               point_shape = 'o', point_size = 3, point_alpha = 1, alpha = 0.7) +
+  theme_lucid(plot.title.size = 25) +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.2, "lines"),
+        strip.text.x = element_text(size = 8)) +
+  labs(title = "Sand content distribution across the seven clases of discritized logRR groups", 
+       x = "Sand content",
+       y = "Discretised groups of logRR") +
+  scale_fill_viridis(option = "D") 
+
+dens.ridge.discritized.logRR.BIO1
+```
+```{r}
+dens.ridge.discritized.logRR.sand <- 
+  agrofor.biophys.modelling.data.discretized.logRR %>%
+  ggplot(aes(x = iSDA_SAND_conc, y = logRR_EQR_group, fill = ..x..)) +
+  geom_density_ridges_gradient(rel_min_height = 0,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 4, height = 0),
+                               point_shape = '|', 
+                               point_size = 3, 
+                               point_alpha = 1, 
+                               quantile_lines = TRUE, 
+                               scale = 0.9, 
+                               alpha = 0.7, 
+                               vline_size = 1, 
+                               vline_color = "red") +
+  theme_lucid(plot.title.size = 25) +
+  theme(legend.position = "none",
+        panel.spacing = unit(0.2, "lines"),
+        strip.text.x = element_text(size = 8)) +
+  labs(title = "Sand concentration distribution across the seven clases of discritized logRR groups", 
+       x = "Sand concentration",
+       y = "Discretised groups of logRR") +
+  scale_fill_viridis(option = "D") 
+
+dens.ridge.discritized.logRR.sand
+```
 
 **Plotting logRR and selected biophysical predictors spatially** 
 
