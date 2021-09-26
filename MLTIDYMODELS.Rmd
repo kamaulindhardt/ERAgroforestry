@@ -2553,10 +2553,12 @@ dens.ridge.points.qq.sand <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.poi
 
 dens.ridge.points.qq.sand
 ```
+Could also be interesting to see how the sand content feature is distributet among the discritized logRR groups
 
+For the equal number discritization 
 
-```{r}
-dens.ridge.discritized.logRR.BIO1 <- 
+```{r Generating ridge plot for the sand content distribution across the EQNo discritized logRR groups, code_folding=TRUE, eval=FALSE}
+dens.ridge.EQNo.discritized.logRR.sand <- 
   par.coord.data.EQNo %>%
   ggplot(aes(x = iSDA_SAND_conc, y = logRR_EQNo_group, fill = ..x..)) +
   geom_density_ridges_gradient(rel_min_height = 0,
@@ -2574,15 +2576,24 @@ dens.ridge.discritized.logRR.BIO1 <-
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
         strip.text.x = element_text(size = 8)) +
-  labs(title = "Sand content distribution across the seven clases of discritized logRR groups", 
+  labs(title = "Sand content distribution across the seven clases of EQNo discritized logRR groups", 
        x = "Sand content",
        y = "Discretised groups of logRR") +
   scale_fill_viridis(option = "D") 
 
-dens.ridge.discritized.logRR.BIO1
+# SAVING PLOT
+saveRDS(dens.ridge.EQNo.discritized.logRR.sand, here::here("TidyMod_OUTPUT", "dens.ridge.EQNo.discritized.logRR.sand.RDS")) 
 ```
-```{r}
-dens.ridge.discritized.logRR.sand <- 
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Density ridge plot for sand content distribution across the EQNo discritized logRR groupss"}
+dens.ridge.EQNo.discritized.logRR.sand <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.EQNo.discritized.logRR.sand.RDS"))
+
+dens.ridge.EQNo.discritized.logRR.sand
+```
+For the equal range discritization 
+
+```{r Generating ridge plot for the sand content distribution across the EQR discritized logRR groups, code_folding=TRUE, eval=FALSE}
+dens.ridge.EQR.discritized.logRR.sand <- 
   agrofor.biophys.modelling.data.discretized.logRR %>%
   ggplot(aes(x = iSDA_SAND_conc, y = logRR_EQR_group, fill = ..x..)) +
   geom_density_ridges_gradient(rel_min_height = 0,
@@ -2600,12 +2611,19 @@ dens.ridge.discritized.logRR.sand <-
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
         strip.text.x = element_text(size = 8)) +
-  labs(title = "Sand concentration distribution across the seven clases of discritized logRR groups", 
+  labs(title = "Sand concentration distribution across the seven clases of EQR discritized logRR groups", 
        x = "Sand concentration",
        y = "Discretised groups of logRR") +
   scale_fill_viridis(option = "D") 
 
-dens.ridge.discritized.logRR.sand
+# SAVING PLOT
+saveRDS(dens.ridge.EQR.discritized.logRR.sand, here::here("TidyMod_OUTPUT", "dens.ridge.EQR.discritized.logRR.sand.RDS")) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Density ridge plot for sand content distribution across the EQR discritized logRR groupss"}
+dens.ridge.EQR.discritized.logRR.sand <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.EQR.discritized.logRR.sand.RDS"))
+
+dens.ridge.EQR.discritized.logRR.sand
 ```
 
 **Plotting logRR and selected biophysical predictors spatially** 
