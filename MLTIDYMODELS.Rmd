@@ -1432,7 +1432,204 @@ par.coord.EQR.combined
 With the equal range method we have the downside that we have fewer observation in the extreme low and extreme high regions. This might create some bias when interpreting the plots. The interesting aspect of these plots is that we do see differences among and between the discretized logRR values for the different biophysical variables, suggesting that logRR is associated with (the combination of) biophysical co-variables.
 
 
+**Multiple pairwise t-test using discritized logRR values**
 
+Using equal range discritized logRR groups we can test for significant difference between the groups of logRR values. This is interesting because we can use it to quickly estimate whether logRR values are in fact statistically significantly different from each other. If not it might be very difficult to distingush them and the influence our biophysical predictors might have/have not on the logRR. 
+
+We know a standard paired t-test, that is used to check the difference between a group of two members (only between two groups). The multiple t-test can be used to performs many t-tests simultaneously, with each test comparing two groups of data. This is practical as we in our case are mostly interested in a EDA of how individual "artificially" discritized groups of our outcome feature, logRR is different from other groups. The multiple pairwise t-test is performed in following steps:
+
+1)  Creating a long format of the agroforestry data where logRR have
+    been discritized (either equal range or equal number method)
+    
+2)  Selecting the
+
+Transforming data into long format
+
+```{r Transforming disritized data into long format, code_folding=FALSE, eval=FALSE}
+# Transform the data into long format
+# Put all variables in the same column except `logRR_EQR_group`, the grouping variable
+
+####################################################################################################################
+# Discretized with equal number
+agrofor.biophys.modelling.data.long.EQNo <- 
+  agrofor.biophys.modelling.data.discretized.logRR %>%
+  dplyr::select(Bio01_MT_Annu:logRR_EQNo_group) %>%
+  rationalize() %>%
+  drop_na() %>%
+  dplyr::select(-(c("RR", "logRR", "logRR_counts_cut_interval", "logRR_EQR_group" , "logRR_counts_cut_number"))) %>%
+  mutate_if(is.character, as.factor) %>%
+  pivot_longer(-logRR_EQNo_group, names_to = "variables", values_to = "value")
+
+####################################################################################################################
+# Discretized with equal range
+agrofor.biophys.modelling.data.long.EQR <- 
+  agrofor.biophys.modelling.data.discretized.logRR %>%
+  dplyr::select(Bio01_MT_Annu:logRR_EQR_group) %>%
+  rationalize() %>%
+  drop_na() %>%
+  dplyr::select(-(c("RR", "logRR", "logRR_counts_cut_interval"))) %>%
+  mutate_if(is.character, as.factor) %>%
+  pivot_longer(-logRR_EQR_group, names_to = "variables", values_to = "value")
+
+
+dim(agrofor.biophys.modelling.data.long.EQR)
+  # [1] 156135      3
+dim(agrofor.biophys.modelling.data.long.EQNo)
+  # [1] 156135      3
+```
+
+Creating summerised statistics
+
+```{r Generating summary statistics, code_folding=FALSE, eval=FALSE}
+
+####################################################################################################################
+# Summary statistics -- Equal number
+agrofor.biophys.modelling.data.long.EQNo.stats <- 
+  agrofor.biophys.modelling.data.long.EQNo %>%
+  group_by(variables, logRR_EQNo_group) %>%
+  summarise(
+    n = n(),
+    mean = mean(value),
+    sd = sd(value)
+  ) %>%
+  ungroup()
+
+####################################################################################################################
+# Summary statistics -- Equal range
+agrofor.biophys.modelling.data.long.EQR.stats <- 
+  agrofor.biophys.modelling.data.long.EQR %>%
+  group_by(variables, logRR_EQR_group) %>%
+  summarise(
+    n = n(),
+    mean = mean(value),
+    sd = sd(value)
+  ) %>%
+  ungroup()
+
+
+# `summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
+# `summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
+
+# SAVING LONG DATA 
+saveRDS(agrofor.biophys.modelling.data.long.EQNo.stats, here::here("TidyMod_OUTPUT", "agrofor.biophys.modelling.data.long.EQNo.stats.RDS")) 
+saveRDS(agrofor.biophys.modelling.data.long.EQR.stats, here::here("TidyMod_OUTPUT", "agrofor.biophys.modelling.data.long.EQR.stats.RDS")) 
+```
+
+```{r View newly created factor levels of logRR equal number, layout = "l-body-outset", results = 'asis'}
+agrofor.biophys.modelling.data.long.EQNo.stats <- readRDS( here::here("TidyMod_OUTPUT","agrofor.biophys.modelling.data.long.EQNo.stats.RDS"))
+
+rmarkdown::paged_table(agrofor.biophys.modelling.data.long.EQNo.stats %>% sample_n(25))
+```
+
+```{r View newly created factor levels of logRR equal range, layout = "l-body-outset", results = 'asis'}
+agrofor.biophys.modelling.data.long.EQR.stats <- readRDS( here::here("TidyMod_OUTPUT","agrofor.biophys.modelling.data.long.EQR.stats.RDS"))
+
+rmarkdown::paged_table(agrofor.biophys.modelling.data.long.EQR.stats %>% sample_n(25))
+```
+
+This long data format is full of potential because we can use it to group our rows/observations based on the discretized logRR factor levels - and this will conglomerate the variables--value combinations. Thereby allowing for a pairwise t-test between the logRR factor levels for each of the different biophysical predictor features. We can use this to for
+example ask the question: Is there (significant) differences between the logRR factor levels when it comes to precipitation (BIO13, BIO14, BIO15, BIO16, BIO17, BIO18 and BIO19). If there is differences it can indicate that precipitation or any given predictor can be used to predict logRR values. Note that caution has to be made when interpretation the
+discritized logRR factor levels because any continuous features have a smaller chance of correlating with the target variable due to the concept of infinite degrees of freedom thus the categorical continuous version of logRR may have a complex non-linear relationship and conclusions from the discretized logRR cannot be directly transferred to the continuous logRR.
+
+Ultimately we are interested in predicting logRR in a continuous version, hence we want to approach the machine learning as a regression problem. Yet, we could also use a classification
+approach on discretized logRR levels. When we discretize an outcome feature that we want to predict, we are fitting it to bins hence reducing the impact of small fluctuation in the data, considered as noise. This noise is reduced through discretization. Another advantage of discretizing the outcome feature, logRR would be that often, it is easier to understand continuous data (such as logRR) when its divided and stored into meaningful categories or groups. For example, we could divide out predicted logRR values into the following groups: High logRR (large benefit of agroforestry - compared to control practice), medium logRR (intermediate/no benefit of agroforestry - compared to control practice) and low logRR (negative impacts of agroforestry - compared to control practice).
+
+That was a little side note. Let us now run the multiple pairwise t-test analysis for the different logRR factor levels in which we compare the differences in the biophysical predictors across the seven groups of logRR. We are using the rstatix package functions t_test()
+
+Group the data by variables and compare logRR groups with t-tests add significance levels
+
+```{r Group the data by variables and compare logRR groups with t-tests add significance levels, code_folding=FALSE, eval=FALSE}
+# Group the data by variables and compare logRR groups with t-tests add significance levels
+
+####################################################################################################################
+# With equal number discritization
+agrofor.biophys.modelling.data.long.stat.ttest.EQNo <- agrofor.biophys.modelling.data.long.EQNo %>%
+  group_by(variables) %>%
+  rstatix::t_test(value ~ logRR_EQNo_group, p.adjust.method = "BH") # adjusting p-values based on the Benjamini-Hochberg method
+
+# Remove unnecessary columns, arranging the columns neatly and display the outputs
+agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results <- agrofor.biophys.modelling.data.long.stat.ttest.EQNo %>% 
+  select(-.y., -statistic, -df) %>% 
+  relocate(variables, group1, group2, p, p.adj.signif) %>%
+  dplyr::arrange(desc(-p))
+
+####################################################################################################################
+# With equal range discritization
+agrofor.biophys.modelling.data.long.stat.ttest.EQR <- agrofor.biophys.modelling.data.long.EQR %>%
+  group_by(variables) %>%
+  rstatix::t_test(value ~ logRR_EQR_group, p.adjust.method = "BH") # adjusting p-values based on the Benjamini-Hochberg method
+
+# Remove unnecessary columns, arranging the columns neatly and display the outputs
+agrofor.biophys.modelling.data.long.stat.ttest.EQR.results <- agrofor.biophys.modelling.data.long.stat.ttest.EQR %>% 
+  select(-.y., -statistic, -df) %>% 
+  relocate(variables, group1, group2, p, p.adj.signif) %>%
+  dplyr::arrange(desc(-p))
+
+
+
+# SAVING LONG DATA 
+saveRDS(agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results, here::here("TidyMod_OUTPUT", "agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results.RDS")) 
+saveRDS(agrofor.biophys.modelling.data.long.stat.ttest.EQR.results, here::here("TidyMod_OUTPUT", "agrofor.biophys.modelling.data.long.stat.ttest.EQR.results.RDS")) 
+```
+
+Lets look at the (significant) differences between our discretized logRR groups for the equal number method
+
+```{r t-test for groups of equal number, layout = "l-body-outset", results = 'asis'}
+agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results <- readRDS( here::here("TidyMod_OUTPUT","agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results.RDS"))
+
+rmarkdown::paged_table(agrofor.biophys.modelling.data.long.stat.ttest.EQNo.results)
+```
+
+..and now for the equal range method
+
+
+```{r t-test for groups of equal range, layout = "l-body-outset", results = 'asis'}
+agrofor.biophys.modelling.data.long.stat.ttest.EQR.results <- readRDS( here::here("TidyMod_OUTPUT","agrofor.biophys.modelling.data.long.stat.ttest.EQR.results.RDS"))
+
+rmarkdown::paged_table(agrofor.biophys.modelling.data.long.stat.ttest.EQR.results) 
+```
+
+We find that there is significant differences between discretized logRR groups, this is the case for both methods of equal and equal number. 
+
+Before we visualise these trends we are first going to generating the mean values of all biophysical variables that we can add to the boxplot as a vertical reference bar. Open the code by pressing "Show code" to see how thiswas done.
+
+```{r Generating mean values for each co-variable, code_folding=TRUE, eval=FALSE}
+
+####################################################################################################################
+# Mean values for each biophysical variable -- With equal number discritization
+agfor.biophys.mean.EQNo <- agrofor.biophys.modelling.data.long.EQNo.stats %>%
+  group_by(variables) %>%
+  dplyr::summarise(mean) %>%
+  pivot_wider(names_from = variables, values_from = mean, values_fn = mean) %>%
+  pivot_longer(cols =  everything(), names_to = "variables", values_to = "mean.values")
+
+####################################################################################################################
+# Mean values for each biophysical variable -- With equal range discritization
+agfor.biophys.mean.EQR <- agrofor.biophys.modelling.data.long.EQR.stats %>%
+  group_by(variables) %>%
+  dplyr::summarise(mean) %>%
+  pivot_wider(names_from = variables, values_from = mean, values_fn = mean) %>%
+  pivot_longer(cols =  everything(), names_to = "variables", values_to = "mean.values")
+
+
+#`summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
+# `summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
+```
+Let us define the mean values to be depicted in the boxplot be merging with the datasets.
+
+```{r Defining the mean values to be depicted in the boxplot code_folding=FALSE, eval=FALSE}
+
+####################################################################################################################
+# Horizontal line based on mean values for each biophysical variable -- With equal range discritization
+agrofor.biophys.long.EQR.hline <- merge(agrofor.biophys.modelling.data.long.EQR, 
+                                                   agfor.biophys.mean.EQR, 
+                                                   by.x = "variables", by.y = "variables")
+####################################################################################################################
+# Horizontal line based on mean values for each biophysical variable -- With equal number discritization
+agrofor.biophys.long.EQNo.hline <- merge(agrofor.biophys.modelling.data.long.EQNo, 
+                                                   agfor.biophys.mean.EQNo, 
+                                                   by.x = "variables", by.y = "variables")
+```
 
 
 **PCA and variable importance** 
