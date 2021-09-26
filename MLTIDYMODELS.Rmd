@@ -38,7 +38,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "here", "see", "ggplot2", "hablar", "kableExtra", "RColorBrewer", 
                        "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally", "DataExplorer", "corrr",
-                       "ggridges",
+                       "ggridges", "Boruta",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -2451,12 +2451,17 @@ BIO 1 - Mean Annual Temperature
 dens.ridge.points.qq.bio1 <- 
   agrofor.biophys.modelling.data %>%
   ggplot(aes(x = Bio01_MT_Annu, y = PrName, fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 3,
-                               bandwidth = 1.60,
-                               rel_min_height = 0.01,
+  geom_density_ridges_gradient(rel_min_height = 0,
                                jittered_points = TRUE,
-                               position = position_points_jitter(width = 0.2, height = 0),
-                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+                               position = position_points_jitter(width = 4, height = 0),
+                               point_shape = '|', 
+                               point_size = 3, 
+                               point_alpha = 1, 
+                               quantile_lines = TRUE, 
+                               scale = 0.9, 
+                               alpha = 0.7, 
+                               vline_size = 1, 
+                               vline_color = "red") +
   theme_lucid(plot.title.size = 25) +
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
@@ -2482,12 +2487,17 @@ Soil Organic Carbon
 dens.ridge.points.qq.soilC <- 
   agrofor.biophys.modelling.data %>%
   ggplot(aes(x = iSDA_log_SOC, y = PrName, fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 3,
-                               bandwidth = 1.60,
-                               rel_min_height = 0.01,
+  geom_density_ridges_gradient(rel_min_height = 0,
                                jittered_points = TRUE,
-                               position = position_points_jitter(width = 0.2, height = 0),
-                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+                               position = position_points_jitter(width = 4, height = 0),
+                               point_shape = '|', 
+                               point_size = 3, 
+                               point_alpha = 1, 
+                               quantile_lines = TRUE, 
+                               scale = 0.9, 
+                               alpha = 0.7, 
+                               vline_size = 1, 
+                               vline_color = "red") +
   theme_lucid(plot.title.size = 25) +
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
@@ -2513,12 +2523,17 @@ Sand content
 dens.ridge.points.qq.sand <- 
   agrofor.biophys.modelling.data %>%
   ggplot(aes(x = iSDA_SAND_conc, y = PrName, fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 3,
-                               bandwidth = 1.60,
-                               rel_min_height = 0.01,
+  geom_density_ridges_gradient(rel_min_height = 0,
                                jittered_points = TRUE,
-                               position = position_points_jitter(width = 0.2, height = 0),
-                               point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7) +
+                               position = position_points_jitter(width = 4, height = 0),
+                               point_shape = '|', 
+                               point_size = 3, 
+                               point_alpha = 1, 
+                               quantile_lines = TRUE, 
+                               scale = 0.9, 
+                               alpha = 0.7, 
+                               vline_size = 1, 
+                               vline_color = "red") +
   theme_lucid(plot.title.size = 25) +
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
@@ -2538,21 +2553,23 @@ dens.ridge.points.qq.sand <- readRDS(here::here("TidyMod_OUTPUT","dens.ridge.poi
 
 dens.ridge.points.qq.sand
 ```
-```{r}
-par.coord.data.EQNo
-```
 
 
 ```{r}
 dens.ridge.discritized.logRR.BIO1 <- 
   par.coord.data.EQNo %>%
   ggplot(aes(x = iSDA_SAND_conc, y = logRR_EQNo_group, fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 3,
-                               
-                               rel_min_height = 0.01,
+  geom_density_ridges_gradient(rel_min_height = 0,
                                jittered_points = TRUE,
-                               position = position_points_jitter(width = 0.2, height = 0),
-                               point_shape = 'o', point_size = 3, point_alpha = 1, alpha = 0.7) +
+                               position = position_points_jitter(width = 4, height = 0),
+                               point_shape = '|', 
+                               point_size = 3, 
+                               point_alpha = 1, 
+                               quantile_lines = TRUE, 
+                               scale = 0.9, 
+                               alpha = 0.7, 
+                               vline_size = 1, 
+                               vline_color = "red") +
   theme_lucid(plot.title.size = 25) +
   theme(legend.position = "none",
         panel.spacing = unit(0.2, "lines"),
@@ -2656,6 +2673,244 @@ We are now going to use the function to look at a set of selected biophysical pr
 (pred.spatial(Bio07_TAR, "BIO.07 - Annual Temperature Range") + pred.spatial(Bio12_Pecip_Annu, "BIO.12 - Annual Precipitation") + pred.spatial(Bio17_Precip_DryQ, "BIO.17 - Precipitation of Driest Quarter")) /
 (pred.spatial(iSDA_SAND_conc, "Sand concentration") + pred.spatial(iSDA_log_C_tot, "Total soil carbon") + pred.spatial(iSDA_pH, "pH"))
 ```
+
+
+**Boruta: Wrapper Algorithm for All Relevant Feature Selection**
+
+Boruta is an all relevant feature selection wrapper algorithm. It finds relevant features by comparing original attributes' importance with importance achievable at random, estimated using their permuted copies (shadows). It is an all relevant feature selection method, while most other are minimal optimal; this means it tries to find all features carrying information usable for prediction, rather than finding a possibly compact subset of features on which some classifier has a minimal error. 
+
+Boruta iteratively compares importances of attributes with importances of shadow attributes, created by shuffling original ones. Attributes that have significantly worst importance than shadow ones are being consecutively dropped. On the other hand, attributes that are significantly better than shadows are admitted to be Confirmed. Shadows are re-created in each iteration. Algorithm stops when only Confirmed attributes are left, or when it reaches maxRuns importance source runs. If the second scenario occurs, some attributes may be left without a decision. They are claimed Tentative. You may try to extend maxRuns or lower pValue to clarify them, but in some cases their importances do fluctuate too much for Boruta to converge. Instead, you can use TentativeRoughFix function, which will perform other, weaker test to make a final decision, or simply treat them as undecided in further analysis. It is actually pretty trivial, no magic at all. The core idea is that a feature that is not relevant is not more useful for classification than its version with a permuted order of values. To this
+end, Boruta extends the given dataset with such permuted copies of all features (which we call shadows), applies some feature importance measure (aka VIM; Boruta can use any, the default is Random Forest's MDA) and checks which features are better and which are worse than a most important shadow. The next important idea is based on observation that VIMs get more accurate with less irrelevant features present; thus, Boruta applies the above test iteratively, constantly removing features which it strongly believes are irrelevant.
+
+In Boruta, features do not compete among themselves. Instead - and this is the first brilliant idea - they compete with a randomized version of themselves.
+
+
+```{r Performing Boruta analysis of predictor features - tree feature included, code_folding=TRUE, eval=FALSE}
+agrofor.boruta.with.tree <- as.data.table(data.table::copy(agrofor.biophys.modelling.data)) %>%
+  dplyr::select(-c(MeanC,             # Outcome variable(s)
+                  MeanT,
+                  RR,
+                    
+                  ID,                # ID variable (will not be included as predictor)
+                  AEZ16s,            # ID variable (will not be included as predictor)
+                  PrName,            # ID variable (will not be included as predictor)
+                  PrName.Code,       # ID variable (will not be included as predictor)
+                  SubPrName,         # ID variable (will not be included as predictor)
+                  Product,           # ID variable (will not be included as predictor)
+                  Out.SubInd,        # ID variable (will not be included as predictor)
+                  Out.SubInd.Code,   # ID variable (will not be included as predictor)
+                  Country,           # ID variable (will not be included as predictor)
+                    
+                  Latitude,          # ID variable (will not be included as predictor, but as a basis for the spatial/cluster cross-validation)
+                  Longitude,         # ID variable (will not be included as predictor, but as a basis for the spatial/cluster cross-validation)
+                    
+                  #Site.Type,         # Site_Type will be included as predictor, to see how much it explains the outcome
+                  #Tree               # Tree will be included as predictor, to see how much it explains the outcome
+                    ) 
+                ) %>%
+    
+  rationalize() %>%
+  drop_na()
+ # distinct(PrName, .keep_all = TRUE)
+
+  
+set.seed(1407)
+
+agrofor.boruta.with.tree <-  Boruta::Boruta(logRR ~ ., data = agrofor.boruta.with.tree, 
+                                     pValue = 0.01,
+                                     mcAdj = TRUE,
+                                     holdHistory = TRUE,
+                                     doTrace = 3,
+                                     maxRuns = 200,
+                                     getImp = getImpRfZ) 
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------
+# agrofor.boruta.with.tree
+
+# Boruta performed 16 iterations in 1.193105 mins.
+#  37 attributes confirmed important: ASTER_Altitude, ASTER_Slope, Bio01_MT_Annu, Bio02_MDR, Bio03_Iso and 32 more;
+#  No attributes deemed unimportant.
+
+# SAVING DATA
+saveRDS(agrofor.boruta.with.tree, here::here("TidyMod_OUTPUT", "agrofor.boruta.with.tree.RDS"))
+```
+
+
+```{r Performing Boruta analysis of predictor features - tree feature excluded, code_folding=TRUE, eval=FALSE}
+agrofor.boruta.without.tree <- as.data.table(data.table::copy(agrofor.biophys.modelling.data)) %>%
+  dplyr::select(-c(MeanC,             # Outcome variable(s)
+                  MeanT,
+                  RR,
+                    
+                  ID,                # ID variable (will not be included as predictor)
+                  AEZ16s,            # ID variable (will not be included as predictor)
+                  PrName,            # ID variable (will not be included as predictor)
+                  PrName.Code,       # ID variable (will not be included as predictor)
+                  SubPrName,         # ID variable (will not be included as predictor)
+                  Product,           # ID variable (will not be included as predictor)
+                  Out.SubInd,        # ID variable (will not be included as predictor)
+                  Out.SubInd.Code,   # ID variable (will not be included as predictor)
+                  Country,           # ID variable (will not be included as predictor)
+                  Tree,              # The Tree feature is excluded
+                    
+                  Latitude,          # ID variable (will not be included as predictor, but as a basis for the spatial/cluster cross-validation)
+                  Longitude,         # ID variable (will not be included as predictor, but as a basis for the spatial/cluster cross-validation)
+                    
+                  #Site.Type,         # Site_Type will be included as predictor, to see how much it explains the outcome
+                  #Tree               # Tree will be included as predictor, to see how much it explains the outcome
+                    ) 
+                ) %>%
+    
+  rationalize() %>%
+  drop_na()
+ # distinct(PrName, .keep_all = TRUE)
+
+  
+set.seed(1407)
+
+agrofor.boruta.without.tree <-  Boruta::Boruta(logRR ~ ., data = agrofor.boruta.without.tree, 
+                                     pValue = 0.01,
+                                     mcAdj = TRUE,
+                                     holdHistory = TRUE,
+                                     doTrace = 3,
+                                     maxRuns = 200,
+                                     getImp = getImpRfZ) 
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------
+# agrofor.boruta.without.tree
+
+# Boruta performed 20 iterations in 1.329663 mins.
+#  36 attributes confirmed important: ASTER_Altitude, ASTER_Slope, Bio01_MT_Annu, Bio02_MDR, Bio03_Iso and 31 more;
+#  No attributes deemed unimportant.
+
+# SAVING DATA
+saveRDS(agrofor.boruta.without.tree, here::here("TidyMod_OUTPUT", "agrofor.boruta.without.tree.RDS"))
+
+```
+
+"What is to be sought in designs for the display of information is the clear portrayal of complexity. Not the complication of the simple; rather ... the revelation of the complex."
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Boruta plot of biophysical predictors with the tree feature included"}
+
+# LOADING BORUTA RESULTS --------------------------------------------------------------------------------
+agrofor.boruta.with.tree <- readRDS( here::here("TidyMod_OUTPUT","agrofor.boruta.with.tree.RDS"))
+
+
+plot(agrofor.boruta.with.tree, xlab = "", xaxt = "n")
+
+lz <- lapply(1:ncol(agrofor.boruta.with.tree$ImpHistory),function(i)
+  
+agrofor.boruta.with.tree$ImpHistory[is.finite(agrofor.boruta.with.tree$ImpHistory[,i]),i])
+
+names(lz) <- colnames(agrofor.boruta.with.tree$ImpHistory)
+
+Labels <- sort(sapply(lz, median))
+
+axis(side = 1, las = 2, labels = names(Labels), at = 1:ncol(agrofor.boruta.with.tree$ImpHistory), cex.axis = 0.5)
+```
+
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Boruta plot of biophysical predictors with the tree feature excluded"}
+
+# LOADING BORUTA RESULTS --------------------------------------------------------------------------------
+agrofor.boruta.without.tree <- readRDS( here::here("TidyMod_OUTPUT","agrofor.boruta.without.tree.RDS"))
+
+plot(agrofor.boruta.without.tree, xlab = "", xaxt = "n")
+
+lz <- lapply(1:ncol(agrofor.boruta.without.tree$ImpHistory),function(i)
+  
+agrofor.boruta.without.tree$ImpHistory[is.finite(agrofor.boruta.without.tree$ImpHistory[,i]),i])
+
+names(lz) <- colnames(agrofor.boruta.without.tree$ImpHistory)
+
+Labels <- sort(sapply(lz, median))
+
+axis(side = 1, las = 2, labels = names(Labels), at = 1:ncol(agrofor.boruta.without.tree$ImpHistory), cex.axis = 0.5)
+```
+
+This plot reveals the importance of each of the features/attributes. There were no tentative attributes after the Boruta analysis for neither of the cases. Normally this is where it is the time to take decision on tentative attributes. The tentative attributes can be classified as confirmed or rejected by comparing the median Z score of the attributes with the median Z score of the best shadow attribute. However this is not nessesary now as all variables were confirmed to be important. 
+
+The columns in green are 'confirmed' and the ones in red are not. There are couple of blue bars representing ShadowMax and ShadowMin. They are not actual features, but are used by the boruta algorithm to decide if a variable is important or not.
+
+**Note:** the code below shows how the final boruta analysis can be obtained
+
+
+```{r Finalizing Boruta analysis, code_folding=TRUE, eval=FALSE}
+# --------------------------------------------------------------------------------------------------------------------------------------------------------
+# agrofor.boruta.with.tree
+agrofor.boruta.with.tree.final <- TentativeRoughFix(agrofor.boruta.with.tree)
+print(agrofor.boruta.with.tree.final)
+
+# Warning in TentativeRoughFix(agrofor.boruta.with.tree) :
+#   There are no Tentative attributes! Returning original object.
+# Boruta performed 16 iterations in 2.665884 mins.
+#  37 attributes confirmed important: ASTER_Altitude, ASTER_Slope, Bio01_MT_Annu, Bio02_MDR, Bio03_Iso and 32 more;
+#  No attributes deemed unimportant.
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------
+# agrofor.boruta.without.tree
+
+agrofor.boruta.without.tree.final <- TentativeRoughFix(agrofor.boruta.without.tree)
+print(agrofor.boruta.without.tree.final)
+
+# Warning in TentativeRoughFix(agrofor.boruta.without.tree) :
+#   There are no Tentative attributes! Returning original object.
+# Boruta performed 20 iterations in 1.329663 mins.
+#  36 attributes confirmed important: ASTER_Altitude, ASTER_Slope, Bio01_MT_Annu, Bio02_MDR, Bio03_Iso and 31 more;
+#  No attributes deemed unimportant.
+```
+
+
+Listing the results of the Boruta analysis.
+
+```{r List of attributes from the Boruta analysis where the Tree feature is included, code_folding=TRUE, eval=TRUE}
+agrofor.boruta.with.tree.final.attribute.results <- getSelectedAttributes(agrofor.boruta.with.tree, withTentative = F)
+
+
+agrofor.boruta.with.tree.final.attribute.results.df <- attStats(agrofor.boruta.with.tree)
+
+agrofor.boruta.with.tree.final.attribute.results.df %>%
+  arrange(desc(meanImp))
+```
+
+```{r List of attributes from the Boruta analysis where the Tree feature is excuded, code_folding=TRUE, eval=TRUE}
+agrofor.boruta.without.tree.final.attribute.results <- getSelectedAttributes(agrofor.boruta.without.tree, withTentative = F)
+
+
+agrofor.boruta.without.tree.final.attribute.results.df <- attStats(agrofor.boruta.without.tree)
+
+agrofor.boruta.without.tree.final.attribute.results.df %>%
+  arrange(desc(meanImp))
+```
+
+Ww see that the ten most important predictor features are: 
+
+* Tree, 
+* ASTER_Altitude
+* iSDA_SAND_conc
+* iSDA_CLAY_conc
+* iSDA_SILT_conc
+* iSDA_log_K
+* Bio04_TS
+* Bio03_Iso,
+* Bio12_Pecip_Annu
+* iSDA_log_Mg
+
+
+However, all predictors/attributes were found to sufficiently contributing to the predictability of logRR. A similar analysis was run but without the Tree feature. This yielded in the ten most important predictor features being slightly different:
+
+* ASTER_Altitude
+* iSDA_SILT_conc
+* iSDA_SAND_conc
+* iSDA_CLAY_conc
+* iSDA_log_K
+* Bio04_TS
+* iSDA_log_Mg
+* Bio03_Iso,
+* Bio12_Pecip_Annu
 
 
 

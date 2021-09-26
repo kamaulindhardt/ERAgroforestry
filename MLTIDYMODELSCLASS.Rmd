@@ -1,0 +1,21 @@
+---
+title: "Part 5: Tidymodels - Classification"
+favicon: ./IMAGES/ERA_logo_circle.png
+description: |
+  On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis.
+bibliography: library.bib
+csl: frontiers-in-ecology-and-the-environment.csl
+output: 
+  distill::distill_article:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
