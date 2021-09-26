@@ -37,7 +37,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # General packages
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "here", "see", "ggplot2", "hablar", "kableExtra", "RColorBrewer", 
-                       "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally", "DataExplorer",
+                       "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally", "DataExplorer", "corrr",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -1417,77 +1417,6 @@ expl.agfor.qqplot.logRR
 ```
 It is very evident again that the log-transformed RR has a better distribution, even though we can clearly see from the convex-concave patterns of logRR, that the data is heavy tailed on both ends. These "extreme" data points can perhabs be minimised with the removal of the extreme outliers, that we just discussed in previous section.
 
-**Boxplots of predictors vs. discritized logRR** 
-
-We will use the plot_boxplot() function from the DataExplorer package to create a multiples plot of boxplots for each continuous feature based on the outcome, logRR feature. Boxplots are powerful EDA visuals as they are very intuitivly showing where the most of the data is (inside of the box), and whether variables have $many$ outliers or not. Boxplots are also useful for a quick comparison of data distributions across groups, samples or categories, because they visualize center, spread and range
-of every group. Thus, similarly to the correlation analysis we did above, boxplots also help to develop hypotheses.
-
-Generating custom colour object with 180 colours
-
-```{r Generating custom colour object with 180 colours, code_folding=TRUE, eval=FALSE}
-# 180 levels of 35 colours
-explor.cols.group.35_180 <- c("#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
-                          "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
-                          "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
-                          "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
-                          "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
-                          "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
-                          "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
-                          "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
-                          "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
-                          "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
-                          "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
-                          "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
-                          "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
-                          "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
-                          "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
-                          "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
-                          "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
-                          "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
-                          "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880", 
-                          "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
-                          "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854", 
-                          "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
-                          "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
-                          "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
-                          "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
-                          "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
-                          "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
-                          "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
-                          "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
-                          "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
-                          "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
-                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
-                          "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
-                          "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
-                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A"
-                         )
-```
-
-
-```{r Generating boxplots of predictors and discretized logRR, code_folding=FALSE, eval=FALSE}
-expl.agfor.boxplot.pred <- expl.agfor.data.no.na %>%
-  dplyr::select(-c("RR")) %>%
-  plot_boxplot(by = "logRR",
-             geom_boxplot_args = list("outlier.color" = "#636363", "outlier.shape" = 1, "outlier.size" = 0.4, "alpha" = 0.6,
-             "fill" = (explor.cols.group.35_180)),
-             ggtheme = theme_lucid(), ncol = 6, nrow = 6,
-             title = "Boxplots of predictors vs. discritized logRR")
-
-# SAVING PLOT
-saveRDS(expl.agfor.boxplot.pred, here::here("TidyMod_OUTPUT","expl.agfor.boxplot.pred.RDS"))
-```
-
-```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap =  "Boxplots of predictors and discretized logRR"}
-expl.agfor.boxplot.pred <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.boxplot.pred.RDS"))
-
-expl.agfor.boxplot.pred
-```
-
-The multiples plot above is showing each of the biophysical predictorsin separate plots as we have seen before. The novelty and slightly unusual aspects of the plot above, is that we have depicted our continuous outcome variable, logRR in a discretized manner on the y axis and shown the range of the respected biophysical predictor on the x-axis. The groupings, also called bins, of logRR for each of the biophysical predictors shows some promising trends: That we do see differences in thhe predictors for different levels of our discretized
-logRR outcome. This is good news as these differences in the data can be used by our machine learning models. In addition, we also see that we have a large amount of outliers (Note: 1.5 \* IQR), especially in the central/median groups.
-
-
 
 **Discritization of target feature, logRR**
     i) Boxplots of predictors vs. discritized logRR
@@ -1829,6 +1758,77 @@ par.coord.EQR.combined
 With the equal range method we have the downside that we have fewer observation in the extreme low and extreme high regions. This might create some bias when interpreting the plots. The interesting aspect of these plots is that we do see differences among and between the discretized logRR values for the different biophysical variables, suggesting that logRR is associated with (the combination of) biophysical co-variables.
 
 
+
+**Boxplots of predictors vs. discritized logRR** 
+
+We will use the plot_boxplot() function from the DataExplorer package to create a multiples plot of boxplots for each continuous feature based on the outcome, logRR feature. Boxplots are powerful EDA visuals as they are very intuitivly showing where the most of the data is (inside of the box), and whether variables have $many$ outliers or not. Boxplots are also useful for a quick comparison of data distributions across groups, samples or categories, because they visualize center, spread and range
+of every group. Thus, similarly to the correlation analysis we did above, boxplots also help to develop hypotheses.
+
+Generating custom colour object with 180 colours
+
+```{r Generating custom colour object with 180 colours, code_folding=TRUE, eval=FALSE}
+# 180 levels of 35 colours
+explor.cols.group.35_180 <- c("#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
+                          "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                          "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                          "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                          "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                          "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                          "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                          "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                          "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                          "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                          "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                          "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                          "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                          "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                          "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                          "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                          "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                          "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                          "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880", 
+                          "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                          "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854", 
+                          "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                          "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                          "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                          "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                          "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                          "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                          "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                          "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                          "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                          "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                          "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                          "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A"
+                         )
+```
+
+
+```{r Generating boxplots of predictors and discretized logRR, code_folding=FALSE, eval=FALSE}
+expl.agfor.boxplot.pred <- expl.agfor.data.no.na %>%
+  dplyr::select(-c("RR")) %>%
+  plot_boxplot(by = "logRR",
+             geom_boxplot_args = list("outlier.color" = "#636363", "outlier.shape" = 1, "outlier.size" = 0.4, "alpha" = 0.6,
+             "fill" = (explor.cols.group.35_180)),
+             ggtheme = theme_lucid(), ncol = 6, nrow = 6,
+             title = "Boxplots of predictors vs. discritized logRR")
+
+# SAVING PLOT
+saveRDS(expl.agfor.boxplot.pred, here::here("TidyMod_OUTPUT","expl.agfor.boxplot.pred.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap =  "Boxplots of predictors and discretized logRR"}
+expl.agfor.boxplot.pred <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.boxplot.pred.RDS"))
+
+expl.agfor.boxplot.pred
+```
+
+The multiples plot above is showing each of the biophysical predictorsin separate plots as we have seen before. The novelty and slightly unusual aspects of the plot above, is that we have depicted our continuous outcome variable, logRR in a discretized manner on the y axis and shown the range of the respected biophysical predictor on the x-axis. The groupings, also called bins, of logRR for each of the biophysical predictors shows some promising trends: That we do see differences in thhe predictors for different levels of our discretized
+logRR outcome. This is good news as these differences in the data can be used by our machine learning models. In addition, we also see that we have a large amount of outliers (Note: 1.5 \* IQR), especially in the central/median groups.
+
 **Multiple pairwise t-test using discritized logRR values**
 
 Using equal range discritized logRR groups we can test for significant difference between the groups of logRR values. This is interesting because we can use it to quickly estimate whether logRR values are in fact statistically significantly different from each other. If not it might be very difficult to distingush them and the influence our biophysical predictors might have/have not on the logRR. 
@@ -2131,9 +2131,6 @@ ttest.pair.plot.discretized.logRR.biophy.pred.EQNo <- readRDS( here::here("TidyM
 ttest.pair.plot.discretized.logRR.biophy.pred.EQNo
 ```
 
-**PCA and variable importance** 
-    i) of continuous predictors (all biophysical) 
-
 
 **Correlation of features** 
 
@@ -2160,6 +2157,117 @@ There is another kind of cross-correlation that returns all correlations in a si
 # Cross-Correlation max values per category
 lares::corr_cross(agrofor.biophys.modelling.data.lares.corr, type = 2, top = NA)
 ```
+
+
+We are going to investigate the correlation among the continuous predictor features via the corrr package. This package is specifically designed to check for correlation between features. We are using the corrr::correlation() function to produce a correlation matrix with Pearson's product-moment correlation coefficient. The correlation matrix is a measure of linear correlation between two variables in the agroforestry data. It is the ratio between the covariance of two variables and the product of their standard deviations; thus it essentially shows a normalised measurement of the covariance, between −1 (negatively correlated) and 1 (positively correlated). Hence, the coefficient indicates both the strength of the
+relationship as well as the direction. If two variables change in the same direction they are positively correlated. If the change in opposite directions together (one goes up, one goes down), then they are negatively correlated. As with covariance itself, the measure can only reflect a linear correlation of variables, and ignores many other types of relationship.
+
+"Covariance" indicates the direction of the linear relationship between variables. "Correlation" on the other hand measures both the strength and direction of the linear relationship between two variables. Correlation is a function of the covariance. What sets them apart is the fact that correlation values are standardized whereas, covariance values are not.
+
+Creating a correlation matrix is a useful step in our explanatory data analysis of our agroforestry data, because some machine learning algorithms like linear and logistic regression can have poor performance if there are highly correlated input variables in your data. 
+
+Lets first prepare a correlation matrix, that we can plot on a graph
+
+```{r Preparing correlation matrix of continous predictor variables, code_folding=FALSE, eval=FALSE}
+agroforest.corr.cont.pred <- agrofor.biophys.modelling.data.numeric %>% 
+  dplyr::select(Bio01_MT_Annu:ASTER_Slope) %>%         # selecting predictor columns numeric data from the agrofor.biophys.modelling.data.numeric dataset
+  corrr::correlate() %>%                              # using the correlation() function to create the correlation matrix
+  corrr::focus(Bio01_MT_Annu:ASTER_Slope, mirror = TRUE) %>% 
+  corrr::rearrange()                                         # rearrange by correlations
+
+# Using corrr::fashion() to print correlation matrix in a nicer format
+# corrr::fashion(agroforest.corr.cont.pred) 
+
+# Correlation method: 'pearson'
+# Missing treated using: 'pairwise.complete.obs'
+# 
+# Registered S3 methods overwritten by 'registry':
+#   method               from 
+#   print.registry_field proxy
+#   print.registry_entry proxy
+
+# SAVING CORR DATA
+saveRDS(agroforest.corr.cont.pred, here::here("TidyMod_OUTPUT", "agroforest.corr.cont.pred.RDS")) 
+```
+
+Correlation table
+
+```{r Viewing the correlation matrix of era agroforestry data, layout = "l-body-outset", results = 'asis'}
+
+agroforest.corr.cont.pred <- readRDS( here::here("TidyMod_OUTPUT","agroforest.corr.cont.pred.RDS"))
+
+rmarkdown::paged_table(agroforest.corr.cont.pred %>% shave() %>% corrr::fashion())          # shave off the upper triangle for a clean result
+```
+
+
+Now we can plot the correlation matrix visually interpret our correlation analysis
+
+```{r Generating correlation plot of continous predictor variables, code_folding=FALSE, eval=FALSE}
+agroforest.corr.cont.pred.plot <- agroforest.corr.cont.pred %>%
+  shave() %>% 
+  corrr::rplot(colours = c("#C6B18B","white","#66C2A5")) +
+  labs(title = "Correlation between biophysical predictors", 
+       subtitle = "Pearson's correlation - for all ERA agroforestry practices with crop and biomass yield outcomes") +
+    expand_limits(x = c(-0.2, 0.2), y = c(-0.2, 0.2)) +
+    theme_lucid(plot.title.size = 25,
+                axis.title.size = 20,
+                axis.text.angle = 45,
+                legend.position = "right",
+                tags.size = 20,
+                legend.text.size = 15)
+
+# SAVING CORR PLOT
+saveRDS(agroforest.corr.cont.pred.plot, here::here("TidyMod_OUTPUT", "agroforest.corr.cont.pred.plot.RDS")) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Correlation matrix plot of all biophysical predictors"}
+agroforest.corr.cont.pred.plot <- readRDS( here::here("TidyMod_OUTPUT","agroforest.corr.cont.pred.plot.RDS"))
+
+agroforest.corr.cont.pred.plot
+```
+
+
+Lets have a closer look at the correlation between RR and some of the numeric predictors by plotting another correlation matrix where we include logRR and filter rows to occasions in which logRR has a correlation of 0.7 or more with another variable.
+
+```{r Generating correlation matrix and correlation plot of logRR and continous predictor variables, code_folding=FALSE, eval=FALSE}
+agroforest.corr.cont.pred.logRR <- agrofor.biophys.modelling.data.numeric %>% 
+  dplyr::select(logRR:ASTER_Slope) %>%
+  rationalize() %>%
+  drop_na() %>%
+  dplyr::select(logRR:ASTER_Slope) %>%                # selecting logRR and predictor columns numeric data from the agrofor.biophys.modelling.data.numeric dataset
+  corrr::correlate() %>%                              # using the correlation() function to create the correlation matrix
+  focus(logRR:ASTER_Slope, mirror = TRUE) %>% 
+  rearrange()                                         # rearrange by correlations
+
+# Correlation method: 'pearson'
+# Missing treated using: 'pairwise.complete.obs'
+
+agroforest.corr.cont.pred.logRR.plot <- agroforest.corr.cont.pred.logRR %>%
+  shave() %>% 
+  corrr::rplot(colours = c("#C6B18B","white","#66C2A5")) +
+  labs(title = "Correlation between biophysical predictors and logRR", 
+       subtitle = "Pearson's correlation - for all ERA agroforestry practices with crop and biomass yield outcomes") +
+    expand_limits(x = c(-0.2, 0.2), y = c(-0.2, 0.2)) +
+    theme_lucid(plot.title.size = 25,
+                axis.title.size = 20,
+                axis.text.angle = 45,
+                legend.position = "right",
+                tags.size = 20,
+                legend.text.size = 15)
+
+
+# SAVING CORR PLOT
+saveRDS(agroforest.corr.cont.pred.logRR.plot, here::here("TidyMod_OUTPUT", "agroforest.corr.cont.pred.logRR.plot.RDS")) 
+```
+
+Lets plot the correlation matrix in which we have inclueded logRR
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Correlation between biophysical predictors and logRR"}
+agroforest.corr.cont.pred.logRR.plot <- readRDS( here::here("TidyMod_OUTPUT","agroforest.corr.cont.pred.logRR.plot.RDS"))
+
+agroforest.corr.cont.pred.logRR.plot
+```
+
 
 **Multiple pairwise t-test using discritized logRR values** 
     i) of continuous predictors (all biophysical)
