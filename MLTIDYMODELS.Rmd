@@ -1185,7 +1185,6 @@ nb.cols.25 <- 25
 era.af.colors.25 <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols.25)
 ```
 
-
 ```{r Prepare plot of EQNo discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
 
 par.coord.EQNo.plot <- 
@@ -1316,6 +1315,123 @@ We can use this parallel coordinate plot to get a better understanding of the no
 
 Let us now make a similar plot for the equal range method where logRR have been grouped based on their range.
 
+```{r Prepare parallel coordinate plot of EQR discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+
+par.coord.EQR.plot <- 
+  ggparcoord(par.coord.data.EQR,
+    columns = 1:35, 
+    #groupColumn = 36,     # group by logRR_EQR_group
+    scale = "center",      # uniminmax to standardize vertical height, then center each variable at a value specified by the scaleSummary param
+   # order = "anyClass",    # ordering by feature separation between any one class and the rest (as opposed to their overall variation between classes).
+    missing = "exclude",
+    showPoints = FALSE, 
+    boxplot = FALSE,
+    #shadeBox = 35,
+    centerObsID = 1,
+    #title = "Discretized logRR values based on equal number vs. biophysical predictors",
+    alphaLines = 0.1,
+    splineFactor = TRUE,   # making lines curvey
+    #shadeBox = NULL,
+    mapping = aes(color = as.factor(logRR_EQR_group))) + 
+    scale_color_manual("logRR_EQR_group", labels = levels(par.coord.data.EQR$logRR_EQR_group), values = era.af.colors.25) +
+   # ggplot2::scale_color_manual(values = era.af.colors.25) + # assigning costom colour range
+    facet_grid(logRR_EQR_group ~ . , labeller = labeller(logRR_EQR_group = logRR_group.label.names)) +
+    coord_cartesian(ylim = c(- 0.8, 0.8)) +
+    theme_lucid() +
+    theme(plot.title = element_text(size = 20), legend.position = "none", #axis.text.x = element_text(angle = 60, hjust = 1)
+          axis.text.x = element_blank(),
+          strip.text.y = element_text(angle = 0),
+          plot.margin = margin(1, 0, 1, 0)) +
+   xlab("") +
+   ylab("")
+```
+
+Plotting the parallel coordinate plots of EQR using the plot_grid() function from the cowplot package. 
+
+```{r Prepare parallel coordinate plot of EQR discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+par.coord.EQR.plot.means <- 
+  par.coord.data.EQR %>%
+  dplyr::group_by(logRR_EQR_group) %>% 
+  dplyr::summarize_all(funs(mean)) %>%
+  
+  ggparcoord(
+        columns=c(2:36), 
+        # groupColumn = 1,
+        splineFactor = TRUE,
+        showPoints = TRUE,
+        #boxplot = TRUE,
+        #shadeBox = 4,
+        # scaleSummary = "mean",
+        scale = "center",      # uniminmax to standardize vertical height, then center each variable at a value specified by the scaleSummary param
+        # order = "anyClass",    # ordering by feature separation between any one class and the rest 
+        missing = "exclude",
+        centerObsID = 1,
+        # title = "Discretized logRR values based on equal range vs. mean values of biophysical predictors",
+        alphaLines = 0.8,
+        mapping = aes(color = as.factor(logRR_EQR_group), size = 3)) + 
+        # mapping = ggplot2::aes(size = 3)) +
+        scale_color_manual("logRR_EQR_group", labels = levels(par.coord.data.EQR$logRR_EQR_group), values = era.af.colors.25) +
+        # ggplot2::scale_color_manual(values = era.af.colors.25) + # assigning costom colour range
+        facet_grid(logRR_EQR_group ~ . , labeller = labeller(logRR_EQR_group = logRR_group.label.names)) +
+        coord_cartesian(ylim = c(- 2, 2)) +
+        theme_lucid() +
+        theme(plot.title = element_text(size = 20), axis.text.x = element_text(angle = 60, hjust = 1), legend.position = "none", 
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              strip.text.y = element_text(angle = 0),
+              plot.margin = margin(0.5, 0, 0.5, 0))  
+        #xlab("Mean values of biophysical predictors") +
+        #ylab("Uniminmax standardized logRR")
+```
+
+Cowplot of EQR
+
+```{r Plotting the parallel coordinate plots of EQR, code_folding=FALSE, eval=FALSE}
+# Creating title
+par.coord.EQR.title <- 
+  ggdraw() + 
+  draw_label("Equal range discretized logRR vs biophysical predictors",
+    fontface = 'bold',
+    x = 0,
+    hjust = 0,
+    size = 20) + 
+  theme(plot.margin = margin(5, 0, 0, 10))
+  
+
+# Using cowplot::plot_grid() to plot the two plots together and adding the title
+par.coord.EQR.combined <- 
+  cowplot::plot_grid(
+    
+    par.coord.EQR.title,
+    NULL,
+    par.coord.EQR.plot,
+    NULL,
+    par.coord.EQR.plot.means,
+    #####
+    ncol = 1, nrow = 5, 
+    align = "v",
+    axis = "l",
+    rel_widths = c(1), 
+    rel_heights = c(0.4, 0.1, 4, 0.1, 4)) +
+#perhaps reduce this for a bit more space
+draw_label("Biophysical predictors", x = 0.63, y = 0, vjust = -0.9, angle = 0) +
+draw_label("Uniminmax and centered standardized logRR", x =  0, y = 0.5, vjust = 1.5, angle = 90)
+
+# SAVING PLOT
+saveRDS(par.coord.EQR.combined, here::here("TidyMod_OUTPUT","par.coord.EQR.combined.RDS"))
+```
+
+Final parallel coordinate plot for the equal number discritized logRR
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Parallel coordinate plots of discritized logRR against biophysical predictors, method: Equal range"}
+par.coord.EQR.combined <- readRDS( here::here("TidyMod_OUTPUT","par.coord.EQR.combined.RDS"))
+par.coord.EQR.combined
+```
+
+
+With the equal range method we have the downside that we have fewer observation in the extreme low and extreme high regions. This might create some bias when interpreting the plots. The interesting aspect of these plots is that we do see differences among and between the discretized logRR values for the different biophysical variables, suggesting that logRR is associated with (the combination of) biophysical co-variables.
+
+
 
 
 
@@ -1341,6 +1457,7 @@ lares::corr_cross(agrofor.biophys.modelling.data.lares.corr,
                   top = 20,
                   quiet = TRUE)
 ```
+
 There is another kind of cross-correlation that returns all correlations in a single plot, not necessarily ranked. This will help us understand the skewness or randomness of some correlations found. It will also highlight the highest correlations for each of the variables used.
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Ranked cross-correlation plot with all correlations of numeric biophysical co-variables"}
