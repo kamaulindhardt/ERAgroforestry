@@ -37,7 +37,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # General packages
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "here", "see", "ggplot2", "hablar", "kableExtra", "RColorBrewer", 
-                       "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally",
+                       "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally", "DataExplorer",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -788,7 +788,7 @@ We see again that there is a spatial relation between the missingness of our dat
 
 Until this point we have identified and familiarised ourself with the missing data. We can now make a clean numeric dataset in which we remove all NA observations. This will be helpful for the further process of EDA. For a more aesthetic experience we are also making a custom colour range of 35 colours that we can use to plot our 35 predictors with.
 
-```{r Clean dataset for EDA and making colour range, code_folding=FALSE, eval=TRUE}
+```{r Clean dataset for EDA and making colour range, code_folding=FALSE, eval=FALSE}
 expl.agfor.data.no.na <- agrofor.biophys.modelling.data.numeric %>%
   rationalize() %>%
   drop_na()
@@ -1062,23 +1062,279 @@ logRR.outlier.plot.explained
 We see that there are some logRR observation we would have to remove in order for our machine learning models to perform well!
 
 
-**Histograms of features**
+**Histograms of biophysical predictor features**
 
-Lets now look at the histograms of our biophysical predictors. This is slightly similar to the density plots, but with the histograms we are able to see how the data is distributed in bins of 30 observations each. We are using the plot_histogram() from the DataExplorer package.
+Lets now look at the histograms of our biophysical predictors. This is slightly similar to the density plots, but with the histograms we are able to see how the data is distributed in bins of 30 observations each. We are using the plot_histogram() from the DataExplorer package. The way we are going to plot the histogram requires a custom colour specification that has more than 1000 color objects specified. 
 
-```{r Histograms of biophysical predictors, code_folding=TRUE, eval=FALSE}
+Generating custom colour object
+
+```{r Generating costum colour object, code_folding=TRUE, eval=FALSE}
+# 1050 levels of 35 colours
+explor.cols.group.35_1050 <- c("#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
+                               "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5",
+                               "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
+                               "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5",
+                               "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5",
+                               "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5",
+                               
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                               
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                                "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                               
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                               
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                               
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                               
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                               
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                               
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                               
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                               
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                               
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                               
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                               
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                               
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                               
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                               
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                               
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                               
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880", 
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880",
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880",
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880",
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880",
+                               "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880",
+                               
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                               
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854", 
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854",
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854",
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854",
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854",
+                               "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854",
+                               
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                               
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                               
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                               
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                               
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                               
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443", 
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                               "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                               
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                               
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                               
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                               
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                               
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                               
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                               
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                               "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A"
+                               
+                               )
+
+```
+
+```{r Creating histograms of our biophysical predictors, code_folding=TRUE, eval=FALSE}
 expl.agfor.hist <- expl.agfor.data.no.na %>%
-  dplyr::select(-c("RR", "logRR")) %>% 
-  plot_histogram(ggtheme = theme_lucid(),
-                 geom_histogram_args = list(fill = (explor.cols.group.35_1050), bins = 30L),
-                 ncol = 6, nrow = 6, 
-                 parallel = FALSE,
-                 title = "hist"
-                 ) 
+   dplyr::select(-c("RR", "logRR")) %>% 
+   DataExplorer::plot_histogram(ggtheme = theme_lucid(),
+                  geom_histogram_args = list(fill = (explor.cols.group.35_1050), bins = 30L),
+                  ncol = 6, nrow = 6, 
+                  parallel = FALSE,
+                  title = "hist"
+                  ) 
+
+# SAVING PLOT
+saveRDS(expl.agfor.hist, here::here("TidyMod_OUTPUT","expl.agfor.hist.RDS"))
 ```
 
 
-```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap = "Density distributions logRR"}
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=10, fig.cap = "Histogram of biophysical predictors vs. logRR"}
 expl.agfor.hist <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.hist.RDS"))
 
 expl.agfor.hist
@@ -1088,10 +1344,56 @@ expl.agfor.hist
     i) of continuous predictors (all biophysical) 
     i) of outcome (RR and logRR)
     
+We use the plot_scatterplot() function from the DataExplorer package to generate a multiples of all the predictors with the response/outcome, logRR on the y-axis.
+
+```{r Generating scatter plot between predictors and logRR, code_folding=TRUE, eval=FALSE}
+expl.agfor.scatter <- expl.agfor.data.no.na %>%
+  dplyr::select(-c("RR")) %>% 
+  DataExplorer::plot_scatterplot(by = "logRR", 
+                   geom_point_args = list("col" = "#A2AC8A", "shape" = 10, "alpha" = 0.3, 
+                                          "position" = "position_jitter"("width" = 0.1, "height" = 4.5), "size" = 0.3),   # adding a jitter effect to avoid 
+                   ggtheme = theme_lucid(),                                                                       # too much overlap of points
+                   ncol = 6, nrow = 6,
+                   title = "scatter") 
+
+# SAVING PLOT
+saveRDS(expl.agfor.scatter, here::here("TidyMod_OUTPUT","expl.agfor.scatter.RDS"))
+```
+
+```{r  layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap = "Scatter plot of biophysical predictors vs. logRR"}
+expl.agfor.scatter <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.scatter.RDS"))
+
+expl.agfor.scatter
+```
+    
 **Quantile-quantile plots** 
     i) of continuous predictors (all biophysical) 
     i) of outcome (RR and logRR) 
     
+Quantile-quantile plots (QQ-plots) is a plot of the quantiles of one sample or distribution of the data against the quantiles of a second sample. QQ-plot makes it possible to compare the distribution of the data of a batch with the so-called normal or Gaussian distribution with the hypothesis that the data is distributed along the diagonal axis in the plot, through the 1st and 3rd quartiles (here shown in red).
+
+```{r Generating QQ plot of biophysical predictors, code_folding=FALSE, eval=FALSE}
+expl.agfor.qqplot.pred <- expl.agfor.data.no.na %>%
+  dplyr::select(-c("RR", "logRR")) %>% 
+  plot_qq(geom_qq_args = list("col" = "#A2AC8A", "shape" = 10, "alpha" = 0.3, 
+                            position = position_jitter(width = 0.1, height = 2), "size" = 0.3),
+          geom_qq_line_args = list("colour" = "#de2d26", "alpha" = 0.6, "size" = 0.4, "geom" = "path", "position" = "identity"),
+          ggtheme = theme_lucid(),
+                   ncol = 6, nrow = 6,
+                   title = "QQ plot")
+
+# SAVING PLOT
+saveRDS(expl.agfor.qqplot.pred, here::here("TidyMod_OUTPUT","expl.agfor.qqplot.pred.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap = "QQ plot of biophysical predictors"}
+expl.agfor.qqplot.pred <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.qqplot.pred.RDS"))
+
+expl.agfor.qqplot.pred
+```
+ 
+Again.. we clearly see that the predictors are not normally distributed. The QQ-plots can be interpreted based on whether there shape is of convex, concave, convex-concave, or concave-convex. A concave plot implies that the sample on the x-axis is more right-skewed, like the shape we see for iSDA Iron concentrations and iSDA total carbon. A convex plot implies that the sample on the x-axis is less right-skewed, or more left skewed, that is very clear what is the case for the slope feature. A convex-concave (concave-convex) plot implies that the data is heavy tailed on the x axis, e.g. iSDA soil organic carbon.
+ 
 **Discritization of target feature, logRR**
     i) Boxplots of predictors vs. discritized logRR
     
