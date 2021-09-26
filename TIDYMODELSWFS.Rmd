@@ -289,10 +289,23 @@ wflwset_setup <-
       cross = TRUE
    )
 
+saveRDS( wflwset_setup, file = here::here("TidyModWflSet_OUTPUT", "wflwset_setup.RDS")) 
+```
+
+```{r code_folding=FALSE, eval=FALSE}
+wflwset_setup <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup.RDS"))
 wflwset_setup
 ```
 
-## STEP 8: Tuning workflowsets using tune_grid()
+We see very clearly that a workflowset contains all possible combinations of model specifications and pre-processing steps. A powerful way to test several models on different forms of pre-processing specifications to scan and find the best setup. 
+
+## STEP 8: Tuning workflowsets using tune_grid() or tune_race_anova()
+
+There are different ways we can tune/fit our workflowsets. The more traditional one is using tune_grid() from the tune package, that is part of tidymodels. With tune_grid() we will compute a set of performance metrics (e.g. MAE or RMSE) for a pre-defined set of tuning parameters that correspond to a model or recipe across one or more resamples of the data. Hence all set combinations of (hyper)-parameters for the models are used to tune the models individually. This can sometimes cause really long and expensive model tuning. 
+
+A more effecient alternative to tune_grid() is the tune_race_anova() from the finetune package. Instead of tuning the individual models based on all possible combinations of (hyper)-parameters tune_race_anova() computes a set of performance metrics (e.g. MAE or RMSE) for a pre-defined set of tuning parameters that correspond to a model or recipe across one or more resamples of the data. After an initial number of resamples have been evaluated, the process eliminates tuning parameter combinations that are unlikely to be the best results using a repeated measure ANOVA model. This approach is significantly more efficient, as not all (hyper)-parameter combination will have to be used in the model tuning process, but only the ones that in a step-wise manner improve model performance. 
+
+### Using tune_grid()
 
 ```{r code_folding=FALSE, eval=FALSE}
  # Initializing parallel processing 
@@ -313,15 +326,60 @@ wflwset_setup_res <-
 parallelStop()
 ```
 
+
+
+
+### Using tune_race_anova()
+
+```{r}
+race_ctrl <-
+   control_race(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+
+ # Initializing parallel processing 
+ doParallel::registerDoParallel()
+
+wflwset_setup_race_res <-
+   wflwset_setup %>%
+   workflow_map(fn        = "tune_race_anova", 
+                seed      = 1503,
+                resamples = cv.fold.wf, 
+                metrics   = multi.metric.wf, 
+                verbose   = TRUE, 
+                grid      = 5,
+                control   = race_ctrl
+   )
+
+# Terminating parallel session
+parallelStop()
+
+```
+
+
 ## STEP 9: Assessing results of the tuned workflowsets
+
+### From tune_grid()
 
 ```{r}
 autoplot(wflwset_setup_res)
 ```
 
 
+```{r}
+rank_results(wflwset_setup_res, 
+             rank_metric = "rmse", 
+             select_best = TRUE) %>% 
+  select(rank, mean, model, wflow_id, .config)
+```
 
+### From tune_race_anova()
 
+```{r}
+wflwset_setup_race_res
+```
 
 
 
