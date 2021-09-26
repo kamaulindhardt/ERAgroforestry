@@ -19,3 +19,86 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+# Loading necessary R packages and ERA data
+
+**Loading general R packages**
+
+This part of the document is where we actually get to the nitty-gritty of the ERA agroforestry data and therefore it requires us to load a number of R packages for both general Explorortive Data Analysis and Machine Learning. 
+
+```{r Loading packages needed, comment=NA, code_folding=TRUE}
+# Using the pacman functions to load required packages
+
+        if(!require("pacman", character.only = TRUE)){
+          install.packages("pacman",dependencies = T)
+          }
+
+# ------------------------------------------------------------------------------------------
+# General packages
+# ------------------------------------------------------------------------------------------
+required.packages <- c("tidyverse", "tidymodels", "finetune", "kernlab", "here", "hablar", "spatialsample", 
+                       "stacks", "rules", "baguette", "viridis", "yardstick", "DALEXtra", 
+# ------------------------------------------------------------------------------------------
+# Parallel computing packages
+# ------------------------------------------------------------------------------------------
+                      "parallelMap", "parallelly", "parallel", "doParallel"
+)
+
+p_load(char=required.packages, install = T,character.only = T)
+```
+
+## STEP 1: Getting the data
+
+```{r Getting the data, eval=TRUE, code_folding=FALSE}
+agrofor.biophys.modelling.data.wf <- readRDS(file = here::here("agrofor.biophys.modelling.data.RDS"))
+
+ml.data.wf <-  agrofor.biophys.modelling.data.wf %>%
+  dplyr::select(-c("RR", "ID", "AEZ16s", "Country", "MeanC", "MeanT", "PrName.Code", "SubPrName"))
+```
+
+
+**Discritization of target feature, logRR**
+    i) Boxplots of predictors vs. discritized logRR
+    
+We are now going to discretize our continues outcome feature, logRR into seven categorical/nominal groups. In statistics and machine learning, discretization refers to the process of converting or partitioning continuous features into discretized or nominal features with certain intervals. The goal of discretization is to reduce the number of values a continuous feature have by grouping it into a number of intervals or bins. This can be useful when one wish to perform EDA on a continues feature with no or very little linear (co)-relation to predictors. Hence, we can group the continuous outcome feature, logRR and look at discrete differences on the predictors for each group of logRR. Continuous features have a smaller chance of correlating with the target variable due to infinite degrees of freedom and may have a complex non-linear relationship. After discretizing logRR into groups it it easier to perform test on differences and for these results to be interpreted. The aim of performing the discretization of logRR in our case is to be able to make a pairwise t-test for the different groups of
+logRR. Thereby getting an understanding of whether there is significant differences between levels of logRR. Discretization, or binning/grouping of a continuous feature is mostly done in two ways, and we are going to evaluate the t-test outcome from both of these methods - because the binning technique is so different:  
+
+- Equal-Width Discretization: Separating all possible values into 'N' number of bins, each having the same width. Formula for interval width: Width = (maximum value - minimum value) / N. Where N is the number of bins or intervals. This method doesn't improve the value spread and it can handle outliers effectively.
+
+- Equal-Frequency Discretization: Separating all possible values into 'N' number of bins, each having the same amount of observations. These intervals are normally corresponding to ranges or quantile values. This method does improve the value spread and it can handle outliers effectively.
+
+First, we are creating a two new feature columns in our agroforestry modelling data. We are using the functions cut_interval() and cut_number(), to perform the discrete levels of logRR based on the equal-frequency method and the equal-width method, respectfully. For each method seven groups are created. The groups range from 1, extremely low (low logRR values) to 7, extremely high (high logRR values).
+
+```{r Creating seven discritized groups of logRR with two methods, eval=TRUE, code_folding=FALSE}
+
+agrofor.biophys.modelling.data.discretized.logRR <- agrofor.biophys.modelling.data %>% 
+  rationalize(logRR) %>%
+  drop_na(logRR) %>%
+  mutate(logRR_counts_cut_interval = cut_interval(logRR, n = 7)) %>%
+  mutate(logRR_EQR_group = case_when(
+    logRR_counts_cut_interval   == "[-4.43,-3.16]"   ~ "1.extremely_low",
+    logRR_counts_cut_interval   == "(-3.16,-1.9]"    ~ "2.very_low",
+    logRR_counts_cut_interval   == "(-1.9,-0.627]"   ~ "3.low",
+    logRR_counts_cut_interval   == "(-0.627,0.642]"  ~ "4.medium",
+    logRR_counts_cut_interval   == "(0.642,1.91]"    ~ "5.high",
+    logRR_counts_cut_interval   == "(1.91,3.18]"     ~ "6.very_high",
+    logRR_counts_cut_interval   == "(3.18,4.45]"     ~ "7.extremely_high",)) %>%
+  
+  mutate(logRR_counts_cut_number = cut_number(logRR, n = 7)) %>%
+  mutate(logRR_EQNo_group = case_when(
+    logRR_counts_cut_number   == "[-4.43,-0.31]"     ~ "1.extremly_low",
+    logRR_counts_cut_number   == "(-0.31,-0.0195]"   ~ "2.very_low",
+    logRR_counts_cut_number   == "(-0.0195,0.155]"   ~ "3.low",
+    logRR_counts_cut_number   == "(0.155,0.379]"     ~ "4.medium",
+    logRR_counts_cut_number   == "(0.379,0.643]"     ~ "5.high",
+    logRR_counts_cut_number   == "(0.643,1.1]"       ~ "6.very_high",
+    logRR_counts_cut_number   == "(1.1,4.45]"        ~ "7.extremely_high",))
+```
+
+Lets compare the newly created factor levels. Are there differences in how logRR was grouped by the two methods..?
+
+```{r View newly created factor levels of logRR, layout = "l-body-outset", results = 'asis'}
+rmarkdown::paged_table(agrofor.biophys.modelling.data.discretized.logRR %>%
+  sample_n(25) %>% # randomly sampling a subset of 25 rows/observations 
+  dplyr::relocate(logRR_EQNo_group, logRR_EQR_group, logRR, RR, ID))
+```
+    

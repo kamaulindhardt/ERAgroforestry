@@ -1466,8 +1466,7 @@ agrofor.biophys.modelling.data.discretized.logRR <- agrofor.biophys.modelling.da
     logRR_counts_cut_number   == "(1.1,4.45]"        ~ "7.extremely_high",))
 ```
 
-Lets compare the newly created factor levels. Are there differences in
-how logRR was grouped by the two methods..?
+Lets compare the newly created factor levels. Are there differences in how logRR was grouped by the two methods..?
 
 ```{r View newly created factor levels of logRR, layout = "l-body-outset", results = 'asis'}
 rmarkdown::paged_table(agrofor.biophys.modelling.data.discretized.logRR %>%
