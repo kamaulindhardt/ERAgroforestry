@@ -187,7 +187,7 @@ interact_recipe <-
   step_interact(~ all_numeric_predictors():all_numeric_predictors(), skip = FALSE)
 ```
 
-**Noet:** To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable. 
+**Note:** To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable. 
 
 ```{r  code_folding=FALSE, eval=TRUE}
 impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
