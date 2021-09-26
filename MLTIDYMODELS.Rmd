@@ -1066,9 +1066,9 @@ We see that there are some logRR observation we would have to remove in order fo
 
 Lets now look at the histograms of our biophysical predictors. This is slightly similar to the density plots, but with the histograms we are able to see how the data is distributed in bins of 30 observations each. We are using the plot_histogram() from the DataExplorer package. The way we are going to plot the histogram requires a custom colour specification that has more than 1000 color objects specified. 
 
-Generating custom colour object
+Generating custom colour object with 1050 colours
 
-```{r Generating costum colour object, code_folding=TRUE, eval=FALSE}
+```{r Generating costum colour object with 1050 colours, code_folding=TRUE, eval=FALSE}
 # 1050 levels of 35 colours
 explor.cols.group.35_1050 <- c("#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
                                "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5",
@@ -1393,7 +1393,102 @@ expl.agfor.qqplot.pred
 ```
  
 Again.. we clearly see that the predictors are not normally distributed. The QQ-plots can be interpreted based on whether there shape is of convex, concave, convex-concave, or concave-convex. A concave plot implies that the sample on the x-axis is more right-skewed, like the shape we see for iSDA Iron concentrations and iSDA total carbon. A convex plot implies that the sample on the x-axis is less right-skewed, or more left skewed, that is very clear what is the case for the slope feature. A convex-concave (concave-convex) plot implies that the data is heavy tailed on the x axis, e.g. iSDA soil organic carbon.
- 
+
+Lets also take a look at a QQ-plot for the outcome, logRR and RR.
+
+```{r Generating QQ plot of outcomes RR and logRR, code_folding=FALSE, eval=FALSE}
+expl.agfor.qqplot.logRR <- expl.agfor.data.no.na %>%
+  dplyr::select(c("RR", "logRR")) %>% 
+  plot_qq(geom_qq_args = list("col" = "#FED82F", "shape" = 10, "alpha" = 0.3, 
+                            position = position_jitter(width = 0.1, height = 0.5), "size" = 0.5),
+          geom_qq_line_args = list("colour" = "#de2d26", "alpha" = 0.6, "size" = 0.6, "geom" = "path", "position" = "identity"),
+          ggtheme = theme_lucid(),
+                   ncol = 2, nrow = 2,
+                   title = "QQ plot") 
+
+# SAVING PLOT
+saveRDS(expl.agfor.qqplot.logRR, here::here("TidyMod_OUTPUT","expl.agfor.qqplot.logRR.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap =  "qq plot of outcomes RR and logRR"}
+expl.agfor.qqplot.logRR <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.qqplot.logRR.RDS"))
+
+expl.agfor.qqplot.logRR
+```
+It is very evident again that the log-transformed RR has a better distribution, even though we can clearly see from the convex-concave patterns of logRR, that the data is heavy tailed on both ends. These "extreme" data points can perhabs be minimised with the removal of the extreme outliers, that we just discussed in previous section.
+
+**Boxplots of predictors vs. discritized logRR** 
+
+We will use the plot_boxplot() function from the DataExplorer package to create a multiples plot of boxplots for each continuous feature based on the outcome, logRR feature. Boxplots are powerful EDA visuals as they are very intuitivly showing where the most of the data is (inside of the box), and whether variables have $many$ outliers or not. Boxplots are also useful for a quick comparison of data distributions across groups, samples or categories, because they visualize center, spread and range
+of every group. Thus, similarly to the correlation analysis we did above, boxplots also help to develop hypotheses.
+
+Generating custom colour object with 180 colours
+
+```{r Generating custom colour object with 180 colours, code_folding=TRUE, eval=FALSE}
+# 180 levels of 35 colours
+explor.cols.group.35_180 <- c("#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", "#66C2A5", 
+                          "#84B797", "#84B797", "#84B797", "#84B797", "#84B797",
+                          "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A", "#A2AC8A",
+                          "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C", "#C0A27C",
+                          "#DE976F", "#DE976F", "#DE976F", "#DE976F", "#DE976F",
+                          "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62", "#FC8D62",
+                          "#E59077", "#E59077", "#E59077", "#E59077", "#E59077",
+                          "#CF948C", "#CF948C", "#CF948C", "#CF948C", "#CF948C",
+                          "#B998A1", "#B998A1", "#B998A1", "#B998A1", "#B998A1",
+                          "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5", "#A39CB5",
+                          "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB", "#8DA0CB",
+                          "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9", "#9F9BC9",
+                          "#B197C7", "#B197C7", "#B197C7", "#B197C7", "#B197C7",
+                          "#C392C6", "#C392C6", "#C392C6", "#C392C6", "#C392C6",
+                          "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4", "#D48EC4",
+                          "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3", "#E78AC3",
+                          "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC", "#DA99AC",
+                          "#CDA996", "#CDA996", "#CDA996", "#CDA996", "#CDA996",
+                          "#C0B880", "#C0B880", "#C0B880", "#C0B880", "#C0B880", 
+                          "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A", "#B3C86A",
+                          "#A6D854", "#A6D854", "#A6D854", "#A6D854", "#A6D854", 
+                          "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C", "#B7D84C",
+                          "#C9D845", "#C9D845", "#C9D845", "#C9D845", "#C9D845",
+                          "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D", "#DBD83D",
+                          "#EDD836", "#EDD836", "#EDD836", "#EDD836", "#EDD836",
+                          "#FED82F", "#FED82F", "#FED82F", "#FED82F", "#FED82F",
+                          "#F9D443", "#F9D443", "#F9D443", "#F9D443", "#F9D443",
+                          "#F4D057", "#F4D057", "#F4D057", "#F4D057", "#F4D057",
+                          "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B", "#EFCC6B",
+                          "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F", "#EAC87F",
+                          "#E5C494", "#E5C494", "#E5C494", "#E5C494", "#E5C494",
+                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A",
+                          "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6", "#C7B9A6",
+                          "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC", "#BCB6AC",
+                          "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A", "#DBC09A"
+                         )
+```
+
+
+```{r Generating boxplots of predictors and discretized logRR, code_folding=FALSE, eval=FALSE}
+expl.agfor.boxplot.pred <- expl.agfor.data.no.na %>%
+  dplyr::select(-c("RR")) %>%
+  plot_boxplot(by = "logRR",
+             geom_boxplot_args = list("outlier.color" = "#636363", "outlier.shape" = 1, "outlier.size" = 0.4, "alpha" = 0.6,
+             "fill" = (explor.cols.group.35_180)),
+             ggtheme = theme_lucid(), ncol = 6, nrow = 6,
+             title = "Boxplots of predictors vs. discritized logRR")
+
+# SAVING PLOT
+saveRDS(expl.agfor.boxplot.pred, here::here("TidyMod_OUTPUT","expl.agfor.boxplot.pred.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap =  "Boxplots of predictors and discretized logRR"}
+expl.agfor.boxplot.pred <- readRDS(file = here::here("TidyMod_OUTPUT", "expl.agfor.boxplot.pred.RDS"))
+
+expl.agfor.boxplot.pred
+```
+
+The multiples plot above is showing each of the biophysical predictorsin separate plots as we have seen before. The novelty and slightly unusual aspects of the plot above, is that we have depicted our continuous outcome variable, logRR in a discretized manner on the y axis and shown the range of the respected biophysical predictor on the x-axis. The groupings, also called bins, of logRR for each of the biophysical predictors shows some promising trends: That we do see differences in thhe predictors for different levels of our discretized
+logRR outcome. This is good news as these differences in the data can be used by our machine learning models. In addition, we also see that we have a large amount of outliers (Note: 1.5 \* IQR), especially in the central/median groups.
+
+
+
 **Discritization of target feature, logRR**
     i) Boxplots of predictors vs. discritized logRR
     
