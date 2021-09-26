@@ -1933,6 +1933,9 @@ approach on discretized logRR levels. When we discretize an outcome feature that
 
 That was a little side note. Let us now run the multiple pairwise t-test analysis for the different logRR factor levels in which we compare the differences in the biophysical predictors across the seven groups of logRR. We are using the rstatix package functions t_test()
 
+**Multiple pairwise t-test using discritized logRR values** 
+    i) of continuous predictors (all biophysical)
+
 Group the data by variables and compare logRR groups with t-tests add significance levels
 
 ```{r Group the data by variables and compare logRR groups with t-tests add significance levels, code_folding=FALSE, eval=FALSE}
@@ -2268,10 +2271,120 @@ agroforest.corr.cont.pred.logRR.plot <- readRDS( here::here("TidyMod_OUTPUT","ag
 agroforest.corr.cont.pred.logRR.plot
 ```
 
+```{r Generating corr plot data with logRR, code_folding=FALSE, eval=FALSE}
+agroforest.corr.cont.pred.logRR.results.filtered <- agroforest.corr.cont.pred.logRR %>% 
+  filter(logRR > 0.019) %>%
+  relocate(term, logRR) %>%
+  arrange(desc(logRR))
 
-**Multiple pairwise t-test using discritized logRR values** 
-    i) of continuous predictors (all biophysical)
-    
+# SAVING CORR DATA
+saveRDS(agroforest.corr.cont.pred.logRR.results.filtered, here::here("TidyMod_OUTPUT", "agroforest.corr.cont.pred.logRR.results.filtered.RDS")) 
+```
+
+```{r Correlation between biophysical predictors and logRR, layout = "l-body-outset", results = 'asis'}
+agroforest.corr.cont.pred.logRR.results.filtered <- readRDS( here::here("TidyMod_OUTPUT","agroforest.corr.cont.pred.logRR.results.filtered.RDS"))
+
+rmarkdown::paged_table(agroforest.corr.cont.pred.logRR.results.filtered)  
+```
+
+Another way of visually examine correlations in our data is through a so called network correlation plot. Again the corrr package comes in handy as it has a plot function called network_plot() specifically for network correlations.
+
+```{r Generating network correlation plot of continous predictor variables, code_folding=TRUE, eval=FALSE}
+agroforest.network.corr.cont.pred.plot <- agroforest.corr.cont.pred %>% 
+  network_plot(min_cor = .2, repel = TRUE, colours = c("#C6B18B","white","#66C2A5"), legend = TRUE, curved = TRUE) +
+  labs(title = "Network correlation between biophysical predictors",
+       subtitle = "Pearson's correlation [min. correlation = 0.2] - for all ERA agroforestry practices with crop and biomass yield outcomes") +
+    expand_limits(x = c(-0.2, 0.2), y = c(-0.2, 0.2)) +
+  theme_lucid(plot.title.size = 25,
+              legend.position = "right",
+              tags.size = 5,
+              legend.text.size = 15) 
+
+# SAVING NETWORK CORR PLOT
+saveRDS(agroforest.network.corr.cont.pred.plot, here::here("TidyMod_OUTPUT", "agroforest.network.corr.cont.pred.plot.RDS")) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Network correlation plot between biophysical predictors and logRR"}
+agroforest.network.corr.cont.pred.plot <- readRDS( here::here("TidyMod_OUTPUT","agroforest.network.corr.cont.pred.plot.RDS"))
+
+agroforest.network.corr.cont.pred.plot
+```
+
+
+We see that there is clearly some of the biophysical predictor features that requires some serious attention to reduce the high correlation there is between some of them. Some features are obviously highly correlated, e.g. sand, clay and silts content, because they are expressed as percentage they are directly proportional to one another. For other features it is less obvious, e.g. clay and soil organic carbon or mean temperature of wettest month (Bio05_TWM) and mean temperature of warmest quarter (Bio10_MT_WarQ). Note that this correlation matrix only shows us linear relationships of features, and ignores other types of (more complex) relational patterns, that our machine learning algorithms might take advantage of.
+
+
+
+**Plotting logRR and selected biophysical predictors spatially** 
+
+We hypothersise that the outcome feature, logRR, is assosiated with our biophysical predictors, but what about the spatial distribution of the logRR values. As the last step in our EDA, lets view the logRR and a group of selected biophysical predictors in a spatial dimension. We are going to use the coordinates (Longitude and Latitude) of the agroforestry data and use them to plot logRR on a hexaplot with colours of logRR values depending on whether they are high or low. First we will have to make am agroforestry dataset with no NA cells, as this is not meaningful.
+
+How is the logRR values distributed on the continent..?
+
+```{r Generating data and plot for visualising spatial relations of logRR data, code_folding=TRUE, eval=FALSE}
+agrofor.biophys.modelling.data.raz <- agrofor.biophys.modelling.data %>% 
+  rationalize() %>% 
+  drop_na()
+
+
+# SAVING DATA
+saveRDS(agrofor.biophys.modelling.data.raz, here::here("TidyMod_OUTPUT", "agrofor.biophys.modelling.data.raz.RDS"))
+
+
+logRR.plot <-
+  agrofor.biophys.modelling.data.raz %>%
+  select("logRR", "Longitude", "Latitude") %>%
+  ggplot(aes(Longitude, Latitude, z = logRR)) +
+  stat_summary_hex(alpha = 0.8, bins = 40) +
+  scale_fill_viridis_c(option = "magma") +
+  labs(
+    fill = "mean",
+    title = "logRR"
+  )
+
+# SAVING NETWORK CORR PLOT
+saveRDS(logRR.plot, here::here("TidyMod_OUTPUT", "logRR.plot.RDS")) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=8, fig.cap = "Spatial distribution of logRR values"}
+logRR.plot <- readRDS( here::here("TidyMod_OUTPUT","logRR.plot.RDS"))
+
+logRR.plot
+```
+
+Interesting! We do see an indication of spatially dependency of logRR values. Perhaps this is related to the agroecological climates in the locations? Unfortunately the spatial resolution is too course to actually open the possibility of conducting a proper in-depth spatial analysis. 
+
+Let us not look at the spatial variability for a number of selected biophysical predictors. We are going to create a little function that we call "pred.spatial". We can apply this function on any of the agroforestry predictor features. The function will only require the coordinates (Longitude and Latitude) and a variable of interest.
+
+
+```{r Function for plotting spatial dependency of selected biophysical predictors, code_folding=FALSE, eval=TRUE}
+
+agrofor.biophys.modelling.data.raz <-  readRDS( here::here("TidyMod_OUTPUT","agrofor.biophys.modelling.data.raz.RDS"))
+
+pred.spatial <- function(var, title) {
+  agrofor.biophys.modelling.data.raz %>%
+    ggplot(aes(Longitude, Latitude, z = {{ var }})) +
+    stat_summary_hex(alpha = 0.8, bins = 40) +
+    scale_fill_viridis_c(option = "magma") +
+    labs(
+      fill = "mean",
+      title = title
+    )
+}
+```
+
+We are now going to use the function to look at a set of selected biophysical predictors and align them in a 3 x 3 multiples plot using the patchwork package, designed to make it simple and very intuitive to quickly combine separate ggplots into the same graphic.
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=8, fig.cap = "Spatial distribution of selected biophysical predictors"}
+(logRR.plot + pred.spatial(Bio01_MT_Annu, "BIO.01 - Mean Annual Temperature") + pred.spatial(Bio03_Iso, "BIO.03 - Isothermality")) /
+(pred.spatial(Bio07_TAR, "BIO.07 - Annual Temperature Range") + pred.spatial(Bio12_Pecip_Annu, "BIO.12 - Annual Precipitation") + pred.spatial(Bio17_Precip_DryQ, "BIO.17 - Precipitation of Driest Quarter")) /
+(pred.spatial(iSDA_SAND_conc, "Sand concentration") + pred.spatial(iSDA_log_C_tot, "Total soil carbon") + pred.spatial(iSDA_pH, "pH"))
+```
+
+
+
+
+
 
 
 # Tidymodels workflow steps
