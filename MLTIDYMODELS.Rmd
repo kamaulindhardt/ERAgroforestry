@@ -37,7 +37,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # General packages
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "here", "see", "ggplot2", "hablar", "kableExtra", "RColorBrewer", 
-                       "cowplot", "ggpubr", "ggbeeswarm", "viridis",
+                       "cowplot", "ggpubr", "ggbeeswarm", "viridis", "GGally",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -1142,6 +1142,181 @@ rmarkdown::paged_table(agrofor.biophys.modelling.data.discretized.logRR %>%
   dplyr::relocate(logRR_EQNo_group, logRR_EQR_group, logRR, RR, ID))
 ```
     
+Now we can prepare a [parallel coordinate plot](https://www.data-to-viz.com/graph/parallel.html), that is an excellent way of visually assessing the differences in patterns for the discretized logRR groups for each of the biophysical predictors on the x-axis. A parallel coordinate plot allows to compare the feature of several individual observations (as a series) on a set of numeric variables (e.g. our biophysical predictors). We are going to make use of the ggparcoord() function from the GGally package to make this fancy multiples plot where all logRR groups are stacked on the y-axis.
+
+**Note:** that we are making individual plots for each of the two discritization methods. 
+
+```{r Preparing the data for discretized logRR parallel coordinate plots, code_folding=FALSE, eval=FALSE}
+
+# Equal number data
+
+par.coord.data.EQNo <- 
+  agrofor.biophys.modelling.data.discretized.logRR %>%
+  dplyr::select(-c(ID, Out.SubInd, Product, MeanC, MeanT, AEZ16s, Latitude, Country, Longitude, Site.Type, Tree, SubPrName, RR,
+                   logRR, logRR_EQR_group, PrName, PrName.Code, Out.SubInd.Code, logRR_counts_cut_interval, logRR_counts_cut_number)) %>%
+  mutate_if(is.character, as.factor) %>%
+  rationalize() %>%
+  drop_na() %>%
+  arrange(across(starts_with("logRR_EQNo_group")))
+
+# Equal range data
+
+par.coord.data.EQR <- 
+  agrofor.biophys.modelling.data.discretized.logRR %>%
+  dplyr::select(-c(ID, Out.SubInd, Product, MeanC, MeanT, AEZ16s, Latitude, Country, Longitude, Site.Type, Tree, SubPrName, RR,
+                   logRR, logRR_EQNo_group, PrName, PrName.Code, Out.SubInd.Code, logRR_counts_cut_interval, logRR_counts_cut_number)) %>%
+  mutate_if(is.character, as.factor) %>%
+  rationalize() %>%
+  drop_na() %>%
+  arrange(across(starts_with("logRR_EQR_group")))
+
+# Facet label names
+
+logRR_group.label.names <- c("1.extremely_low", "2.very_low", "3.low", "4.medium", "5.high", "6.very_high", "7.extremely_high")
+names(logRR_group.label.names) <- c("1", "2", "3", "4", "5", "6", "7")
+
+```
+
+Defining a custom colours range for the parallel coordinate plots
+
+```{r Defining a custom colours range for the parallel coordinate plots, code_folding=TRUE, eval=FALSE}
+# Defining a custom colours range
+nb.cols.25 <- 25
+era.af.colors.25 <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols.25)
+```
+
+
+```{r Prepare plot of EQNo discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+
+par.coord.EQNo.plot <- 
+  GGally::ggparcoord(par.coord.data.EQNo,
+    columns = 1:35, 
+    #groupColumn = 36,     # group by logRR_EQNo_group
+    scale = "center",      # uniminmax to standardize vertical height, then center each variable at a value specified by the scaleSummary param
+   # order = "anyClass",    # ordering by feature separation between any one class and the rest (as opposed to their overall variation between classes).
+    missing = "exclude",
+    showPoints = FALSE, 
+    boxplot = FALSE,
+    #shadeBox = 35,
+    centerObsID = 1,
+    #title = "Discretized logRR values based on equal number vs. biophysical predictors",
+    alphaLines = 0.1,
+    splineFactor = TRUE,   # making lines curvey
+    #shadeBox = NULL,
+    mapping = aes(color = as.factor(logRR_EQNo_group))) + 
+    scale_color_manual("logRR_EQNo_group", labels = levels(par.coord.data.EQNo$logRR_EQNo_group), values = era.af.colors.25) +
+   # ggplot2::scale_color_manual(values = era.af.colors.25) + # assigning costom colour range
+    facet_grid(logRR_EQNo_group ~ . , labeller = labeller(logRR_EQNo_group = logRR_group.label.names)) +
+    coord_cartesian(ylim = c(- 0.8, 0.8)) +
+    theme_lucid() +
+    theme(plot.title = element_text(size = 20), legend.position = "none", #axis.text.x = element_text(angle = 60, hjust = 1)
+          axis.text.x = element_blank(),
+          strip.text.y = element_text(angle = 0),
+          plot.margin = margin(1, 0, 1, 0)) +
+   xlab("") +
+   ylab("")
+```
+
+```{r Prepare parallel coordinate plot of EQNo discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+par.coord.EQNo.plot.means <- 
+  par.coord.data.EQNo %>%
+  dplyr::group_by(logRR_EQNo_group) %>% 
+  dplyr::summarize_all(funs(mean)) %>%
+  
+  ggparcoord(
+        columns=c(2:36), 
+        # groupColumn = 1,
+        splineFactor = TRUE,
+        showPoints = TRUE,
+        #boxplot = TRUE,
+        #shadeBox = 4,
+        # scaleSummary = "mean",
+        scale = "center",      # uniminmax to standardize vertical height, then center each variable at a value specified by the scaleSummary param
+        # order = "anyClass",    # ordering by feature separation between any one class and the rest 
+        missing = "exclude",
+        centerObsID = 1,
+        # title = "Discretized logRR values based on equal range vs. mean values of biophysical predictors",
+        alphaLines = 0.8,
+        mapping = aes(color = as.factor(logRR_EQNo_group), size = 3)) + 
+        # mapping = ggplot2::aes(size = 3)) +
+        scale_color_manual("logRR_EQNo_group", labels = levels(par.coord.data.EQNo$logRR_EQNo_group), values = era.af.colors.25) +
+        # ggplot2::scale_color_manual(values = era.af.colors.25) + # assigning costom colour range
+        facet_grid(logRR_EQNo_group ~ . , labeller = labeller(logRR_EQNo_group = logRR_group.label.names)) +
+        coord_cartesian(ylim = c(- 2, 2)) +
+        theme_lucid() +
+        theme(plot.title = element_text(size = 20), axis.text.x = element_text(angle = 60, hjust = 1), legend.position = "none", 
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              strip.text.y = element_text(angle = 0),
+              plot.margin = margin(0.5, 0, 0.5, 0))  
+        #xlab("Mean values of biophysical predictors") +
+        #ylab("Uniminmax standardized logRR")
+
+# Warnings to be ignored
+
+# Warning: `funs()` was deprecated in dplyr 0.8.0.
+# Please use a list of either functions or lambdas: 
+# 
+#   # Simple named list: 
+#   list(mean = mean, median = median)
+# 
+#   # Auto named with `tibble::lst()`: 
+#   tibble::lst(mean, median)
+# 
+#   # Using lambdas
+#   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
+# This warning is displayed once every 8 hours.
+# Call `lifecycle::last_warnings()` to see where this warning was generated.
+```
+
+Plotting the parallel coordinate plots of EQNo using the plot_grid() function from the cowplot package. 
+
+```{r Plotting the parallel coordinate plots of EQNo, code_folding=FALSE, eval=FALSE}
+# Creating title
+par.coord.EQNo.title <- 
+  ggdraw() + 
+  draw_label("Equal number discretized logRR vs biophysical predictors",
+    fontface = 'bold',
+    x = 0,
+    hjust = 0,
+    size = 20) + 
+  theme(plot.margin = margin(5, 0, 0, 10))
+  
+
+# Using cowplot::plot_grid() to plot the two plots together and adding the title
+par.coord.EQNo.combined <- 
+  cowplot::plot_grid(
+    
+    par.coord.EQNo.title,
+    NULL,
+    par.coord.EQNo.plot,
+    NULL,
+    par.coord.EQNo.plot.means,
+    #####
+    ncol = 1, nrow = 5, 
+    align = "v",
+    axis = "l",
+    rel_widths = c(1), 
+    rel_heights = c(0.4, 0.1, 4, 0.1, 4)) +
+#perhaps reduce this for a bit more space
+draw_label("Biophysical predictors", x = 0.63, y = 0, vjust = -0.9, angle = 0) +
+draw_label("Uniminmax and centered standardized logRR", x =  0, y = 0.5, vjust = 1.5, angle = 90)
+
+# SAVING PLOT
+saveRDS(par.coord.EQNo.combined, here::here("TidyMod_OUTPUT","par.coord.EQNo.combined.RDS"))
+```
+Final parallel coordinate plot for the equal number discritized logRR
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Parallel coordinate plots of discritized logRR against biophysical predictors, method: Equal number"}
+par.coord.EQNo.combined <- readRDS( here::here("TidyMod_OUTPUT","par.coord.EQNo.combined.RDS"))
+par.coord.EQNo.combined
+```
+
+We can use this parallel coordinate plot to get a better understanding of the non-linear relationship in our data. Initially, it does not seem like we have any noticeable differences in our predictors for the different factor levels of logRR. However, if we look carefully, some inconsistencies are present. For example, the predictor feature iSDA sand concentration seem to be more clear/precise for the higher values ou logRR and the influence of Bio16 precipitation of wettest quarter seems to diminish for the higher logRR factor groups. Reversely, we find that Bio03 isothermality is lower for the extremely low logRR group. 
+
+Let us now make a similar plot for the equal range method where logRR have been grouped based on their range.
+
+
 
 
 **PCA and variable importance** 
