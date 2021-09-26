@@ -835,7 +835,7 @@ It is not only the destribution of predictors that matter when doing machine lea
 
 This clearly demonstrate that the log transformed RR is a much better outcome feature, compared to the raw RR. We might want to exclude extreme values from our logRR on both the positive and negative tail of the distribution. We might do this using the extreme outlier removal approach already used in the ERAAnalyze function, where response ratios above or below 3∗IQR (interquartile range) are removed.
 
-```{r Identifying outliers in outcome logRR, echo = T, include = F, eval = T, results = 'hide'}
+```{r Identifying outliers in outcome logRR, code_folding=FALSE, eval=FALSE}
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 3 * IQR(x) | x > quantile(x, 0.75) + 3 * IQR(x))
 }
@@ -844,9 +844,15 @@ expl.agfor.data.no.na.logRR.outlier <- expl.agfor.data.no.na %>%
   mutate(ERA_Agroforestry = 1) %>%
   group_by(ERA_Agroforestry) %>%
   mutate(logRR.outlier = ifelse(is_outlier(logRR), logRR, as.numeric(NA))) 
+
+# SAVING DATA
+
+saveRDS(expl.agfor.data.no.na.logRR.outlier, here::here("TidyMod_OUTPUT", "expl.agfor.data.no.na.logRR.outlier.RDS"))
 ```
 
 ```{r Viewing identified outcome outliers of agroforestry data, layout="l-screen-inset shaded", code_folding=TRUE}
+expl.agfor.data.no.na.logRR.outlier <- readRDS(here::here("TidyMod_OUTPUT", "expl.agfor.data.no.na.logRR.outlier.RDS"))
+
 rmarkdown::paged_table(expl.agfor.data.no.na.logRR.outlier %>% count(logRR.outlier, sort = TRUE))
 ```
 
@@ -1641,7 +1647,7 @@ We can use this parallel coordinate plot to get a better understanding of the no
 
 Let us now make a similar plot for the equal range method where logRR have been grouped based on their range.
 
-```{r Prepare parallel coordinate plot of EQR discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+```{r Generate parallel coordinate plot of EQR discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
 
 par.coord.EQR.plot <- 
   ggparcoord(par.coord.data.EQR,
@@ -2018,7 +2024,7 @@ agfor.biophys.mean.EQR <- agrofor.biophys.modelling.data.long.EQR.stats %>%
 
 Let us define the mean values to be depicted in the boxplot be merging with the datasets.
 
-```{r Defining the mean values to be depicted in the boxplot code_folding=FALSE, eval=FALSE}
+```{r Defining the mean values to be depicted in the boxplot, code_folding=FALSE, eval=FALSE}
 
 ####################################################################################################################
 # Horizontal line based on mean values for each biophysical variable -- With equal number discritization
