@@ -1615,22 +1615,124 @@ agfor.biophys.mean.EQR <- agrofor.biophys.modelling.data.long.EQR.stats %>%
 #`summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
 # `summarise()` has grouped output by 'variables'. You can override using the `.groups` argument.
 ```
+
 Let us define the mean values to be depicted in the boxplot be merging with the datasets.
 
 ```{r Defining the mean values to be depicted in the boxplot code_folding=FALSE, eval=FALSE}
+
+####################################################################################################################
+# Horizontal line based on mean values for each biophysical variable -- With equal number discritization
+agrofor.biophys.long.EQNo.hline <- merge(agrofor.biophys.modelling.data.long.EQNo, 
+                                                   agfor.biophys.mean.EQNo, 
+                                                   by.x = "variables", by.y = "variables")
 
 ####################################################################################################################
 # Horizontal line based on mean values for each biophysical variable -- With equal range discritization
 agrofor.biophys.long.EQR.hline <- merge(agrofor.biophys.modelling.data.long.EQR, 
                                                    agfor.biophys.mean.EQR, 
                                                    by.x = "variables", by.y = "variables")
-####################################################################################################################
-# Horizontal line based on mean values for each biophysical variable -- With equal number discritization
-agrofor.biophys.long.EQNo.hline <- merge(agrofor.biophys.modelling.data.long.EQNo, 
-                                                   agfor.biophys.mean.EQNo, 
-                                                   by.x = "variables", by.y = "variables")
 ```
 
+Defining a custom colours range for the boxplots
+
+```{r Defining a custom colours range with 35 colors for the parallel coordinate plots, code_folding=TRUE, eval=FALSE}
+# Colour range with 35 levels
+nb.cols.35 <- 35
+era.af.colors.35 <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols.35)
+```
+
+Create multi-panel Boxplots with t-test p-values for the EQNo 
+
+```{r Create multi-panel Boxplots for the EQNo with t-test p-values, code_folding=FALSE, eval=FALSE}
+# Create multi-panel Boxplots with t-test p-values
+logRR.EQNo.group.comparisons <- list(c("1.extremely_low", "2.very_low"),
+                                    c("2.very_low", "3.low"), 
+                                    c("3.low", "4.medium"), 
+                                    c("4.medium", "5.high"),
+                                    c("5.high", "6.very_high"),
+                                    c("6.very_high", "7.extremely_high"),
+                                    c("7.extremely_high", "1.extremely_low"))
+
+
+ttest.pair.plot.discretized.logRR.biophy.pred.EQNo <- ggpubr::ggboxplot(agrofor.biophys.long.EQNo.hline, 
+            "logRR_EQNo_group", "value",
+            color = "variables", palette = era.af.colors.35, add = "jitter", add.params = list(size = 0.2, jitter = 0.3),
+            title = "Differences in discretized logRR values based on equal number, for each biophysical predictor",
+            bxp.errorbar = TRUE, bxp.errorbar.width = 0.5, outlier.shape = 10) +
+  facet_wrap(variables ~ ., scales = "free_y") +
+  theme_lucid() +
+  theme(plot.title = element_text(size = 20), axis.text.x = element_text(angle = 60, hjust = 1), legend.position = "none") +
+  xlab("Biophysical co-variates/predictors") +
+  ylab("logRR") +
+  font("title", size = 20, color = "black") +
+  geom_hline(aes(yintercept = mean.values), linetype = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  stat_compare_means(comparisons = logRR.EQNo.group.comparisons, 
+                     mapping = aes(label = sprintf("p = %1.1f", as.numeric(..p.format..))), color = "black", size = 2.5) +
+  stat_compare_means(label = "p.signif", method = "t.test", ref.group = ".all.", label.y = 10) 
+# stat_compare_means(method = "anova", label.y = - 5, mapping = aes(label = sprintf("p = %1.1f", as.numeric(..p.format..))), size = 2.0) +
+  
+# Using `as.character()` on a quosure is deprecated as of rlang 0.3.0.
+# Please use `as_label()` or `as_name()` instead.
+# This warning is displayed once per session.
+
+# SAVING PLOT
+saveRDS(ttest.pair.plot.discretized.logRR.biophy.pred.EQNo, here::here("TidyMod_OUTPUT", "ttest.pair.plot.discretized.logRR.biophy.pred.EQNo.RDS")) 
+```
+
+Create multi-panel Boxplots with t-test p-values for the EQR 
+
+```{r Create multi-panel Boxplots for the EQR with t-test p-values, code_folding=FALSE, eval=FALSE}
+# Create multi-panel Boxplots with t-test p-values
+logRR.EQR.group.comparisons <- list(c("1.extremely_low", "2.very_low"),
+                                    c("2.very_low", "3.low"), 
+                                    c("3.low", "4.medium"), 
+                                    c("4.medium", "5.high"),
+                                    c("5.high", "6.very_high"),
+                                    c("6.very_high", "7.extremely_high"),
+                                    c("7.extremely_high", "1.extremely_low"))
+
+
+ttest.pair.plot.discretized.logRR.biophy.pred.EQR <- ggpubr::ggboxplot(agrofor.biophys.long.EQR.hline, 
+            "logRR_EQR_group", "value",
+            color = "variables", palette = era.af.colors.35, add = "jitter", add.params = list(size = 0.2, jitter = 0.3),
+            title = "Differences in discretized logRR values based on equal range, for each biophysical predictor",
+            bxp.errorbar = TRUE, bxp.errorbar.width = 0.5, outlier.shape = 10) +
+  facet_wrap(variables ~ ., scales = "free_y") +
+  theme_lucid() +
+  theme(plot.title = element_text(size = 20), axis.text.x = element_text(angle = 60, hjust = 1), legend.position = "none") +
+  xlab("Biophysical co-variates/predictors") +
+  ylab("logRR") +
+  font("title", size = 20, color = "black") +
+  geom_hline(aes(yintercept = mean.values), linetype = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  stat_compare_means(comparisons = logRR.EQR.group.comparisons, 
+                     mapping = aes(label = sprintf("p = %1.1f", as.numeric(..p.format..))), color = "black", angle = -90, size = 2.5) +
+  stat_compare_means(label = "p.signif", method = "t.test", ref.group = ".all.", label.y = 10) 
+# stat_compare_means(method = "anova", label.y = - 5, mapping = aes(label = sprintf("p = %1.1f", as.numeric(..p.format..))), size = 2.0) +
+  
+# Using `as.character()` on a quosure is deprecated as of rlang 0.3.0.
+# Please use `as_label()` or `as_name()` instead.
+# This warning is displayed once per session.
+
+# SAVING PLOT
+saveRDS(ttest.pair.plot.discretized.logRR.biophy.pred.EQR, here::here("TidyMod_OUTPUT", "ttest.pair.plot.discretized.logRR.biophy.pred.EQR.RDS")) 
+```
+
+Boxplot of equal range discretized logRR vs. biophysical predictors
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Boxplot of equal range discretized logRR vs. biophysical predictors"}
+ttest.pair.plot.discretized.logRR.biophy.pred.EQR <- readRDS( here::here("TidyMod_OUTPUT","ttest.pair.plot.discretized.logRR.biophy.pred.EQR.RDS"))
+
+ttest.pair.plot.discretized.logRR.biophy.pred.EQR
+```
+Boxplot of equal number discretized logRR vs. biophysical predictors
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Boxplot of equal number discretized logRR vs. biophysical predictors"}
+ttest.pair.plot.discretized.logRR.biophy.pred.EQNo <- readRDS( here::here("TidyMod_OUTPUT","ttest.pair.plot.discretized.logRR.biophy.pred.EQNo.RDS"))
+
+ttest.pair.plot.discretized.logRR.biophy.pred.EQNo
+```
 
 **PCA and variable importance** 
     i) of continuous predictors (all biophysical) 
