@@ -397,10 +397,8 @@ class(agrofor.biophys.selected.features)
 ```
 
 **Calculating response ratios for each observation** 
-We are going to
-compute a simple response ratio as RR = (MeanT/MeanC) and a
-log-transformed response ratio as logRR = (log(MeanT/MeanC)). The later
-will be used as our outcome variable.
+
+We are going to compute a simple response ratio as RR = (MeanT/MeanC) and a log-transformed response ratio as logRR = (log(MeanT/MeanC)). The later will be used as our outcome variable.
 
 ```{r Calculating response ratios for each observation, code_folding=FALSE, eval=FALSE}
 agrofor.biophys.modelling.data <- data.table::copy(agrofor.biophys.selected.features) %>% 
@@ -420,6 +418,11 @@ agrofor.biophys.modelling.data <- readRDS(file = here::here("TidyMod_OUTPUT","ag
 
 rmarkdown::paged_table(agrofor.biophys.modelling.data)
 ```
+
+```{r}
+agrofor.biophys.modelling.data %>% group_by()
+```
+
 
 Looks pretty good, however we have many empty cells for the Tree column that needs to be fixed. We have a data.frame (rowwise_df, tbl_df, tbl, data.frame) with 4578 observations and 52 features. Four of these features are our MeanC and MeanT that we will use to calculate the response ratio (RR and logRR). The RR and/or logRR will be our outcome feature, also called response variable. Hence, we have 52 - (4 + 11) = 37 predictors of which 35 are numeric and two (Tree and Site.Type are categorical/factors). 
 
@@ -1074,6 +1077,7 @@ We see that there are some logRR observation we would have to remove in order fo
 Lets now look at the histograms of our biophysical predictors. This is slightly similar to the density plots, but with the histograms we are able to see how the data is distributed in bins of 30 observations each. We are using the plot_histogram() from the DataExplorer package. The way we are going to plot the histogram requires a custom colour specification that has more than 1000 color objects specified. 
 
 Generating custom colour object with 1050 colours
+
 
 ```{r Generating costum colour object with 1050 colours, code_folding=TRUE, eval=FALSE}
 # 1050 levels of 35 colours
@@ -1753,7 +1757,7 @@ draw_label("Uniminmax and centered standardized logRR", x =  0, y = 0.5, vjust =
 saveRDS(par.coord.EQR.combined, here::here("TidyMod_OUTPUT","par.coord.EQR.combined.RDS"))
 ```
 
-Final parallel coordinate plot for the equal number discritized logRR
+Final parallel coordinate plot for the equal range discritized logRR
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Parallel coordinate plots of discritized logRR against biophysical predictors, method: Equal range"}
 par.coord.EQR.combined <- readRDS( here::here("TidyMod_OUTPUT","par.coord.EQR.combined.RDS"))
@@ -2128,7 +2132,7 @@ saveRDS(ttest.pair.plot.discretized.logRR.biophy.pred.EQR, here::here("TidyMod_O
 Boxplot of equal range discretized logRR vs. biophysical predictors
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Boxplot of equal range discretized logRR vs. biophysical predictors"}
-ttest.pair.plot.discretized.logRR.biophy.pred.EQR <- readRDS( here::here("TidyMod_OUTPUT","ttest.pair.plot.discretized.logRR.biophy.pred.EQR.RDS"))
+ttest.pair.plot.discretized.logRR.biophy.pred.EQR <- readRDS(here::here("TidyMod_OUTPUT","ttest.pair.plot.discretized.logRR.biophy.pred.EQR.RDS"))
 
 ttest.pair.plot.discretized.logRR.biophy.pred.EQR
 ```
@@ -3983,6 +3987,7 @@ model_results_all_plot_spatcv <- model_results_spatcv %>%
 # Plotting
 model_results_all_plot_spatcv
 ```
+
 ### Models tuned/fit with normal cv-folds
 
 ```{r eval=TRUE, layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Model evaluation, resampling: Normal cv-folds - metrics: CCC, RMSE, MAE, rsq"}
@@ -4098,7 +4103,7 @@ If we recall again the logRR distribution, that is a little positively skewed, i
 ```{r layout = "l-body-outset", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Density/count distribution of real logRR values"}
 logRR_distribution <- agrofor.biophys.modelling.data %>%
   rationalize(logRR) %>%
-  drop_na(logRR) %>%
+  drop_na(logRR) %>% 
   ggplot(aes(x = logRR)) +
   geom_density(aes(y = ..count..), fill = "lightgray") +
   geom_vline(aes(xintercept = mean(logRR)), 
@@ -5307,17 +5312,19 @@ rf_spatcv_test_pred <-
 
 # rf_spatcv_test_pred %>% rmse(logRR, .pred)
 saveRDS(rf_spatcv_test_pred, file = here::here("TidyMod_OUTPUT", "rf_spatcv_test_pred.RDS"))
+rf_spatcv_test_pred <- readRDS(file = here::here("TidyMod_OUTPUT", "rf_spatcv_test_pred.RDS"))
 
 rf_spatcv_test_pred_hexplot <- 
   rf_spatcv_test_pred %>% 
   ggplot(aes(x = logRR, y = .pred)) +
+  geom_hex(alpha = 0.9, bins = 35) +
+  #geom_jitter(size = 0.5, width = 0.05, height = 0.05, shape = 3, alpha = 0.3) +
+  coord_obs_pred(ratio = 1.2) +
   geom_abline(col = "black", lty = 1, size = 1) +
-  geom_hex(alpha = 0.8, bins = 50) +
-  geom_jitter(size = 0.8, width = 0.05, height = 0.05, shape = 3, alpha = 0.6) +
-  coord_fixed(ratio = 0.8) +
+ # coord_fixed(ratio = 1) +
   xlab("Observed logRR") +
   ylab("Predicted logRR") +
-  scale_fill_viridis() + 
+  scale_fill_viridis_c(direction = -1, option = "D") + 
   ggtitle("Pred vs. obs logRR, model: RF with spatial clustering cv-fold") +
   theme_lucid(plot.title.size = 10)
 
@@ -5722,8 +5729,6 @@ lm_cv_test_pred %>% rmse(logRR, .pred)
 spline_cv_test_pred %>% rmse(logRR, .pred)
 rf_cv_test_pred %>% rmse(logRR, .pred)
 xgb_cv_test_pred %>% rmse(logRR, .pred)
-
-xgb_spatcv_test_pred_hexplot
 ```
 
 
@@ -6030,6 +6035,7 @@ all_spatcv_pred_vs_obs_logRR_plot <-
                           ncol = 2,
                           nrow = 2)
 ```
+
 ### Resampling: normal cv-folds
 
 ```{r eval=TRUE, layout="l-screen-inset shaded", code_folding=TRUE, fig.width=15, fig.height=8, fig.cap = "Predicted vs. observed logRR values, resampling: Normal cv-folds"}
@@ -6341,8 +6347,8 @@ stacked_pred_vs_obs_cv <-
   #geom_point(alpha = 0.2) +
   coord_obs_pred() +
   labs(x = "Observed logRR", y = "Predicted logRR") +
-  #geom_abline(linetype = "dashed", col = "red", lty = 1, size = 1) +
-  geom_smooth(method = "gam", linetype = "dashed", col = "black", lty = 1, size = 1) +
+  geom_abline(linetype = "dashed", col = "red", lty = 1, size = 1) +
+  #geom_smooth(method = "gam", linetype = "dashed", col = "black", lty = 1, size = 1) +
   geom_jitter(width = 0.2, height = 0.2, size = 0.2, shape = 10) +
   coord_fixed(ratio = 0.8) +
   geom_hex(bins = 50, alpha = 1, show.legend = FALSE) +
@@ -6399,6 +6405,7 @@ agfor_stacked_model_full_lares_plot_cv <-
                   file_name = "agfor_stacked_model_full_lares_plot_cv.png",
                   plot = FALSE) 
 ```
+
 ```{r eval=TRUE, layout="l-screen-inset shaded", code_folding=TRUE, fig.width=12, fig.height=6, fig.cap = "Full lares plot for the ensemble stacked model with normal cv-folds"}
 ggdraw() + 
   draw_image(here::here("TidyMod_OUTPUT","agfor_stacked_model_full_lares_plot_cv.png")) 
@@ -6418,6 +6425,7 @@ agfor_stacked_model_linear_lares_plot_cv <-
 ggdraw() + 
   draw_image(here::here("TidyMod_OUTPUT", "agfor_stacked_model_linreg_lares_plot_cv.png")) 
 ```
+
 Lares splits for the models fit with normal cv-folds
 
 ```{r Creating the split lares plot for stack, resampling: Normal cv-folds, code_folding=FALSE, eval=FALSE}
