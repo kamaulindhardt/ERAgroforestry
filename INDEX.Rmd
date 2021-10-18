@@ -35,25 +35,23 @@ This website have been prepared as part of my final outcome of my MSc Internship
 
 ## Executive Summary
 
-Why agroforestry? Agroforestry is the practice of deliberate growing of woody perennials in association with food crops and pastures. It is frequently framed as an important development concept that is able to augment and enhance agricultural systems by alleviating production deficits and reducing risks in the light of changing climates. The concept is integrally linked with the potential to address multiple complex problems, especially prevaillent on the African continent. Issues such as pressing land management problems, contribution to secure food production, the generation of diversified income for rural households, enrichment of biodiversity through the provision of ecosystem services, and as a potential for carbon storage and other mitigation or adaptation practices. For this reason agroforestry is having a tremendous potential to achive multiple development objectives for socio-ecological sustainability and resilience. A solid understanding of how agroforestry practices in Africa perform compared under (changing) climate and soil conditions is increasingly needed in order to guide agroforestry policies, research and development. 
+Why agroforestry? Agroforestry is the practice of deliberate growing of woody perennials in association with food crops and pastures. It is frequently framed as an important development concept that is able to augment and enhance agricultural systems by alleviating production deficits and reducing risks in the light of changing climates. A solid understanding of how agroforestry in Africa perform compared to non-agroforestry (here after control) is essential to provide the necessary evidence-base for site-specific agroforestry interventions and support. Ultimately, by understanding the nature of how environmental factors influence agroforestry performance global and local stakeholders can perform better decisions on agroforestry under (changing) climate and soil conditions. This is increasingly needed in order to guide agroforestry policies, research and development.
 
-An executive summary is a short document or section of a document produced for business purposes. It summarizes a longer report or proposal or a group of related reports in such a way that readers can rapidly become acquainted with a large body of material without having to read it all. It usually contains a brief statement of the problem or proposal covered in the major document(s), background information, concise analysis and main conclusions. It is intended as an aid to decision-making by managers and has been described as the most important part of a business plan.
+This analysis is divided in five parts: (1) an introduction to ERA's agroforestry data and machine learning using tidymodels, (2) an assessment of the structure and key data and knowledge gaps of the agroforestry data from ERA, (3) a detailed step-by-step guide to the machine learning regression analysis of ERA's agroforestry data. In this section ten machine learning regression algorithms are tested and trained to predict agroforestry performance (using response ratios). (4) an introduction to the tidymodels Workflowsets package, that allows for seamless integrated training of multiple combinations of models and pre-processing steps. (5) a brief guide to how a discretization of the continuous response ratio target feature, can be used to perform a classification analysis. 
 
-An executive summary differs from an abstract in that an abstract will usually be shorter and is typically intended as an overview or orientation rather than being a condensed version of the full document. Abstracts are extensively used in academic research where the concept of the executive summary is not in common usage. "An abstract is a brief summarizing statement... read by parties who are trying to decide whether or not to read the main document", while "an executive summary, unlike an abstract, is a document in miniature that may be read in place of the longer document".
+Key findings of this agroforestry assessment include: 
 
-There is general agreement on the structure of an executive summary. Typically, an executive summary will:
+1. There was generally a poor but complex relationship between environmental predictors and agroforestry response ratios. 
+2. Out of all the model algorithms tested, it was especially the tree-based models that were superior at explaining the relationships between response ratios and environmental predictors. 
+3. Soil texture features (sand, clay and silt content) were particularly important factors for the models when predicting response ratios of agroforestry.
+4. Increase in sand content had a negative relationship with response ratios of agroforestry.
+5. Precipitation features, especially precipitation of driest quarter, was generally having a negative relationship with response ratios of agroforestry. 
+5. The temperature feature mean diurnal temperature had a moderately positive relationship with response ratios of agroforestry. 
+6. The poor relationship between agroforestry response ratios and environmental factors is likely attributed to the fact that data is indirectly sourced and does not provide detailed spatial and temporal resolution.
 
-* be approximately 5-10% of the length of the main report
-* be written in language appropriate for the target audience
-* consist of short, concise paragraphs
-* begin with a summary
-* be written in the same order as the main report
-* only include material present in the main report
-* make recommendations
-* provide a justification
-* have a conclusion
-* be readable separately from the main report
-* sometimes summarize more than one document
+These results can together with appropriate socio-economic studies provide the necessary evidence for where the implemented and/support of agroforestry can result in optimal outcomes. These finding suggests that the benefit of agroforestry expressed as the performance compared to control, is likely higher in areas where soils are sandy, precipitation is low and temperature fluctuations high. Thus, implementing and/or supporting agroforestry in areas that have these specific environmental contexts, can potentially assure relatively higher crop and biomass yields compared to control practices. 
+
+The kind of evidence presented in this analysis can together with socio-economic studies be relevant for stakeholders (governments, NGO’s and development initiatives) have to evaluate where to focus on agroforestry, compared to other agricultural practices. These findings can help in the quest for Option-by-Context a methodology developed by [@Sinclair2019] as it elucidate important biophysical contexts in which agroforestry is likely to perform better. 
 
 
 ### Key Words
