@@ -57,6 +57,7 @@ The ERAg package includes all the ERA data we need for the EDA.
 library(ERAg)
 ```
 
+
 # The total ERA dataset 
 
 We will first need to "split" the ERA data using the inherent ERAg function called "ERAComboSplit". Using the ERAComboSplit function we can split practice and product combinations into duplicate individual rows each contain a unique combination of any practice x product combination present in the original observation.
@@ -122,9 +123,13 @@ Now we can view the subsetted agroforestry data.
 
 ```{r agroforestry-data, layout="l-body-outset", results='asis'}
 rmarkdown::paged_table(af)
+
+af %>%
+  filter(Product.Simple == "Cassava") %>%
+  group_by(Code)
 ```
 
-The total agroforestry data is fairly large and contains 9871 observations with a total of 142 columns. How much of the total ERA data is under the Theme "Agroforestry"? In order to answer this we are going to divide the number of observations from the agroforestry data with the total number of ERA observations -and take the percentage. 
+The total agroforestry data is fairly large and contains 9871 observations from 270 studies with a total of 142 columns. How much of the total ERA data is under the Theme "Agroforestry"? In order to answer this we are going to divide the number of observations from the agroforestry data with the total number of ERA observations -and take the percentage. 
 
 ```{r Calculation of the proportion of agroforestry in ERA, code_folding=FALSE}
 nrow(af)/nrow(ERAg::ERA.Compiled)*100
@@ -171,7 +176,9 @@ Lets split the practice, sub-practice combinations from the agroforestry data us
 
 ```{r Splitting agroforestry combinations to visualise with treemap, code_folding=FALSE}
 af.split <- ERAComboSplit(Data = af)
+af.split
 ```
+
 
 
 ### Agroforestry data: practices and sub-practices 
@@ -198,7 +205,7 @@ af.split.subprac.tree.d3viz <- d3tree(af.split.subprac.tree,
                                       id = "name",
                                       celltext = "name",
                                       valueField = "size",
-                                      width = 800, height = 600,
+                                      width = 600, height = 800,
                                       rootname = "Agroforestry Practices and Sub-Practices")
 ```
 
@@ -258,13 +265,15 @@ af.split.subout.prac.tree <- treemap::treemap(af.split.outcome,
       title="Proportions of unique sub-outcome and practices within the agroforestry data based on number of studies")
 ```
 
-Within the agroforestry data we find that the common agronomic terms crop -and biomass yields are the most represented outcomes. Hence a lot of data are pressent for these kind of outcomes. In contrast, there is little data on outcomes such as run-off or soil nitrogen. This indicates that any further analysis we wish to perform using machine learning techniques would benefit greatly from using data rich areas such as crop -and/or biomass yield outcomes. 
+
+Within the agroforestry data we find that the common agronomic terms crop -and biomass yields are the most represented outcomes. Hence a lot of data are pressent for these kind of outcomes. In contrast, there is little data on outcomes such as runoff or biodiversity. This indicates that any further analysis we wish to perform using machine learning techniques would benefit greatly from using data rich areas such as crop -and/or biomass yield outcomes. 
 
 ### Agroforestry data: Crops
 
 Proportions of Crops represented within each Practice for the agroforestry data
 
 This treemap show the proportions of different crops within the agroforestry data. Again its better to view this in a static way:
+
 
 ```{r , code_folding=TRUE, layout="l-body-outset", fig.width=10, fig.height=8, fig.cap = "Proportions of Crops represented within each Practice within the agroforestry data based on number of studies"}
 af.split.crops <- af.split[,list(N.Studies=length(unique(Code))),by=list(PrName, Product.Simple)]
@@ -281,6 +290,9 @@ af.split.crops.tree <- treemap::treemap(af.split.crops,
       title = "Proportions of different crops within the agroforestry data based on number of studies")
 ```
 
+
+
+
 We find that the majority of crops are cereals and mostly annual crops. Maize is the most represented (the largest proportion) of all crops. This is in line with agricultural statistics from [FAO, 2021](http://www.fao.org/faostat/en/#data/QCL) Maize is grown on over 40 M ha of land in Africa and is the primary cereal grown in over half of the countries in Africa, and one of the top two cereals in over three-quarters of these countries. 
 
 **Note:** Interesting to notice is that there is a great variety of crops. Many annuals, especially cereals but alo many crops we normally associate with being biannual or perennial, such as yam ($Dioscorea rotundata$), banana (genus: $Musa$) and coffee (genus: $Coffea$).  
@@ -288,6 +300,12 @@ We find that the majority of crops are cereals and mostly annual crops. Maize is
 ## Agroforestry data: Geographic distribution
 
 We can use the ERAHexPlot function, inherent in the ERAg package, to spatially project where in Africa this agroforestry data comes from. We are doing this by plotting the number of studies for each ERA location on a map of the continent.
+
+```{r}
+af.unique <- unique(af.split$DOI)
+length(af.unique)
+```
+
 
 ```{r Agroforestry studies generating hexpplotmap, code_folding=TRUE, eval=FALSE}
 agrofor.data.hexmap <- ERAg::ERAHexPlot(Data = af, 
@@ -705,6 +723,7 @@ agroforestry.analyzed <-
 # Ignore these warning messages: boundary (singular) fit: see ?isSingular
 ```
 
+
 Lets have a look at the various columns that come out of the ERAAnalyze function: 
 
 ```{r What columns do we have from the ERAAnalyze function output, code_folding=TRUE}
@@ -817,15 +836,19 @@ rmarkdown::paged_table(agroforestry.analyzed.rr)
 
 # Back to the agroforestry data: Density distributions
 
-Before we get into the results of the  ERAAnalyze function, let us first check the density distribution for the most data rich combination of Outcome and Practice to get a better idea of the data. This is the Outcome "Crop Yield" and the Practice "Agroforestry Pruning". Hence, we are going to look at the density distribution of the RR of the Crop Yield variable.
+Before we get into the results of the  ERAAnalyze function, let us first check the density distribution for the most data rich combination of Outcome and Practice to get a better idea of the data. This is the Outcome crop and biomass yield and the Practice "Agroforestry Pruning". Hence, we are going to look at the density distribution of the RR of the Crop Yield variable.
 
-```{r , code_folding=TRUE, layout="l-body-outset", fig.width=10, fig.height=8, fig.cap = "Histogram and density distribution plot for RR of Crop Yields for Crop Yield and Agroforestry Pruning as Outcome and Practice combinations, respectfully"}
+```{r , code_folding=TRUE, layout="l-body-outset", fig.width=10, fig.height=8, fig.cap = "Histogram and density distribution plot for RR of crop and biomass yield"}
 
 # Reading/loading the agroforestry.prepared dataset 
 agroforestry.prepared <- readRDS(here::here("ERAAnalyze_OUTPUT", "agroforestry.prepared.RDS"))
 
-agroforestry.prepared %>%
-  dplyr::filter(Out.SubInd == "Crop Yield" & PrName == "Agroforestry Pruning") %>%
+agroforestry.prepared.yi <- 
+  agroforestry.prepared %>%
+  dplyr::filter(Out.SubInd == "Crop Yield" | 
+                  Out.SubInd == "Biomass Yield") %>%
+  rationalize(yi) %>%
+  drop_na(yi) %>%
   ggpubr::gghistogram(
     x = "yi",
     y = "..count..",
@@ -834,28 +857,32 @@ agroforestry.prepared %>%
     color = "#E7B800",
     add_density = TRUE,
     bins = 40) +
-  ggtitle("Histogram and density distribution for RR of Crop Yields") +
-  xlab("RR for Crop Yield") +
-  ylab("Counts of identical cases of RR values") +
+  ggtitle("Histogram and density distribution for crop and biomass yields") +
+  xlab("Relative crop and biomass yield") +
+  ylab("Counts of identical cases") +
   theme_lucid(plot.title.size = 25,
               axis.text.size = 15,
               legend.title.size = 20,
               legend.text.size = 20,
               axis.title.size = 20)
+
+agroforestry.prepared.yi
 ```
 
 We are observing that: 
 
-1. The RR of Crop Yields has a fairly good resemblance to an ideal normal distribution centred around the mean.^[A normal distribution has a bell-shaped density curve described by its mean and standard deviation. The density curve is symmetrical, centred around the mean, with its spread determined by its standard deviation]  
+1. The RR of crop and biomass yield has a fairly good resemblance to an ideal normal distribution centred around the mean.^[A normal distribution has a bell-shaped density curve described by its mean and standard deviation. The density curve is symmetrical, centred around the mean, with its spread determined by its standard deviation]  
 
-2. The mean of the RR of Crop Yields is skewed to the right indicating an overall positive effect of agroforestry on Crop Yields, even though we do see a substantial amount of cases with negative RR for Crop Yields. Thus, in certain situations there will be an overall negative effect of agroforestry compared to non-agroforestry and we cannot conclude that agroforestry pruning practices is better than non-agroforestry in all situations.
+2. The mean of the RR of crop and biomass yield  is skewed to the right indicating an overall positive effect of agroforestry on crop and biomass yield , even though we do see a substantial amount of cases with negative RR for crop and biomass yield . Thus, in certain situations there will be an overall negative effect of agroforestry compared to non-agroforestry and we cannot conclude that agroforestry pruning practices is better than non-agroforestry in all situations.
 
-We can make a similar plot for the proportions of MeanC/MeanT with the agroforestry data of Outcome "Crop Yield" and the Practice "Agroforestry Pruning":
+We can make a similar plot for the proportions of MeanC/MeanT with the agroforestry data of Outcome crop and biomass yield  and the Practice "Agroforestry Pruning":
 
-```{r , code_folding=TRUE, layout="l-body-outset", fig.width=10, fig.height=8, fig.cap = "Proportions of MeanC/MeanT for Crop Yield and Agroforestry Pruning as Outcome and Practice combinations, respectfully"}
+```{r , code_folding=TRUE, layout="l-body-outset", fig.width=10, fig.height=8, fig.cap = "Proportions of MeanC/MeanT for crop and biomass yield"}
 
-agroforestry.prepared %>%
-  dplyr::filter(Out.SubInd == "Crop Yield" & PrName == "Agroforestry Pruning") %>%
+agroforestry.prepared.meanc.menat <- 
+  agroforestry.prepared %>%
+  dplyr::filter(Out.SubInd == "Crop Yield" | 
+                  Out.SubInd == "Biomass Yield") %>%
   dplyr::mutate(Proportion = MeanC/MeanT) %>%
   ggpubr::gghistogram(
     x = "Proportion",
@@ -864,16 +891,19 @@ agroforestry.prepared %>%
     rug = TRUE, 
     color = "#66C2A5",
     add_density = TRUE,
-    bins = 40) +
-  ggtitle("Proportions of MeanC/MeanT for Crop Yield") +
+    bins = 200) +
+  ggtitle("Proportions of MeanC/MeanT for crop and biomass yield") +
   xlab("Proportion [MeanC/MeanT]") +
-  ylab("Counts of identical cases of Proportion values") +
+  ylab("Counts of identical cases") +
   theme_lucid(plot.title.size = 25,
               axis.text.size = 15,
               legend.title.size = 20,
               legend.text.size = 20,
               axis.title.size = 20)
+
+agroforestry.prepared.meanc.menat
 ```
+
 This gives us a clear indication of why the log-transformation is important to our RR outcome. If not we would get this long tail on the distribution. 
 
 # Results of ERAAnalyze
@@ -1089,7 +1119,7 @@ outlier_score <- outliers %>%
   summarise(score = n() / nrow(used_rules))
 
 # Top 10 outliers
-outlier_score %>% arrange(desc(score)) %>% slice(1:10)
+outlier_score %>% arrange(desc(score)) %>% dplyr::slice(1:10)
 ```
 
 Given the dataframe "outliers", one can do whatever he/she wants to identify outliers. Here we will use the basic combination approach based on average scores. You can see in the table above, where a random sample of 10 rows is shown, that all have an "outlier score". We can use this score to further process the data so that we remove outliers that are above a determined combined outlier score. Combined outlier detection score for certain row can be defined as share of applied methods that tagged it as outlier. Alternatively one can define it just as number of those methods as it will only change absolute value of the result and not the order. 
@@ -1208,6 +1238,7 @@ annotate_figure(plot_PrName,
                 top = text_grob("Strong outliers illustration by practices \n ", 
                                 color = "black", face = "bold", size = 30))
 ```
+
 **Strong RR and RR.jpc.jen outliers by outcomes**
 
 ```{r code_folding=TRUE, layout="l-screen-inset shaded", fig.width=20, fig.height=10, fig.cap = "Strong outliers illustration by practices"}
@@ -1357,6 +1388,43 @@ dim(agroforestry.analysed.imputed.prname.grouped)
 # Warning: `summarise()` has grouped output by 'PrName'. You can override using the `.groups` argument.
 ```
 
+
+```{r code_folding=TRUE, layout="l-screen-inset shaded", fig.width=10, fig.height=5, fig.cap = "Results of ERAAnalyze for selected agroforestry practices"}
+agroforestry.analyzed.results.plot <- 
+  agroforestry.analyzed.imputed %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  arrange(desc(-RR.pc.jen)) %>%
+  ggpubr::gghistogram(
+    x = "RR.pc.jen",
+    y = "..density..",
+    add = "mean", 
+    add.params = list(linetype = "dashed", size = 1.5),
+    rug = TRUE, 
+    color = "PrName",
+    fill = "PrName",
+    palette = "Set2",
+    alpha = 0.5,
+    add_density = TRUE,
+    bins = 10,
+    facet.by = "PrName", 
+    scales = "free_y") +
+
+  ggtitle("Histogram and density distribution for RR of Crop Yields") +
+  xlab("RR for Crop Yield") +
+  ylab("Counts of identical cases of RR values") +
+  theme_lucid(plot.title.size = 25,
+              axis.text.size = 15,
+              legend.title.size = 20,
+              legend.text.size = 20,
+              axis.title.size = 20)
+
+agroforestry.analyzed.results.plot
+```
+
+
 ```{r Creating a collectes sum of studies and observation for each combination of PrName and Out.SubInd, code_folding=TRUE}
 agroforestry.analysed.nstudies <- agroforestry.analysed.imputed.prname.grouped %>% 
   group_by(PrName, meanRR, meanRR.pc.jen) %>%             # <-  grouping by PrName anf meanRR and meanRR.pc.jen with the assuption that they are all unique
@@ -1414,6 +1482,11 @@ RR_bar + labs(title="Response ratio for agroforestry practices across all outcom
   annotation_custom(no_studies)
 ```
 
+```{r}
+mean(agroforestry.analysed.imputed.prname.grouped$meanRR.pc.jen)
+```
+
+
 ## Variations in RR.pc.jen for agroforestry practices
 
 Plotting RR percentage with Jensen corrections for all agroforestry practices plot in bar plot
@@ -1447,6 +1520,63 @@ meanRR.pc.jen_bar + labs(title="RR.pc.jen for ERA agroforestry practices across 
            x = "ERA agroforestry practices (PrName)") +
   annotation_custom(no_studies)
 ```
+
+
+```{r}
+
+# With barplot
+
+meanRR.pc.jen_bar_selected <- agroforestry.analysed.imputed.prname.grouped %>%
+  ungroup() %>%
+  dplyr::mutate_if(sapply(agroforestry.analysed.imputed.prname.grouped, is.character), as.factor) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot(aes(x = reorder(PrName, -meanRR.pc.jen), y = meanRR.pc.jen, fill = PrName), palette = "Set2") + 
+  geom_bar(stat="identity", color="black", position = position_dodge()) +
+  geom_errorbar(aes(ymin = meanRR.pc.jen.low, ymax = meanRR.pc.jen.high), width=.2, position = position_dodge(.9)) +
+  ggplot2::scale_color_manual(values = era.af.colors) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, 0.1))) +
+  scale_fill_brewer(palette = "Set2") +
+  # geom_text(data = agroforestry.analysed.nstudies, 
+  #           aes(x= reorder(PrName, -meanRR), y = n_studies_label_pos_RR.pc.jen, label = n_studies_1, angle = 60), 
+  #           check_overlap = FALSE, size = 4) +
+  theme_lucid(plot.title.size = 25,
+              axis.text.size = 15,
+              legend.title.size = 20,
+              legend.text.size = 20,
+              axis.title.size = 20) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 60, hjust=1), plot.margin=unit(c(1,6,1,6),"cm")) 
+
+# Create a text
+no_studies <- grid::grobTree(textGrob("Number of studies", hjust = -3.2, y = 0.96, 
+                                      gp = gpar(col="black", fontsize = 13, fontface="italic")))
+
+
+  # Finished bar ggplot bar plot 
+meanRR.pc.jen_bar_selected + labs(title="RR.pc.jen for ERA agroforestry practices across all outcomes", 
+           y = "% response ratios (RR) corrected for Jensen's inequality",
+           x = "ERA agroforestry practices (PrName)") +
+  annotation_custom(no_studies)
+```
+
+```{r}
+meanRR.pc.jen_bar_selected <- agroforestry.analysed.imputed.prname.grouped %>%
+  ungroup() %>%
+  dplyr::mutate_if(sapply(agroforestry.analysed.imputed.prname.grouped, is.character), as.factor) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  group_by(PrName) %>%
+  summarise(across(everything(), mean)) %>%
+  arrange(desc(meanRR.pc.jen))
+
+meanRR.pc.jen_bar_selected
+```
+
 
 RR.pc.jen is grouped mean for each practice across all outcome.
 
@@ -1552,6 +1682,22 @@ RR.pc.jen_bar_yield + labs(title="RR.pc.jen for ERA agroforestry practices acros
   annotation_custom(no_studies)
 ```
 
+```{r}
+ggplot(agroforestry.analyzed.imputed.yield, aes(x = meanRR.pc.jen, y = PrName)) + 
+  geom_density_ridges()
+
+agroforestry.analyzed.imputed.yield 
+```
+
+
+
+
+
+
+
+
+
+
 ## Variations in RR for agroforestry practices accros other outcomes
 
 **Soil Nitrogen and Total Soil Nitrogen**
@@ -1622,6 +1768,7 @@ RR_bar_nitrogen + labs(title="Response ratio for agroforestry practices across S
 
 # Warning: `expand_scale()` is deprecated; use `expansion()` instead.
 ```
+
 Plotting RR.pc.jen for all agroforestry practices with Soil Nitrogen and Total Soil Nitrogen outcomes
 
 ```{r layout="l-screen-inset shaded", fig.width=20, fig.height=15, fig.cap = "Proportion_MeanC/MeanT", code_folding=TRUE}
