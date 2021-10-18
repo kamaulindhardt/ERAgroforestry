@@ -39,7 +39,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # General packages
 # ------------------------------------------------------------------------------------------
 required.packages <- c("tidyverse", "tidymodels", "finetune", "kernlab", "here", "hablar", "spatialsample", 
-                       "stacks", "rules", "baguette", "viridis", "yardstick", "DALEXtra", 
+                       "stacks", "rules", "baguette", "viridis", "yardstick", "DALEXtra", "see", "ggridges",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
 # ------------------------------------------------------------------------------------------
@@ -327,11 +327,9 @@ parallelStop()
 ```
 
 
-
-
 ### Using tune_race_anova()
 
-```{r}
+```{r code_folding=FALSE, eval=FALSE}
 race_ctrl <-
    control_race(
       save_pred = TRUE,
@@ -364,48 +362,1477 @@ parallelStop()
 ### From tune_grid()
 
 ```{r}
-autoplot(wflwset_setup_res)
+# -------------------------------------------------------------------
+# LOAD THE TUNED (tune_race_anova) WORKFLOWSET DATA
+
+wflwset_setup_race_res <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup_race_res.RDS"))
+
+#Error: There were 1 workflows that had no results.
+
+# Removing the result that caused the error for not having a result
+
+wflwset_setup_race_res_clean <- wflwset_setup_race_res %>%
+  dplyr::filter(wflow_id != "interaction_nnet") 
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Results of the tune race anova workflowset tuning"}
+# -------------------------------------------------------------------
+autoplot(wflwset_setup_race_res_clean)
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Results of the tune race anova workflowset tuning after lm models have been excluded"}
+wflwset_setup_race_res_clean_no_linear <- wflwset_setup_race_res_clean %>%
+  dplyr::filter(!str_detect(wflow_id, "_lm"))
+
+autoplot(wflwset_setup_race_res_clean_no_linear) 
 ```
 
 
 ```{r}
-rank_results(wflwset_setup_res, 
+rank_results(wflwset_setup_race_res_clean_no_linear, 
              rank_metric = "rmse", 
              select_best = TRUE) %>% 
-  select(rank, mean, model, wflow_id, .config)
+  select(rank, mean, model, wflow_id, .config) %>%
+  arrange(desc(-rank))
 ```
-
-### From tune_race_anova()
 
 ```{r}
-wflwset_setup_race_res
+rank_results(wflwset_setup_race_res_clean_no_linear, 
+             rank_metric = "ccc", 
+             select_best = TRUE) %>% 
+  select(rank, mean, model, wflow_id, .config) %>%
+  arrange(desc(-rank))
+```
+
+## STEP 10: Finalizing models
+
+Similar to what we wnet through in Part 3: Analysing with Tidymodels, we also have to finalize the models from the tuning results using the best performing (hyper)-parameter configurations. We are going to do this last fitting of the models using the training set. The first step is to pick a workflow to finalize. Since random fores models (RF), boosted tree models (XGB), decision tree models (cart) and generalized linier models (glm) worked well, we’ll extract the best configurations from the sets, update the parameters with the numerically best settings, and fit to the training set. 
+
+### Extracting best performing models configurations
+
+```{r}
+
+rf_wf_best_rmse_results_of_race <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow_set_result("normalized_RF") %>% 
+   select_best(metric = "rmse")
+
+xgb_wf_best_rmse_results_of_race <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow_set_result("interaction_XGB") %>% 
+   select_best(metric = "rmse")
+
+cart_wf_best_rmse_results_of_race <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow_set_result("rm_corr_cart") %>% 
+   select_best(metric = "rmse")
+
+glm_wf_best_rmse_results_of_race <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow_set_result("interaction_glm") %>% 
+   select_best(metric = "rmse")
+```
+
+### Performing last fitting on the whole dataset (traningset + testingset)
+
+```{r}
+
+rf_best_race_last_fit <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("normalized_RF") %>% 
+   finalize_workflow(rf_wf_best_rmse_results_of_race) %>% 
+   last_fit(split = af.split.wf)
+
+xgb_best_race_last_fit <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("interaction_XGB") %>% 
+   finalize_workflow(xgb_wf_best_rmse_results_of_race) %>% 
+   last_fit(split = af.split.wf)
+
+cart_best_race_last_fit <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("rm_corr_cart") %>% 
+   finalize_workflow(cart_wf_best_rmse_results_of_race) %>% 
+   last_fit(split = af.split.wf)
+
+glm_best_race_last_fit <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("interaction_glm") %>% 
+   finalize_workflow(glm_wf_best_rmse_results_of_race) %>% 
+   last_fit(split = af.split.wf)
+
+```
+
+```{r}
+collect_metrics(rf_best_race_last_fit)
+```
+
+```{r}
+rf_wflowset_last_fit_plot <- 
+  rf_best_race_last_fit %>% 
+  collect_predictions() %>% 
+  ggplot(aes(x = logRR, y = .pred)) + 
+  geom_abline(col = "red", lty = 2) + 
+  #geom_smooth(method = "gam", linetype = "dashed", col = "black", size = 1) +
+  geom_jitter(width = 0.5, height = 0.2, alpha = 0.5) + 
+  coord_obs_pred(ratio = 1) + 
+  labs(x = "Observed logRR", y = "Predicted logRR")
+
+rf_wflowset_last_fit_plot
+```
+```{r}
+rf_best_race_last_fit %>% 
+  collect_predictions() %>%
+  arrange(desc(.pred))
+```
+
+## STEP 11: Explaining models and predictions
+
+We suggested that model performance, as measured by appropriate metrics (like RMSE for regression or area under the ROC curve for classification), can be important for all applications of modeling. Similarly, model explanations, answering why a model makes the predictions it does, can be important whether the purpose of your model is largely descriptive, to test a hypothesis, or to make a prediction. Answering the question “why?” allows modeling practitioners to understand which features were important in predictions and even how model predictions would change under different values for the features.
+
+For some models, like linear regression, it is usually clear how to explain why the model makes the predictions it does. The structure of a linear model contains coefficients for each predictor that are typically straightforward to interpret. For other models, like random forests that can capture non-linear behavior by design, it is less transparent how to explain the model’s predictions from only the structure of the model itself. Instead, we can apply model explainer algorithms to generate understanding of predictions.
+
+**Notes:** There are two types of model explanations, global and local. Global model explanations provide an overall understanding aggregated over a whole set of observations; local model explanations provide information about a prediction for a single observation.
+
+The tidymodels framework does not itself contain software for model explanations. Instead, models trained and evaluated with tidymodels can be explained with other, supplementary software in R packages such as lime, vip, and DALEX. We ourselves often choose:
+
+vip functions when we want to use model-based methods that take advantage of model structure (and are often faster), and
+DALEX functions when we want to use model-agnostic methods that can be applied to any model.
+
+Let’s build model-agnostic explainers for both of these models to find out why they make the predictions they do. We can use the DALEXtra add-on package for DALEX, which provides support for tidymodels. Biecek and Burzykowski (2021) provide a thorough exploration of how to use DALEX for model explanations; this chapter only summarizes some important approaches, specific to tidymodels. To compute any kind of model explanation, global or local, using DALEX, we first create an explainer for each model.
+
+Creating trained workflows for each of the four models 
+
+```{r}
+rf_best_race_trained_wf <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("normalized_RF") %>% 
+   finalize_workflow(rf_wf_best_rmse_results_of_race) %>% 
+   fit(data = af.train.wf)
+
+xgb_best_race_trained_wf <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("interaction_XGB") %>% 
+   finalize_workflow(xgb_wf_best_rmse_results_of_race) %>% 
+   fit(data = af.train.wf)
+
+cart_best_race_trained_wf <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("rm_corr_cart") %>% 
+   finalize_workflow(cart_wf_best_rmse_results_of_race) %>% 
+   fit(data = af.train.wf)
+
+glm_best_race_trained_wf <- 
+   wflwset_setup_race_res_clean %>% 
+   extract_workflow("interaction_glm") %>% 
+   finalize_workflow(glm_wf_best_rmse_results_of_race) %>% 
+   fit(data = af.train.wf)
+```
+
+
+Generating explainers for each of the four models 
+
+```{r}
+vip_features <- c("PrName", "Out.SubInd", "Product", "Tree", "Out.SubInd.Code","Site.Type", "Latitude", "Longitude", 
+                  "Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ",
+                  "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc",
+                  "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N",
+                  "iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Altitude", "ASTER_Slope")
+
+vip_train <- 
+  af.train.wf %>% 
+  select(all_of(vip_features))
+
+explainer_rf <- 
+  explain_tidymodels(
+    rf_best_race_trained_wf, 
+    data = vip_train, 
+    y = af.train.wf$logRR,
+    label = "Random Forest with normalized data",
+    verbose = FALSE
+  )
+
+explainer_xgb <- 
+  explain_tidymodels(
+    xgb_best_race_trained_wf, 
+    data = vip_train, 
+    y = af.train.wf$logRR,
+    label = "XGBoost with interactions",
+    verbose = FALSE
+  )
+
+explainer_cart <- 
+    explain_tidymodels(
+    cart_best_race_trained_wf, 
+    data = vip_train, 
+    y = af.train.wf$logRR,
+    label = "Cart with removed correlations",
+    verbose = FALSE
+  )
+
+explainer_glm <- 
+  explain_tidymodels(
+    glm_best_race_trained_wf, 
+    data = vip_train, 
+    y = af.train.wf$logRR,
+    label = "glm with interactions",
+    verbose = FALSE
+  )
+
+```
+
+
+
+Local explanations
+
+Observed low logRR
+
+```{r}
+af.train.wf %>%
+  relocate(logRR) %>%
+  arrange(desc(-logRR)) %>%
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping")
+  
+vip_train_1 <- vip_train %>% 
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping" & 
+                  Out.SubInd == "Crop Yield" & 
+                  Product == "Maize" & 
+                  Tree == "Senna siamea" & 
+                  Site.Type == "Station" & 
+                  Latitude == -1.58240 & 
+                  Longitude == 37.24320)
+
+obs_1 <- vip_train_1[1,]
+  
+```
+
+```{r}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  step_impute_mean(all_numeric()) %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
+  group_by(PrName) %>%
+  summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  arrange(desc(logRR))
+```
+
+
+```{r}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  step_impute_mean(all_numeric()) %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot() +
+  geom_boxplot(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName)) +
+  geom_jitter(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName), height = 0.4, width = 0.1) +
+  theme_lucid(plot.title.size = 25,
+              axis.text.size = 15,
+              legend.title.size = 20,
+              legend.text.size = 20,
+              axis.title.size = 20) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 60, hjust=1), plot.margin=unit(c(1,6,1,6),"cm"))
+```
+```{r}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  drop_na() %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot(aes(y = PrName, x = iSDA_SAND_conc)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "orange", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 5, height = 0.05), point_shape = '|', bandwidth = 6) +
+  theme_lucid() +
+  xlab("Sand concentration %") +
+  ylab("") +
+  ggtitle("SAND concentration (%)")
+```
+Bio15_Precip_S
+
+```{r}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  drop_na() %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot(aes(y = PrName, x = Bio14_Precip_DryM)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "midnightblue", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), point_shape = '|', , bandwidth = 3.75) +
+  theme_lucid() +
+  xlab("Precipitation (driest month)") +
+  ylab("") +
+  ggtitle("Precipitation (driest month) [mm]")
+```
+
+Bio02_MDR
+
+
+```{r}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  drop_na() %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot(aes(y = PrName, x = Bio05_TWM)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "darkgreen", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), point_shape = '|', bandwidth = 2) +
+  theme_lucid() +
+  xlab("Temperature (max temperature of warmest month)") +
+  ylab("") +
+  ggtitle("Temperature (max temperature of warmest month) [°C]")
+```
+
+Local model explanations provide information about a prediction for a single observation. For example, let’s consider an observation of Agroforestry Pruning-Alleycropping for the outcome Maize Crop Yield conducted at a Station with the agroforestry tree being Melia azedarach. This observation has:
+
+* logRR = -1.812378756
+
+
+```{r}
+rf_breakdown <- predict_parts(explainer = explainer_rf, new_observation = obs_1)
+rf_breakdown %>% arrange(desc(-contribution))
+```
+
+```{r}
+xgb_breakdown <- predict_parts(explainer = explainer_xgb, new_observation = obs_1)
+xgb_breakdown %>% arrange(desc(-contribution))
+```
+
+```{r}
+cart_breakdown <- predict_parts(explainer = explainer_cart, new_observation = obs_1)
+cart_breakdown %>% arrange(desc(-contribution))
+```
+
+
+```{r}
+glm_breakdown <- predict_parts(explainer = explainer_glm, new_observation = obs_1)
+glm_breakdown
+```
+
+
+
+Model break-down explanations like these depend on the order of the features.
+
+
+```{r}
+predict_parts_rf <- predict_parts(explainer = explainer_rf, 
+                                  new_observation = obs_1,
+                                  order = rf_breakdown$variable_name)
+
+predict_parts_rf
+```
+
+We can use the fact that these break-down explanations change based on order to compute the most important features over all (or many) possible orderings. This is the idea behind Shapley Additive Explanations (Lundberg and Lee 2017), where the average contributions of features are computed under different combinations or “coalitions” of feature orderings. Let’s compute SHAP attributions for our duplex, using B = 20 random orderings. (https://ema.drwhy.ai/breakDown.html).
+
+We could use the default plot method from DALEX by calling plot(shap_obs_1), or we can access the underlying data and create a custom plot. 
+
+```{r}
+shap_obs_1_rf <- predict_parts(explainer = explainer_rf, 
+                               new_observation = obs_1, 
+                               type = "shap",
+                               B = 20)
+
+shap_obs_1_rf
+```
+
+
+
+Accessing the underlying data and creating a custom plot
+
+The box plots display the distribution of contributions across all the orderings we tried, and the bars display the average attribution for each feature.
+
+```{r}
+shap_obs_1_rf_plot <- 
+  shap_obs_1_rf %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_1_rf_plot
+```
+
+What about a different individual observation in our data set? Let’s look at one of our observation that has a relatively high logRR value of 1.458. This observation has Alleycropping practice with the outcome Crop Yield for product Maize conducted at a Station with the agroforestry tree being Desmodium intortum This observation has following biophysical predictor features:
+
+Observed high logRR
+
+```{r}
+af.train.wf %>%
+  relocate(logRR) %>%
+  arrange(desc(logRR)) %>%
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping")
+  
+vip_train_2 <- vip_train %>% 
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping" & 
+                  Out.SubInd == "Crop Yield" & 
+                  Product == "Maize" & 
+                  Tree == "Senna siamea" & 
+                  Site.Type == "Station" & 
+                  Latitude == 7.49800 & 
+                  Longitude == 3.90300) %>% 
+  mutate(across(where(is.numeric), ~ round(., 8)))
+
+obs_2 <- vip_train_2[1,]
+  
+```
+
+
+* logRR = 3.047025568
+
+
+```{r}
+shap_obs_2_rf <- 
+  predict_parts(explainer = explainer_rf, 
+                new_observation = obs_2, 
+                type = "shap",
+                B = 20)
+
+shap_obs_2_rf
+```
+
+
+```{r}
+shap_obs_2_rf_plot <- 
+  shap_obs_2_rf %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+shap_obs_2_rf_plot
+```
+
+
+
+Global explanations
+
+
+Global model explanations, also called global feature importance or variable importance, help us understand which features are most important in driving the predictions of these two models overall, aggregated over the whole training set. While the previous section addressed what variables or features are most important in predicting sale price for an individual home, global feature importance addresses what variables are most important for a model in aggregate.
+
+
+**Note:** One way to compute variable importance is to permute the features (Breiman 2001a). We can permute or shuffle the values of a feature, predict from the model, and then measure how much worse the model fits the data compared to before shuffling.
+
+If shuffling a column causes a large degradation in model performance, it is important; if shuffling a column’s values doesn’t make much difference to how the model performs, it must not be an important variable. This approach can be applied to any kind of model (it is model-agnostic) and the results are straightforward to understand.
+
+Using DALEX, we compute this kind of variable importance via the model_parts() function.
+
+```{r}
+vip_rf <- DALEX::model_parts(explainer_rf, loss_function = loss_root_mean_square)
+vip_xgb <- DALEX::model_parts(explainer_xgb, loss_function = loss_root_mean_square) 
+vip_cart <- DALEX::model_parts(explainer_cart, loss_function = loss_root_mean_square) 
+vip_glm <- DALEX::model_parts(explainer_glm, loss_function = loss_root_mean_square) 
+```
+
+Again, we could use the default plot method from DALEX by calling e.g. plot(vip_glm) or plot(vip_rf) but the underlying data is available for exploration, analysis, and plotting. Let’s create a function:
+
+```{r}
+plot(vip_glm)
+```
+```{r}
+plot(vip_rf)
+```
+
+```{r}
+ggplot_imp <- function(...) {
+  obj <- list(...)
+  metric_name <- attr(obj[[1]], "loss_name")
+  metric_lab <- paste(metric_name, 
+                      "after permutations\n(higher indicates more important)")
+  
+  full_vip <- bind_rows(obj) %>%
+    filter(variable != "_baseline_")
+  
+  perm_vals <- full_vip %>% 
+    filter(variable == "_full_model_") %>% 
+    group_by(label) %>% 
+    summarise(dropout_loss = mean(dropout_loss))
+  
+  p <- full_vip %>%
+    filter(variable != "_full_model_") %>% 
+    mutate(variable = fct_reorder(variable, dropout_loss)) %>%
+    ggplot(aes(dropout_loss, variable)) 
+  if(length(obj) > 1) {
+    p <- p + 
+      facet_wrap(vars(label)) +
+      geom_vline(data = perm_vals, aes(xintercept = dropout_loss, color = label),
+                 size = 1.4, lty = 2, alpha = 0.7) +
+      geom_boxplot(aes(color = label, fill = label), alpha = 0.2)
+  } else {
+    p <- p + 
+      geom_vline(data = perm_vals, aes(xintercept = dropout_loss),
+                 size = 1.4, lty = 2, alpha = 0.7) +
+      geom_boxplot(fill = "#91CBD765", alpha = 0.4)
+    
+  }
+  
+  p +
+    theme(legend.position = "none") +
+    labs(x = metric_lab, 
+         y = NULL,  fill = NULL,  color = NULL)
+}
+```
+
+```{r}
+pdp_iSDA_SILT <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "iSDA_SILT_conc")
+
+pdp_iSDA_SILT
+```
+
+Let’s create another function for plotting the underlying data in this object:
+
+```{r}
+ggplot_pdp <- function(obj, x) {
+  
+  p <- 
+    as_tibble(obj$agr_profiles) %>%
+    mutate(`_label_` = stringr::str_remove(`_label_`, "^[^_]*_")) %>%
+    ggplot(aes(`_x_`, `_yhat_`)) +
+    geom_line(data = as_tibble(obj$cp_profiles),
+              aes(x = {{ x }}, group = `_ids_`),
+              size = 0.5, alpha = 0.05, color = "gray50")
+  
+  num_colors <- n_distinct(obj$agr_profiles$`_label_`)
+  
+  if (num_colors > 1) {
+    p <- p + geom_line(aes(color = `_label_`), size = 1.2, alpha = 0.8)
+  } else {
+    p <- p + geom_line(color = "midnightblue", size = 1.2, alpha = 0.8)
+  }
+  
+  p
+}
+```
+
+```{r}
+ggplot_imp(vip_rf)
+```
+
+```{r}
+ggplot_imp(vip_xgb)
+```
+
+```{r}
+ggplot_imp(vip_cart)
+```
+
+```{r}
+ggplot_imp(vip_glm)
+```
+
+
+The dashed line in each panel shows the RMSE for the full model, either the linear model or the random forest model. Features further to the right are more important, because permuting them results in higher RMSE. There is quite a lot of interesting information to learn from this plot; for example, neighborhood is quite important in the linear model with interactions/splines but the second least important feature for the random forest model.
+
+
+
+
+Building global explanations from local explanations
+
+
+
+So far in this chapter, we have focused on local model explanations for a single observation (via Shapley additive explanations) and global model explanations for a data set as a whole (via permuting features). It is also possible to build global model explanations up by aggregating local model explanations, as with partial dependence profiles.
+
+**Notes:** Partial dependence profiles show how the expected value of a model prediction, like the predicted price of a home in Ames, changes as a function of a feature, like the age or gross living area.
+
+One way to build such a profile is by aggregating or averaging profiles for individual observations. A profile showing how an individual observation’s prediction changes as a function of a given feature is called an ICE (individual conditional expectation) profile or a CP (ceteris paribus) profile. We can compute such individual profiles (for 500 of the observations in our training set) and then aggregate them using the DALEX function model_profile(). pdp = partial dependency plots
+
+
+Let’s create another function for plotting the underlying data in this object:
+
+```{r}
+ggplot_pdp <- function(obj, x) {
+  
+  p <- 
+    as_tibble(obj$agr_profiles) %>%
+    mutate(`_label_` = stringr::str_remove(`_label_`, "^[^_]*_")) %>%
+    ggplot(aes(`_x_`, `_yhat_`)) +
+    geom_line(data = as_tibble(obj$cp_profiles),
+              aes(x = {{ x }}, group = `_ids_`),
+              size = 0.5, alpha = 0.05, color = "gray50")
+  
+  num_colors <- n_distinct(obj$agr_profiles$`_label_`)
+  
+  if (num_colors > 1) {
+    p <- p + geom_line(aes(color = `_label_`), size = 1.2, alpha = 0.8)
+  } else {
+    p <- p + geom_line(color = "midnightblue", size = 1.2, alpha = 0.8)
+  }
+  
+  p
+}
+```
+
+
+```{r}
+pdp_iSDA_SILT <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "iSDA_SILT_conc")
+
+ggplot_pdp(pdp_iSDA_SILT, iSDA_SILT_conc)  +
+  labs(x = "iSDA_SILT_conc", 
+       y = "logRR", 
+       color = NULL)
+```
+```{r}
+pdp_iSDA_SAND <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "iSDA_SAND_conc")
+
+ggplot_pdp(pdp_iSDA_SAND, iSDA_SAND_conc)  +
+  labs(x = "iSDA_SAND_conc", 
+       y = "logRR", 
+       color = NULL)
+```
+```{r}
+pdp_Bio09_MT_DryQ <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "Bio09_MT_DryQ")
+
+ggplot_pdp(pdp_Bio09_MT_DryQ, Bio09_MT_DryQ)  +
+  labs(x = "Bio09_MT_DryQ", 
+       y = "logRR", 
+       color = NULL)
+```
+
+Bio04_TS
+
+```{r}
+pdp_Bio04_TS <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "Bio04_TS")
+
+ggplot_pdp(pdp_Bio04_TS, Bio04_TS)  +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+```
+
+```{r}
+pdp_Bio04_TS <- model_profile(explainer_glm, 
+                               N = 500, 
+                               variables = "Bio04_TS")
+
+ggplot_pdp(pdp_Bio04_TS, Bio04_TS)  +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+```
+
+Partial dependence profiles can be computed for any other feature in the model, and also for groups in the data. Let’s use 500 observations for these profiles.
+
+```{r}
+pdp_Bio04_TS <- model_profile(explainer_rf, 
+                              N = 500, 
+                              variables = "Bio04_TS") 
+
+pdp_Bio04_TS_sitetype <- model_profile(explainer_rf, 
+                              N = 500, 
+                              variables = "Bio04_TS",
+                              groups = "Site.Type") 
+
+pdp_Bio04_TS_tree <- model_profile(explainer_rf, 
+                              N = 500, 
+                              variables = "Bio04_TS",
+                              groups = "Tree") 
+```
+
+```{r}
+ggplot_pdp(pdp_Bio04_TS, Bio04_TS) +
+  scale_y_log10() +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+
+ggplot_pdp(pdp_Bio04_TS, Bio04_TS) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+
+ggplot_pdp(pdp_Bio04_TS_sitetype, Bio04_TS) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+```
+```{r}
+ggplot_pdp(pdp_Bio04_TS_tree, Bio04_TS) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Bio04_TS", 
+       y = "logRR", 
+       color = NULL)
+```
+
+### Explainer
+
+```{r}
+#random forest model
+explainer_rf_continous <- DALEX::explain(rf_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "Random Forest")
+
+explainer_xgb_continous <- 
+  DALEX::explain(xgb_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "XGBoost")
+  
+
+explainer_cart_continous <- 
+    DALEX::explain(cart_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "Cart")
+  
+
+```
+
+```{r}
+rf_hist <- DALEX::model_performance(explainer_rf_continous)
+
+plot(rf_hist)
+```
+Model profile
+
+```{r}
+model_profile_rf1 <- model_profile(explainer_rf_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+plot(model_profile_rf1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+```
+
+```{r}
+model_profile_xgb1 <- model_profile(explainer_xgb_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+plot(model_profile_xgb1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
 ```
 
 
 
 
+```{r}
+model_profile_cart1 <- model_profile(explainer_cart_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+plot(model_profile_cart1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+```
+
+
+#Compare models with common important variables 
+
+```{r}
+#Compare models with common important variables 
+model_profile_rf1 <- model_profile(explainer_rf_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+model_profile_xgb1 <- model_profile(explainer_xgb_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+model_profile_cart1 <- model_profile(explainer_cart_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
+
+plot(model_profile_rf1, model_profile_xgb1, model_profile_cart1, 
+    variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+```
+
+"Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"
+
+Instance level
+
+# Random forest
+
+```{r}
+bd_rf_logRR_low <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_1, 
+                type = "break_down") 
+
+plot(bd_rf_logRR_low,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+```{r}
+sharp_rf_logRR_low <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_1, 
+                type = "shap",
+                B = 25)
+  
+  plot(sharp_rf_logRR_low,
+       max_features = 20) 
+```
+
+```{r}
+bd_rf_logRR_high <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_2, 
+                type = "break_down") 
+
+  plot(bd_rf_logRR_high,
+       max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (3.04)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r}
+sharp_rf_logRR_high <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_2, 
+                type = "shap",
+                B = 25)
+  
+  plot(sharp_rf_logRR_high,
+       max_features = 20) 
+```
+
+                                                     
+```{r}
+obs_1
+```
+```{r}
+ml.data.no.outliers.wf %>% 
+  sapply(levels)
+```
+
+```{r}
+new_obs_1 <- data.frame(PrName = factor("Agroforestry Pruning-Alleycropping", levels = c("Parklands", "Agroforestry Pruning-Organic Fertilizer", 
+                                                                                          "Agroforestry Pruning", "Agroforestry Pruning-Inorganic Fertilizer", 
+                                                                                          "Agroforestry Pruning-Alleycropping", "Alleycropping", 
+                                                                                          "Agroforestry Pruning-Alleycropping-Inorganic Fertilizer", 
+                                                                                          "Alleycropping-Inorganic Fertilizer", "Agroforestry Pruning-Alleycropping-Organic Fertilizer",
+                                                                                          "Agroforestry Pruning-Alleycropping-Reduced Tillage", "Agroforestry Pruning-Parklands",
+                                                                                          "Agroforestry Pruning-Boundary Planting", 
+                                                                                          "Agroforestry Pruning-Boundary Planting-Inorganic Fertilizer", 
+                                                                                          "Agroforestry Fallow-Agroforestry Pruning", 
+                                                                                          "Agroforestry Fallow-Agroforestry Pruning-Alleycropping", 
+                                                                                          "Agroforestry Pruning-Alleycropping-Intercropping", 
+                                                                                          "Agroforestry Pruning-Green Manure", "Agroforestry Pruning-Green Manure-Inorganic Fertilizer",
+                                                                                          "Agroforestry Fallow",  "Agroforestry Fallow-Water Harvesting", 
+                                                                                          "Agroforestry Fallow-Agroforestry Pruning-Reduced Tillage", "Agroforestry Pruning-Intercropping",
+                                                                                          "Other Agroforestry", "Mulch-Other Agroforestry-Reduced Tillage", 
+                                                                                          "Agroforestry Pruning-Reduced Tillage-Water Harvesting")),
+                        Out.SubInd = factor("Crop Yield", levels = c("Biomass Yield", "Soil Organic Carbon", "Soil Nitrogen", "Crop Yield", "Carbon Dioxide Emissions", "Gross Return",
+                                                                      "Marginal Rate of Return", "Beneficial Organisms", "Nitrogen Use Efficiency (ARE AGB)", "Cation Exchange Capacity",
+                                                                      "Phosphorus Use Efficiency (ARE AGB)", "Potassium Use Efficiency (ARE AGB)", "Soil Organic Carbon (Change)", 
+                                                                      "Water Use Efficiency", "Soil Moisture", "Labour Person Hours", "Labour Cost", "Variable Cost", "Net Return",
+                                                                      "Benefit Cost Ratio (NRTC)", "Return to Labour", "Gross Margin", "Benefit Cost Ratio (GRVC)", "Net Present Value",
+                                                                      "Biodiversity", "Phosphorus Agronomic Efficiency", "Soil Organic Matter", "Nitrogen Factor Productivity", "Water Use",
+                                                                      "Infiltration Rate", "Runoff", "Erosion", "Soil Total Nitrogen", "Soil Carbon Stocks", "Soil Available Nitrogen",
+                                                                      "Nitrous Oxide Emissions", "Methane Emissions", "CO2 Equivalent Emissions", "Benefit Cost Ratio (GRTC)", "Soil NH4",
+                                                                      "Soil NO3", "Land Equivalent Ratio")),
+                        Product = factor("Maize", levels = c("Pearl Millet", "Maize", "Wheat", "Sorghum", "Tomato (Total Yield)", "Common Bean", "Okra", "Spinach", "Sunflower (Seed)",
+                                                              "Rice", "Sunflower (Oil)", "Sesame Seed", "Eggplant", "Barley", "Finger Millet", "Soybean")),
+                        Tree = factor("Senna siamea", levels = c("Faidherbia albida", "Aristida sieberiana", "Guiera senegalensis", "Calliandra calothyrsus", "Sesbania sesban", 
+                                                                  "Leucaena leucocephala", "Leucaena pallida", "Acacia albida", "Albizia gummifera", "Cordia africana", 
+                                                                  "Croton macrostachyus", "Milletia ferruginea", "Gliricidia sepium", "Unknown_Tree", "Alnus acuminata", 
+                                                                  "Alnus acuminata.Calliandra calothyrsus.Sesbania sesban", "Calliandra calothyrsus.Leucaena leucocephala", 
+                                                                  "Crotalaria juncea", "Cupressus lusitanica", "Casuarina equisetifolia", "Markhamia lutea", "Melia azedarach", 
+                                                                  "Cordia abyssinica", "Maesopsis eminii", "Senna spectabilis", "Tithonia diversifolia", "Acacia tumida", 
+                                                                  "Eucalyptus saligna", "Flemingia macrophylla", "Senna siamea", "Leucaena leucocephala.Gliricidia Sepium", 
+                                                                  "Croton megalocarpus", "Melia volkensii", "Croton megalocarpus.Melia volkensii.Senna spectabilis.Gliricidia sepium",
+                                                                  "Pinus patula", "Acacia saligna", "Crotalaria grahamiana", "Grevillea robusta", "Paulownia fortunei", 
+                                                                  "Entada abyssinica", "Dactyladenia barteri", "Gliricidia", "Flemingia", "Cinnamomum cassia","Flemingia congesta", 
+                                                                  "Cassia siamea", "cassia siamea", "Leucaena leucocephala.Acioa barteri", "Acioa barteri", "Azadirachta indica",
+                                                                  "Parkia biglobosa", "Millettia  thonningii", "Pterocarpus santalinoides", "Acacia angustissima",
+                                                                  "Tithonia diversifolia.Acacia angustissima", "Tithonia diversifolia.Calliandra calothyrsus", 
+                                                                  "Tithonia diversifolia.Flemingia macrophylla", "Elaeis guineensis", "Leucaena leucocephala (Var K28)", 
+                                                                  "Cajanus cajan", "Leucaena.Azadirachta indica.Parkia biglobosa", 
+                                                                  "Senna siamea.Leucaena leucocephala.Azadirachta indica", "Vitellaria paradoxa.Parkia biglobosa", "Vitellaria paradoxa",
+                                                                  "Parkia biglobosa.Vitellaria paradoxa", "Parkia biglobosa.Adansonia digitata", "Stylosanthes hamata", 
+                                                                  "Adansonia digitata", "Albizia lebbeck", "Acacia holosericea", "Palm", "Acacia senegal", "Acacia crassicarpa", 
+                                                                  "Acacia mangium", "Acacia polyacantha", "Leucaena diversifolia", "Tephrosia vogelii.Sesbania sesban", 
+                                                                  "Alchornea cordifolia", "Uapaca kirkiana.Brachystegia spiciformis.Julbernardia globiflora", "Uapaca kirkiana",
+                                                                  "Sesbania rostrata", "Cassia spectabilis", "Grevillea robusta.Cajanus cajan", "Tephrosia vogelii", "Sesbania cinerascens",
+                                                                  "Senna didymobotrya", "Senna occidentalis", "Eucalyptus camaldulensis", "Pueraria phaseoloides", "Acacia leptocarpa",
+                                                                  "Gliricida sepium", "Flemingia macrophylla.Gliricidia sepium", "Cedrela serrata", "Acrocarpus fraxinifolius", 
+                                                                  "Cedrela odorata", "Erythrina poeppigiana", "Albizia chinensis", "Piliostigma reticulatum", 
+                                                                  "Poupartia silvatica-Fernandoa madagascariensis-Tarenna sp", "Acacia tortilis", "Crotalaria ochrolueca", 
+                                                                  "Desmodium intortum", "Bauhinia reticulata", "Bauhinia reticulata-Guiera senegalensis", "Acacia sp")),
+                        Out.SubInd.Code = factor("CrY", levels = c("BiY", "SOC", "SN", "CrY", "CO2", "GR", "MRR", "BO", "NUE-Aag", "CEC", "PUE-Aag", "KUE-Aag", "SOCh", "WUE", "SM",
+                                                                    "La-ph", "LC", "VC", "NR", "BCR-NRTC", "RtL", "GM", "BCR-GRVC", "NOV", "Bd", "PAEp", "SOM", "NTFP", "WU", "In",
+                                                                    "Ru", "Er", "STN", "SCS", "SAN", "NOx", "CH4", "CO2eq", "BCR-GRTC", "SNH4", "SNO3", "LER")),
+                        Site.Type = factor("Station", levels = c("Farm", "Station", "Survey")),
+                        Latitude = -1.5824,
+                        Longitude = 37.2432,
+                        
+                        Bio01_MT_Annu = 21.61667, 
+                        Bio02_MDR = 9.716667, 
+                        Bio03_Iso = 83.04844, 
+                        Bio04_TS = 52.88638, 
+                        Bio05_TWM = 27.5, 
+                        Bio06_MinTCM = 15.8, 
+                        Bio07_TAR = 11.7, 
+                        Bio08_MT_WetQ = 21.8, 
+                        Bio09_MT_DryQ = 20.91667, 
+                        Bio10_MT_WarQ = 22.28333, 
+                        Bio11_MT_ColQ = 20.91667, 
+                        Bio12_Pecip_Annu = 1316, 
+                        Bio13_Precip_WetM = 227, 
+                        Bio14_Precip_DryM = 42, 
+                        Bio15_Precip_S = 53.04502, 
+                        Bio16_Precip_WetQ = 585,
+                        Bio17_Precip_DryQ = 168, 
+                        iSDA_Depth_to_bedrock = 199.99, 
+                        iSDA_SAND_conc = 48.582, 
+                        iSDA_CLAY_conc = 33.402, 
+                        iSDA_SILT_conc = 16.748, 
+                        iSDA_log_C_tot = 27.514	, 
+                        iSDA_FE_Bulk_dens = 132.154, 
+                        iSDA_log_Ca = 67.774, 
+                        iSDA_log_eCEC = 27.786, 
+                        iSDA_log_Fe = 35.182, 
+                        iSDA_log_K = 53.296, 
+                        iSDA_log_Mg = 55.09,
+                        iSDA_log_N = 60.844,
+                        iSDA_log_SOC = 22.29, 
+                        iSDA_log_P = 24.798,
+                        iSDA_log_S = 17.79, 
+                        iSDA_pH = 59.784,
+                        ASTER_Altitude = 1578.35,
+                        ASTER_Slope = 4.2)
+
+cp_rf_logRR_low <- 
+  predict(explainer_rf_continous, new_obs_1)
+
+cp_rf_logRR_low
+
+cp_1 <- DALEX::predict_profile(explainer_rf_continous, 
+                               new_obs_1)
+
+cp_1_cart <- DALEX::predict_profile(explainer_cart_continous, 
+                               new_obs_1)
+
+cp_1_xgb <- DALEX::predict_profile(explainer_xgb_continous, 
+                               new_obs_1)
+
+```
+
+("Bio07_TAR", "Bio17_Precip_DryQ", "iSDA_CLAY_conc"
+
+```{r}
+plot(cp_1_cart,
+     variables = c("iSDA_CLAY_conc", "iSDA_log_P", "iSDA_pH")) 
+```
+```{r}
+plot(cp_1_xgb,
+     variables = c("iSDA_CLAY_conc", "iSDA_log_P", "iSDA_pH")) 
+```
+
+
+```{r}
+plot(cp_1,
+     variables = c("iSDA_SILT_conc", "iSDA_SAND_conc", "iSDA_CLAY_conc")) # "iSDA_SAND_conc", "iSDA_CLAY_conc", "Bio07_TAR"
+```
+
+```{r}
+plot(cp_1,
+     variables = c("Bio02_MDR", "Bio07_TAR", "Bio09_MT_DryQ"))
+```
+```{r}
+plot(cp_1,
+     variables = c("Bio15_Precip_S", "Bio14_Precip_DryM", "Bio16_Precip_WetQ"))
+```
+### Using expand_grid to generate new data af.train.wf
+```{r}
+af.train.wf %>%
+  arrange()
+
+old_data <- af.train.wf %>%
+  rationalize() %>%
+  drop_na()
+```
+
+
+```{r}
+new_test_data_var_CLAY <- 
+  expand_grid(iSDA_CLAY_conc = c(10, 20, 30, 40), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albidam", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+new_test_data_var_SAND <- 
+  expand_grid(iSDA_SAND_conc = c(50, 60, 70, 80), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albidam", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+new_test_data_var_Precip_S <- 
+  expand_grid(Bio15_Precip_S = c(40, 50, 60, 70), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+new_test_data_var_Precip_DryQ <- 
+  expand_grid(Bio17_Precip_DryQ = c(150, 180, 200, 220), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+new_test_data_var_MDR<- 
+  expand_grid(Bio02_MDR = c(12, 14, 16, 18), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+new_test_data_var_TWM <- 
+  expand_grid(Bio05_TWM = c(20, 25, 30, 35), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+new_test_data_iSDA_pH <- 
+  expand_grid(iSDA_pH = c(50, 60, 70, 80), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+```
+
+### Predict on this new data
+
+```{r}
+pred_new_data_CLAY <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_CLAY)
+
+pred_new_data_SAND <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_SAND)
+
+pred_new_data_Precip_S <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_Precip_S)
+
+pred_new_data_Precip_DryQ <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_Precip_DryQ)
+
+pred_new_data_MDR <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_MDR)
+
+pred_new_data_TWM <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_var_TWM)
+
+pred_new_data_pH <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_iSDA_pH)
+```
+
+```{r}
+pred_new_data_CLAY <- tibble(iSDA_CLAY_conc = c(10, 20, 30, 40),
+                          .pred = c(0.5355357, 0.5281725, 0.4982191, 0.5128507))
+
+pred_new_data_SAND <- tibble(iSDA_SAND_conc = c(50, 60, 70, 80),
+                          .pred = c(0.4994193, 0.4955434, 0.5159416, 0.5159416))
+
+pred_new_data_Precip_S <- tibble(Bio15_Precip_S = c(40, 50, 60, 70),
+                          .pred = c(0.5320894	, 0.5322152, 0.5507409, 0.4489401))
+
+pred_new_data_Precip_DryQ <- tibble(Bio17_Precip_DryQ = c(150, 180, 200, 220),
+                          .pred = c(0.5352552	, 0.5333205, 0.5294350, 0.5294350))
+
+pred_new_data_MDR <- tibble(Bio02_MDR = c(12, 14, 16, 18),
+                          .pred = c(0.4648982	, 0.4637734, 0.4791219, 0.4791219))
+
+pred_new_data_TWM <- tibble(Bio05_TWM = c(20, 25, 30, 35),
+                          .pred = c(0.4372342	, 0.4372342, 0.4981338, 0.3629274))
+
+
+pred_new_data_pH <- tibble(iSDA_pH = c(50, 60, 70, 80),
+                          .pred = c(0.5760564	, 0.4931747, 0.4762354, 0.4695003))
+```
+
+
+```{r}
+ggplot(pred_new_data_CLAY, aes(x =iSDA_CLAY_conc, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("CLAY: Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Clay content")
+```
+
+
+```{r}
+ggplot(pred_new_data_SAND, aes(x =iSDA_SAND_conc, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("SAND: Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Sand content")
+```
+
+```{r}
+ggplot(pred_new_data_Precip_S, aes(x = Bio15_Precip_S, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "midnightblue") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Precipitation (Seasonal): Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Precipitation (Seasonal)")
+```
+
+
+```{r}
+ggplot(pred_new_data_Precip_DryQ, aes(x =Bio17_Precip_DryQ, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "midnightblue") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Precipitation (Driest Quarter): Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Precipitation (Driest Quarter)")
+```
 
 
 
+```{r}
+ggplot(pred_new_data_MDR, aes(x =Bio02_MDR, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkgreen") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Temperature (Mean Diurnal Range): Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Temperature (Mean Diurnal Range)")
+```
+```{r}
+ggplot(pred_new_data_TWM, aes(x = Bio05_TWM, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkgreen") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Temperature (Max of Warmest Month): Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("Temperature (Max of Warmest Month)")
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+ggplot(pred_new_data_pH, aes(x =iSDA_pH, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Soil pH: Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("pH")
+```
