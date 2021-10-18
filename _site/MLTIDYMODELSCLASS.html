@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+  <meta name="generator" content="distill" />
+
+  <style type="text/css">
+  /* Hide doc at startup (prevent jankiness while JS renders/transforms) */
+  body {
+    visibility: hidden;
+  }
+  </style>
+
+ <!--radix_placeholder_import_source-->
+ <!--/radix_placeholder_import_source-->
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ad0000; } /* Alert */
+code span.an { color: #5e5e5e; } /* Annotation */
+code span.at { color: #20794d; } /* Attribute */
+code span.bn { color: #ad0000; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007ba5; } /* ControlFlow */
+code span.ch { color: #20794d; } /* Char */
+code span.cn { color: #8f5902; } /* Constant */
+code span.co { color: #5e5e5e; } /* Comment */
+code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+code span.dt { color: #ad0000; } /* DataType */
+code span.dv { color: #ad0000; } /* DecVal */
+code span.er { color: #ad0000; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #ad0000; } /* Float */
+code span.fu { color: #4758ab; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #5e5e5e; } /* Information */
+code span.kw { color: #007ba5; } /* Keyword */
+code span.op { color: #5e5e5e; } /* Operator */
+code span.ot { color: #007ba5; } /* Other */
+code span.pp { color: #ad0000; } /* Preprocessor */
+code span.sc { color: #20794d; } /* SpecialChar */
+code span.ss { color: #20794d; } /* SpecialString */
+code span.st { color: #20794d; } /* String */
+code span.va { color: #111111; } /* Variable */
+code span.vs { color: #20794d; } /* VerbatimString */
+code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+</style>
+
+  <!--radix_placeholder_meta_tags-->
+  <title>Home: Part 5: Tidymodels - Classification</title>
+
+  <meta property="description" itemprop="description" content="On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis."/>
+
+  <link rel="icon" type="image/png" href="./IMAGES/ERA_logo_circle.png"/>
+
+
+  <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
+  <meta property="og:title" content="Home: Part 5: Tidymodels - Classification"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:description" content="On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis."/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:site_name" content="Home"/>
+
+  <!--  https://dev.twitter.com/cards/types/summary -->
+  <meta property="twitter:card" content="summary"/>
+  <meta property="twitter:title" content="Home: Part 5: Tidymodels - Classification"/>
+  <meta property="twitter:description" content="On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis."/>
+
+  <!--/radix_placeholder_meta_tags-->
+  
+  <!--radix_placeholder_rmarkdown_metadata-->
+
+  <script type="text/json" id="radix-rmarkdown-metadata">
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","favicon","description","bibliography","csl","output"]}},"value":[{"type":"character","attributes":{},"value":["Part 5: Tidymodels - Classification"]},{"type":"character","attributes":{},"value":["./IMAGES/ERA_logo_circle.png"]},{"type":"character","attributes":{},"value":["On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis.\n"]},{"type":"character","attributes":{},"value":["library.bib"]},{"type":"character","attributes":{},"value":["frontiers-in-ecology-and-the-environment.csl"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc","toc_float","toc_depth","number_sections","code_folding"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[true]},{"type":"integer","attributes":{},"value":[3]},{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  </script>
+  <!--/radix_placeholder_rmarkdown_metadata-->
+  <!--radix_placeholder_navigation_in_header-->
+  <meta name="distill:offset" content=""/>
+
+  <script type="application/javascript">
+
+    window.headroom_prevent_pin = false;
+
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+
+      // initialize headroom for banner
+      var header = $('header').get(0);
+      var headerHeight = header.offsetHeight;
+      var headroom = new Headroom(header, {
+        tolerance: 5,
+        onPin : function() {
+          if (window.headroom_prevent_pin) {
+            window.headroom_prevent_pin = false;
+            headroom.unpin();
+          }
+        }
+      });
+      headroom.init();
+      if(window.location.hash)
+        headroom.unpin();
+      $(header).addClass('headroom--transition');
+
+      // offset scroll location for banner on hash change
+      // (see: https://github.com/WickyNilliams/headroom.js/issues/38)
+      window.addEventListener("hashchange", function(event) {
+        window.scrollTo(0, window.pageYOffset - (headerHeight + 25));
+      });
+
+      // responsive menu
+      $('.distill-site-header').each(function(i, val) {
+        var topnav = $(this);
+        var toggle = topnav.find('.nav-toggle');
+        toggle.on('click', function() {
+          topnav.toggleClass('responsive');
+        });
+      });
+
+      // nav dropdowns
+      $('.nav-dropbtn').click(function(e) {
+        $(this).next('.nav-dropdown-content').toggleClass('nav-dropdown-active');
+        $(this).parent().siblings('.nav-dropdown')
+           .children('.nav-dropdown-content').removeClass('nav-dropdown-active');
+      });
+      $("body").click(function(e){
+        $('.nav-dropdown-content').removeClass('nav-dropdown-active');
+      });
+      $(".nav-dropdown").click(function(e){
+        e.stopPropagation();
+      });
+    });
+  </script>
+
+  <style type="text/css">
+
+  /* Theme (user-documented overrideables for nav appearance) */
+
+  .distill-site-nav {
+    color: rgba(255, 255, 255, 0.8);
+    background-color: #0F2E3D;
+    font-size: 15px;
+    font-weight: 300;
+  }
+
+  .distill-site-nav a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .distill-site-nav a:hover {
+    color: white;
+  }
+
+  @media print {
+    .distill-site-nav {
+      display: none;
+    }
+  }
+
+  .distill-site-header {
+
+  }
+
+  .distill-site-footer {
+
+  }
+
+
+  /* Site Header */
+
+  .distill-site-header {
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 3;
+  }
+
+  .distill-site-header .nav-left {
+    display: inline-block;
+    margin-left: 8px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .distill-site-header .nav-left {
+      margin-left: 0;
+    }
+  }
+
+
+  .distill-site-header .nav-right {
+    float: right;
+    margin-right: 8px;
+  }
+
+  .distill-site-header a,
+  .distill-site-header .title {
+    display: inline-block;
+    text-align: center;
+    padding: 14px 10px 14px 10px;
+  }
+
+  .distill-site-header .title {
+    font-size: 18px;
+    min-width: 150px;
+  }
+
+  .distill-site-header .logo {
+    padding: 0;
+  }
+
+  .distill-site-header .logo img {
+    display: none;
+    max-height: 20px;
+    width: auto;
+    margin-bottom: -4px;
+  }
+
+  .distill-site-header .nav-image img {
+    max-height: 18px;
+    width: auto;
+    display: inline-block;
+    margin-bottom: -3px;
+  }
+
+
+
+  @media screen and (min-width: 1000px) {
+    .distill-site-header .logo img {
+      display: inline-block;
+    }
+    .distill-site-header .nav-left {
+      margin-left: 20px;
+    }
+    .distill-site-header .nav-right {
+      margin-right: 20px;
+    }
+    .distill-site-header .title {
+      padding-left: 12px;
+    }
+  }
+
+
+  .distill-site-header .nav-toggle {
+    display: none;
+  }
+
+  .nav-dropdown {
+    display: inline-block;
+    position: relative;
+  }
+
+  .nav-dropdown .nav-dropbtn {
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 16px 10px;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
+    margin-top: 1px;
+    z-index: 2;
+  }
+
+  .nav-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+    z-index: 1;
+    margin-top: 2px;
+    white-space: nowrap;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .nav-dropdown-content hr {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-dropdown-active {
+    display: block;
+  }
+
+  .nav-dropdown-content a, .nav-dropdown-content .nav-dropdown-header {
+    color: black;
+    padding: 6px 24px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+  }
+
+  .nav-dropdown-content .nav-dropdown-header {
+    display: block;
+    padding: 5px 24px;
+    padding-bottom: 0;
+    text-transform: uppercase;
+    font-size: 14px;
+    color: #999999;
+    white-space: nowrap;
+  }
+
+  .nav-dropdown:hover .nav-dropbtn {
+    color: white;
+  }
+
+  .nav-dropdown-content a:hover {
+    background-color: #ddd;
+    color: black;
+  }
+
+  .nav-right .nav-dropdown-content {
+    margin-left: -45%;
+    right: 0;
+  }
+
+  @media screen and (max-width: 768px) {
+    .distill-site-header a, .distill-site-header .nav-dropdown  {display: none;}
+    .distill-site-header a.nav-toggle {
+      float: right;
+      display: block;
+    }
+    .distill-site-header .title {
+      margin-left: 0;
+    }
+    .distill-site-header .nav-right {
+      margin-right: 0;
+    }
+    .distill-site-header {
+      overflow: hidden;
+    }
+    .nav-right .nav-dropdown-content {
+      margin-left: 0;
+    }
+  }
+
+
+  @media screen and (max-width: 768px) {
+    .distill-site-header.responsive {position: relative; min-height: 500px; }
+    .distill-site-header.responsive a.nav-toggle {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    .distill-site-header.responsive a,
+    .distill-site-header.responsive .nav-dropdown {
+      display: block;
+      text-align: left;
+    }
+    .distill-site-header.responsive .nav-left,
+    .distill-site-header.responsive .nav-right {
+      width: 100%;
+    }
+    .distill-site-header.responsive .nav-dropdown {float: none;}
+    .distill-site-header.responsive .nav-dropdown-content {position: relative;}
+    .distill-site-header.responsive .nav-dropdown .nav-dropbtn {
+      display: block;
+      width: 100%;
+      text-align: left;
+    }
+  }
+
+  /* Site Footer */
+
+  .distill-site-footer {
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    z-index: 3;
+    margin-top: 30px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    text-align: center;
+  }
+
+  /* Headroom */
+
+  d-title {
+    padding-top: 6rem;
+  }
+
+  @media print {
+    d-title {
+      padding-top: 4rem;
+    }
+  }
+
+  .headroom {
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .headroom--transition {
+    transition: all .4s ease-in-out;
+  }
+
+  .headroom--unpinned {
+    top: -100px;
+  }
+
+  .headroom--pinned {
+    top: 0;
+  }
+
+  /* adjust viewport for navbar height */
+  /* helps vertically center bootstrap (non-distill) content */
+  .min-vh-100 {
+    min-height: calc(100vh - 100px) !important;
+  }
+
+  </style>
+
+  <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+  <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+  <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
+  <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
+  <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
+
+  <script type="application/javascript">
+
+  function getMeta(metaName) {
+    var metas = document.getElementsByTagName('meta');
+    for (let i = 0; i < metas.length; i++) {
+      if (metas[i].getAttribute('name') === metaName) {
+        return metas[i].getAttribute('content');
+      }
+    }
+    return '';
+  }
+
+  function offsetURL(url) {
+    var offset = getMeta('distill:offset');
+    return offset ? offset + '/' + url : url;
+  }
+
+  function createFuseIndex() {
+
+    // create fuse index
+    var options = {
+      keys: [
+        { name: 'title', weight: 20 },
+        { name: 'categories', weight: 15 },
+        { name: 'description', weight: 10 },
+        { name: 'contents', weight: 5 },
+      ],
+      ignoreLocation: true,
+      threshold: 0
+    };
+    var fuse = new window.Fuse([], options);
+
+    // fetch the main search.json
+    return fetch(offsetURL('search.json'))
+      .then(function(response) {
+        if (response.status == 200) {
+          return response.json().then(function(json) {
+            // index main articles
+            json.articles.forEach(function(article) {
+              fuse.add(article);
+            });
+            // download collections and index their articles
+            return Promise.all(json.collections.map(function(collection) {
+              return fetch(offsetURL(collection)).then(function(response) {
+                if (response.status === 200) {
+                  return response.json().then(function(articles) {
+                    articles.forEach(function(article) {
+                      fuse.add(article);
+                    });
+                  })
+                } else {
+                  return Promise.reject(
+                    new Error('Unexpected status from search index request: ' +
+                              response.status)
+                  );
+                }
+              });
+            })).then(function() {
+              return fuse;
+            });
+          });
+
+        } else {
+          return Promise.reject(
+            new Error('Unexpected status from search index request: ' +
+                        response.status)
+          );
+        }
+      });
+  }
+
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+
+    // get search element (bail if we don't have one)
+    var searchEl = window.document.getElementById('distill-search');
+    if (!searchEl)
+      return;
+
+    createFuseIndex()
+      .then(function(fuse) {
+
+        // make search box visible
+        searchEl.classList.remove('hidden');
+
+        // initialize autocomplete
+        var options = {
+          autoselect: true,
+          hint: false,
+          minLength: 2,
+        };
+        window.autocomplete(searchEl, options, [{
+          source: function(query, callback) {
+            const searchOptions = {
+              isCaseSensitive: false,
+              shouldSort: true,
+              minMatchCharLength: 2,
+              limit: 10,
+            };
+            var results = fuse.search(query, searchOptions);
+            callback(results
+              .map(function(result) { return result.item; })
+            );
+          },
+          templates: {
+            suggestion: function(suggestion) {
+              var img = suggestion.preview && Object.keys(suggestion.preview).length > 0
+                ? `<img src="${offsetURL(suggestion.preview)}"</img>`
+                : '';
+              var html = `
+                <div class="search-item">
+                  <h3>${suggestion.title}</h3>
+                  <div class="search-item-description">
+                    ${suggestion.description || ''}
+                  </div>
+                  <div class="search-item-preview">
+                    ${img}
+                  </div>
+                </div>
+              `;
+              return html;
+            }
+          }
+        }]).on('autocomplete:selected', function(event, suggestion) {
+          window.location.href = offsetURL(suggestion.path);
+        });
+        // remove inline display style on autocompleter (we want to
+        // manage responsive display via css)
+        $('.algolia-autocomplete').css("display", "");
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+
+  });
+
+  </script>
+
+  <style type="text/css">
+
+  .nav-search {
+    font-size: x-small;
+  }
+
+  /* Algolioa Autocomplete */
+
+  .algolia-autocomplete {
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: sub;
+    background-color: white;
+    color: black;
+    padding: 6px;
+    padding-top: 8px;
+    padding-bottom: 0;
+    border-radius: 6px;
+    border: 1px #0F2E3D solid;
+    width: 180px;
+  }
+
+
+  @media screen and (max-width: 768px) {
+    .distill-site-nav .algolia-autocomplete {
+      display: none;
+      visibility: hidden;
+    }
+    .distill-site-nav.responsive .algolia-autocomplete {
+      display: inline-block;
+      visibility: visible;
+    }
+    .distill-site-nav.responsive .algolia-autocomplete .aa-dropdown-menu {
+      margin-left: 0;
+      width: 400px;
+      max-height: 400px;
+    }
+  }
+
+  .algolia-autocomplete .aa-input, .algolia-autocomplete .aa-hint {
+    width: 90%;
+    outline: none;
+    border: none;
+  }
+
+  .algolia-autocomplete .aa-hint {
+    color: #999;
+  }
+  .algolia-autocomplete .aa-dropdown-menu {
+    width: 550px;
+    max-height: 70vh;
+    overflow-x: visible;
+    overflow-y: scroll;
+    padding: 5px;
+    margin-top: 3px;
+    margin-left: -150px;
+    background-color: #fff;
+    border-radius: 5px;
+    border: 1px solid #999;
+    border-top: none;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion {
+    cursor: pointer;
+    padding: 5px 4px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion:last-of-type {
+    border-bottom: none;
+    margin-bottom: 2px;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item {
+    overflow: hidden;
+    font-size: 0.8em;
+    line-height: 1.4em;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item h3 {
+    font-size: 1rem;
+    margin-block-start: 0;
+    margin-block-end: 5px;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-description {
+    display: inline-block;
+    overflow: hidden;
+    height: 2.8em;
+    width: 80%;
+    margin-right: 4%;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview {
+    display: inline-block;
+    width: 15%;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img {
+    height: 3em;
+    width: auto;
+    display: none;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion .search-item-preview img[src] {
+    display: initial;
+  }
+
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion.aa-cursor {
+    background-color: #eee;
+  }
+  .algolia-autocomplete .aa-dropdown-menu .aa-suggestion em {
+    font-weight: bold;
+    font-style: normal;
+  }
+
+  </style>
+
+
+  <!--/radix_placeholder_navigation_in_header-->
+  <!--radix_placeholder_distill-->
+
+  <style type="text/css">
+
+  body {
+    background-color: white;
+  }
+
+  .pandoc-table {
+    width: 100%;
+  }
+
+  .pandoc-table>caption {
+    margin-bottom: 10px;
+  }
+
+  .pandoc-table th:not([align]) {
+    text-align: left;
+  }
+
+  .pagedtable-footer {
+    font-size: 15px;
+  }
+
+  d-byline .byline {
+    grid-template-columns: 2fr 2fr;
+  }
+
+  d-byline .byline h3 {
+    margin-block-start: 1.5em;
+  }
+
+  d-byline .byline .authors-affiliations h3 {
+    margin-block-start: 0.5em;
+  }
+
+  .authors-affiliations .orcid-id {
+    width: 16px;
+    height:16px;
+    margin-left: 4px;
+    margin-right: 4px;
+    vertical-align: middle;
+    padding-bottom: 2px;
+  }
+
+  d-title .dt-tags {
+    margin-top: 1em;
+    grid-column: text;
+  }
+
+  .dt-tags .dt-tag {
+    text-decoration: none;
+    display: inline-block;
+    color: rgba(0,0,0,0.6);
+    padding: 0em 0.4em;
+    margin-right: 0.5em;
+    margin-bottom: 0.4em;
+    font-size: 70%;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  d-article table.gt_table td,
+  d-article table.gt_table th {
+    border-bottom: none;
+  }
+
+  .html-widget {
+    margin-bottom: 2.0em;
+  }
+
+  .l-screen-inset {
+    padding-right: 16px;
+  }
+
+  .l-screen .caption {
+    margin-left: 10px;
+  }
+
+  .shaded {
+    background: rgb(247, 247, 247);
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .shaded .html-widget {
+    margin-bottom: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .shaded .shaded-content {
+    background: white;
+  }
+
+  .text-output {
+    margin-top: 0;
+    line-height: 1.5em;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  d-article {
+    padding-top: 2.5rem;
+    padding-bottom: 30px;
+  }
+
+  d-appendix {
+    padding-top: 30px;
+  }
+
+  d-article>p>img {
+    width: 100%;
+  }
+
+  d-article h2 {
+    margin: 1rem 0 1.5rem 0;
+  }
+
+  d-article h3 {
+    margin-top: 1.5rem;
+  }
+
+  d-article iframe {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 2.0em;
+    width: 100%;
+  }
+
+  /* Tweak code blocks */
+
+  d-article div.sourceCode code,
+  d-article pre code {
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  }
+
+  d-article pre,
+  d-article div.sourceCode,
+  d-article div.sourceCode pre {
+    overflow: auto;
+  }
+
+  d-article div.sourceCode {
+    background-color: white;
+  }
+
+  d-article div.sourceCode pre {
+    padding-left: 10px;
+    font-size: 12px;
+    border-left: 2px solid rgba(0,0,0,0.1);
+  }
+
+  d-article pre {
+    font-size: 12px;
+    color: black;
+    background: none;
+    margin-top: 0;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+  }
+
+  d-article pre a {
+    border-bottom: none;
+  }
+
+  d-article pre a:hover {
+    border-bottom: none;
+    text-decoration: underline;
+  }
+
+  d-article details {
+    grid-column: text;
+    margin-bottom: 0.8em;
+  }
+
+  @media(min-width: 768px) {
+
+  d-article pre,
+  d-article div.sourceCode,
+  d-article div.sourceCode pre {
+    overflow: visible !important;
+  }
+
+  d-article div.sourceCode pre {
+    padding-left: 18px;
+    font-size: 14px;
+  }
+
+  d-article pre {
+    font-size: 14px;
+  }
+
+  }
+
+  figure img.external {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+    padding: 18px;
+    box-sizing: border-box;
+  }
+
+  /* CSS for d-contents */
+
+  .d-contents {
+    grid-column: text;
+    color: rgba(0,0,0,0.8);
+    font-size: 0.9em;
+    padding-bottom: 1em;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+    padding-left: 0.25em;
+    justify-self: start;
+  }
+
+  @media(min-width: 1000px) {
+    .d-contents.d-contents-float {
+      height: 0;
+      grid-column-start: 1;
+      grid-column-end: 4;
+      justify-self: center;
+      padding-right: 3em;
+      padding-left: 2em;
+    }
+  }
+
+  .d-contents nav h3 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+
+  .d-contents li {
+    list-style-type: none
+  }
+
+  .d-contents nav > ul {
+    padding-left: 0;
+  }
+
+  .d-contents ul {
+    padding-left: 1em
+  }
+
+  .d-contents nav ul li {
+    margin-top: 0.6em;
+    margin-bottom: 0.2em;
+  }
+
+  .d-contents nav a {
+    font-size: 13px;
+    border-bottom: none;
+    text-decoration: none
+    color: rgba(0, 0, 0, 0.8);
+  }
+
+  .d-contents nav a:hover {
+    text-decoration: underline solid rgba(0, 0, 0, 0.6)
+  }
+
+  .d-contents nav > ul > li > a {
+    font-weight: 600;
+  }
+
+  .d-contents nav > ul > li > ul {
+    font-weight: inherit;
+  }
+
+  .d-contents nav > ul > li > ul > li {
+    margin-top: 0.2em;
+  }
+
+
+  .d-contents nav ul {
+    margin-top: 0;
+    margin-bottom: 0.25em;
+  }
+
+  .d-article-with-toc h2:nth-child(2) {
+    margin-top: 0;
+  }
+
+
+  /* Figure */
+
+  .figure {
+    position: relative;
+    margin-bottom: 2.5em;
+    margin-top: 1.5em;
+  }
+
+  .figure img {
+    width: 100%;
+  }
+
+  .figure .caption {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    line-height: 1.5em;
+  }
+
+  .figure img.external {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+    padding: 18px;
+    box-sizing: border-box;
+  }
+
+  .figure .caption a {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .figure .caption b,
+  .figure .caption strong, {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 1.0);
+  }
+
+  /* Citations */
+
+  d-article .citation {
+    color: inherit;
+    cursor: inherit;
+  }
+
+  div.hanging-indent{
+    margin-left: 1em; text-indent: -1em;
+  }
+
+  /* Citation hover box */
+
+  .tippy-box[data-theme~=light-border] {
+    background-color: rgba(250, 250, 250, 0.95);
+  }
+
+  .tippy-content > p {
+    margin-bottom: 0;
+    padding: 2px;
+  }
+
+
+  /* Tweak 1000px media break to show more text */
+
+  @media(min-width: 1000px) {
+    .base-grid,
+    distill-header,
+    d-title,
+    d-abstract,
+    d-article,
+    d-appendix,
+    distill-appendix,
+    d-byline,
+    d-footnote-list,
+    d-citation-list,
+    distill-footer {
+      grid-template-columns: [screen-start] 1fr [page-start kicker-start] 80px [middle-start] 50px [text-start kicker-end] 65px 65px 65px 65px 65px 65px 65px 65px [text-end gutter-start] 65px [middle-end] 65px [page-end gutter-end] 1fr [screen-end];
+      grid-column-gap: 16px;
+    }
+
+    .grid {
+      grid-column-gap: 16px;
+    }
+
+    d-article {
+      font-size: 1.06rem;
+      line-height: 1.7em;
+    }
+    figure .caption, .figure .caption, figure figcaption {
+      font-size: 13px;
+    }
+  }
+
+  @media(min-width: 1180px) {
+    .base-grid,
+    distill-header,
+    d-title,
+    d-abstract,
+    d-article,
+    d-appendix,
+    distill-appendix,
+    d-byline,
+    d-footnote-list,
+    d-citation-list,
+    distill-footer {
+      grid-template-columns: [screen-start] 1fr [page-start kicker-start] 60px [middle-start] 60px [text-start kicker-end] 60px 60px 60px 60px 60px 60px 60px 60px [text-end gutter-start] 60px [middle-end] 60px [page-end gutter-end] 1fr [screen-end];
+      grid-column-gap: 32px;
+    }
+
+    .grid {
+      grid-column-gap: 32px;
+    }
+  }
+
+
+  /* Get the citation styles for the appendix (not auto-injected on render since
+     we do our own rendering of the citation appendix) */
+
+  d-appendix .citation-appendix,
+  .d-appendix .citation-appendix {
+    font-size: 11px;
+    line-height: 15px;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 18px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.02);
+    padding: 10px 18px;
+    border-radius: 3px;
+    color: rgba(150, 150, 150, 1);
+    overflow: hidden;
+    margin-top: -12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* Include appendix styles here so they can be overridden */
+
+  d-appendix {
+    contain: layout style;
+    font-size: 0.8em;
+    line-height: 1.7em;
+    margin-top: 60px;
+    margin-bottom: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    color: rgba(0,0,0,0.5);
+    padding-top: 60px;
+    padding-bottom: 48px;
+  }
+
+  d-appendix h3 {
+    grid-column: page-start / text-start;
+    font-size: 15px;
+    font-weight: 500;
+    margin-top: 1em;
+    margin-bottom: 0;
+    color: rgba(0,0,0,0.65);
+  }
+
+  d-appendix h3 + * {
+    margin-top: 1em;
+  }
+
+  d-appendix ol {
+    padding: 0 0 0 15px;
+  }
+
+  @media (min-width: 768px) {
+    d-appendix ol {
+      padding: 0 0 0 30px;
+      margin-left: -30px;
+    }
+  }
+
+  d-appendix li {
+    margin-bottom: 1em;
+  }
+
+  d-appendix a {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  d-appendix > * {
+    grid-column: text;
+  }
+
+  d-appendix > d-footnote-list,
+  d-appendix > d-citation-list,
+  d-appendix > distill-appendix {
+    grid-column: screen;
+  }
+
+  /* Include footnote styles here so they can be overridden */
+
+  d-footnote-list {
+    contain: layout style;
+  }
+
+  d-footnote-list > * {
+    grid-column: text;
+  }
+
+  d-footnote-list a.footnote-backlink {
+    color: rgba(0,0,0,0.3);
+    padding-left: 0.5em;
+  }
+
+
+
+  /* Anchor.js */
+
+  .anchorjs-link {
+    /*transition: all .25s linear; */
+    text-decoration: none;
+    border-bottom: none;
+  }
+  *:hover > .anchorjs-link {
+    margin-left: -1.125em !important;
+    text-decoration: none;
+    border-bottom: none;
+  }
+
+  /* Social footer */
+
+  .social_footer {
+    margin-top: 30px;
+    margin-bottom: 0;
+    color: rgba(0,0,0,0.67);
+  }
+
+  .disqus-comments {
+    margin-right: 30px;
+  }
+
+  .disqus-comment-count {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+
+  #disqus_thread {
+    margin-top: 30px;
+  }
+
+  .article-sharing a {
+    border-bottom: none;
+    margin-right: 8px;
+  }
+
+  .article-sharing a:hover {
+    border-bottom: none;
+  }
+
+  .sidebar-section.subscribe {
+    font-size: 12px;
+    line-height: 1.6em;
+  }
+
+  .subscribe p {
+    margin-bottom: 0.5em;
+  }
+
+
+  .article-footer .subscribe {
+    font-size: 15px;
+    margin-top: 45px;
+  }
+
+
+  .sidebar-section.custom {
+    font-size: 12px;
+    line-height: 1.6em;
+  }
+
+  .custom p {
+    margin-bottom: 0.5em;
+  }
+
+  /* Styles for listing layout (hide title) */
+  .layout-listing d-title, .layout-listing .d-title {
+    display: none;
+  }
+
+  /* Styles for posts lists (not auto-injected) */
+
+
+  .posts-with-sidebar {
+    padding-left: 45px;
+    padding-right: 45px;
+  }
+
+  .posts-list .description h2,
+  .posts-list .description p {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .posts-list .description h2 {
+    font-weight: 700;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .posts-list h2.post-tag {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    padding-bottom: 12px;
+  }
+  .posts-list {
+    margin-top: 60px;
+    margin-bottom: 24px;
+  }
+
+  .posts-list .post-preview {
+    text-decoration: none;
+    overflow: hidden;
+    display: block;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 24px 0;
+  }
+
+  .post-preview-last {
+    border-bottom: none !important;
+  }
+
+  .posts-list .posts-list-caption {
+    grid-column: screen;
+    font-weight: 400;
+  }
+
+  .posts-list .post-preview h2 {
+    margin: 0 0 6px 0;
+    line-height: 1.2em;
+    font-style: normal;
+    font-size: 24px;
+  }
+
+  .posts-list .post-preview p {
+    margin: 0 0 12px 0;
+    line-height: 1.4em;
+    font-size: 16px;
+  }
+
+  .posts-list .post-preview .thumbnail {
+    box-sizing: border-box;
+    margin-bottom: 24px;
+    position: relative;
+    max-width: 500px;
+  }
+  .posts-list .post-preview img {
+    width: 100%;
+    display: block;
+  }
+
+  .posts-list .metadata {
+    font-size: 12px;
+    line-height: 1.4em;
+    margin-bottom: 18px;
+  }
+
+  .posts-list .metadata > * {
+    display: inline-block;
+  }
+
+  .posts-list .metadata .publishedDate {
+    margin-right: 2em;
+  }
+
+  .posts-list .metadata .dt-authors {
+    display: block;
+    margin-top: 0.3em;
+    margin-right: 2em;
+  }
+
+  .posts-list .dt-tags {
+    display: block;
+    line-height: 1em;
+  }
+
+  .posts-list .dt-tags .dt-tag {
+    display: inline-block;
+    color: rgba(0,0,0,0.6);
+    padding: 0.3em 0.4em;
+    margin-right: 0.2em;
+    margin-bottom: 0.4em;
+    font-size: 60%;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .posts-list img {
+    opacity: 1;
+  }
+
+  .posts-list img[data-src] {
+    opacity: 0;
+  }
+
+  .posts-more {
+    clear: both;
+  }
+
+
+  .posts-sidebar {
+    font-size: 16px;
+  }
+
+  .posts-sidebar h3 {
+    font-size: 16px;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  .sidebar-section {
+    margin-bottom: 30px;
+  }
+
+  .categories ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .categories li {
+    color: rgba(0, 0, 0, 0.8);
+    margin-bottom: 0;
+  }
+
+  .categories li>a {
+    border-bottom: none;
+  }
+
+  .categories li>a:hover {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  }
+
+  .categories .active {
+    font-weight: 600;
+  }
+
+  .categories .category-count {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+
+  @media(min-width: 768px) {
+    .posts-list .post-preview h2 {
+      font-size: 26px;
+    }
+    .posts-list .post-preview .thumbnail {
+      float: right;
+      width: 30%;
+      margin-bottom: 0;
+    }
+    .posts-list .post-preview .description {
+      float: left;
+      width: 45%;
+    }
+    .posts-list .post-preview .metadata {
+      float: left;
+      width: 20%;
+      margin-top: 8px;
+    }
+    .posts-list .post-preview p {
+      margin: 0 0 12px 0;
+      line-height: 1.5em;
+      font-size: 16px;
+    }
+    .posts-with-sidebar .posts-list {
+      float: left;
+      width: 75%;
+    }
+    .posts-with-sidebar .posts-sidebar {
+      float: right;
+      width: 20%;
+      margin-top: 60px;
+      padding-top: 24px;
+      padding-bottom: 24px;
+    }
+  }
+
+
+  /* Improve display for browsers without grid (IE/Edge <= 15) */
+
+  .downlevel {
+    line-height: 1.6em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+  }
+
+  .downlevel .d-title {
+    padding-top: 6rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .downlevel .d-title h1 {
+    font-size: 50px;
+    font-weight: 700;
+    line-height: 1.1em;
+    margin: 0 0 0.5rem;
+  }
+
+  .downlevel .d-title p {
+    font-weight: 300;
+    font-size: 1.2rem;
+    line-height: 1.55em;
+    margin-top: 0;
+  }
+
+  .downlevel .d-byline {
+    padding-top: 0.8em;
+    padding-bottom: 0.8em;
+    font-size: 0.8rem;
+    line-height: 1.8em;
+  }
+
+  .downlevel .section-separator {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .downlevel .d-article {
+    font-size: 1.06rem;
+    line-height: 1.7em;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+
+
+  .downlevel .d-appendix {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: none;
+    font-size: 0.8em;
+    line-height: 1.7em;
+    margin-bottom: 0;
+    color: rgba(0,0,0,0.5);
+    padding-top: 40px;
+    padding-bottom: 48px;
+  }
+
+  .downlevel .footnotes ol {
+    padding-left: 13px;
+  }
+
+  .downlevel .base-grid,
+  .downlevel .distill-header,
+  .downlevel .d-title,
+  .downlevel .d-abstract,
+  .downlevel .d-article,
+  .downlevel .d-appendix,
+  .downlevel .distill-appendix,
+  .downlevel .d-byline,
+  .downlevel .d-footnote-list,
+  .downlevel .d-citation-list,
+  .downlevel .distill-footer,
+  .downlevel .appendix-bottom,
+  .downlevel .posts-container {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  @media(min-width: 768px) {
+    .downlevel .base-grid,
+    .downlevel .distill-header,
+    .downlevel .d-title,
+    .downlevel .d-abstract,
+    .downlevel .d-article,
+    .downlevel .d-appendix,
+    .downlevel .distill-appendix,
+    .downlevel .d-byline,
+    .downlevel .d-footnote-list,
+    .downlevel .d-citation-list,
+    .downlevel .distill-footer,
+    .downlevel .appendix-bottom,
+    .downlevel .posts-container {
+    padding-left: 150px;
+    padding-right: 150px;
+    max-width: 900px;
+  }
+  }
+
+  .downlevel pre code {
+    display: block;
+    border-left: 2px solid rgba(0, 0, 0, .1);
+    padding: 0 0 0 20px;
+    font-size: 14px;
+  }
+
+  .downlevel code, .downlevel pre {
+    color: black;
+    background: none;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+  }
+
+  .downlevel .posts-list .post-preview {
+    color: inherit;
+  }
+
+
+
+  </style>
+
+  <script type="application/javascript">
+
+  function is_downlevel_browser() {
+    if (bowser.isUnsupportedBrowser({ msie: "12", msedge: "16"},
+                                   window.navigator.userAgent)) {
+      return true;
+    } else {
+      return window.load_distill_framework === undefined;
+    }
+  }
+
+  // show body when load is complete
+  function on_load_complete() {
+
+    // add anchors
+    if (window.anchors) {
+      window.anchors.options.placement = 'left';
+      window.anchors.add('d-article > h2, d-article > h3, d-article > h4, d-article > h5');
+    }
+
+
+    // set body to visible
+    document.body.style.visibility = 'visible';
+
+    // force redraw for leaflet widgets
+    if (window.HTMLWidgets) {
+      var maps = window.HTMLWidgets.findAll(".leaflet");
+      $.each(maps, function(i, el) {
+        var map = this.getMap();
+        map.invalidateSize();
+        map.eachLayer(function(layer) {
+          if (layer instanceof L.TileLayer)
+            layer.redraw();
+        });
+      });
+    }
+
+    // trigger 'shown' so htmlwidgets resize
+    $('d-article').trigger('shown');
+  }
+
+  function init_distill() {
+
+    init_common();
+
+    // create front matter
+    var front_matter = $('<d-front-matter></d-front-matter>');
+    $('#distill-front-matter').wrap(front_matter);
+
+    // create d-title
+    $('.d-title').changeElementType('d-title');
+
+    // create d-byline
+    var byline = $('<d-byline></d-byline>');
+    $('.d-byline').replaceWith(byline);
+
+    // create d-article
+    var article = $('<d-article></d-article>');
+    $('.d-article').wrap(article).children().unwrap();
+
+    // move posts container into article
+    $('.posts-container').appendTo($('d-article'));
+
+    // create d-appendix
+    $('.d-appendix').changeElementType('d-appendix');
+
+    // flag indicating that we have appendix items
+    var appendix = $('.appendix-bottom').children('h3').length > 0;
+
+    // replace footnotes with <d-footnote>
+    $('.footnote-ref').each(function(i, val) {
+      appendix = true;
+      var href = $(this).attr('href');
+      var id = href.replace('#', '');
+      var fn = $('#' + id);
+      var fn_p = $('#' + id + '>p');
+      fn_p.find('.footnote-back').remove();
+      var text = fn_p.html();
+      var dtfn = $('<d-footnote></d-footnote>');
+      dtfn.html(text);
+      $(this).replaceWith(dtfn);
+    });
+    // remove footnotes
+    $('.footnotes').remove();
+
+    // move refs into #references-listing
+    $('#references-listing').replaceWith($('#refs'));
+
+    $('h1.appendix, h2.appendix').each(function(i, val) {
+      $(this).changeElementType('h3');
+    });
+    $('h3.appendix').each(function(i, val) {
+      var id = $(this).attr('id');
+      $('.d-contents a[href="#' + id + '"]').parent().remove();
+      appendix = true;
+      $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('d-appendix'));
+    });
+
+    // show d-appendix if we have appendix content
+    $("d-appendix").css('display', appendix ? 'grid' : 'none');
+
+    // localize layout chunks to just output
+    $('.layout-chunk').each(function(i, val) {
+
+      // capture layout
+      var layout = $(this).attr('data-layout');
+
+      // apply layout to markdown level block elements
+      var elements = $(this).children().not('details, div.sourceCode, pre, script');
+      elements.each(function(i, el) {
+        var layout_div = $('<div class="' + layout + '"></div>');
+        if (layout_div.hasClass('shaded')) {
+          var shaded_content = $('<div class="shaded-content"></div>');
+          $(this).wrap(shaded_content);
+          $(this).parent().wrap(layout_div);
+        } else {
+          $(this).wrap(layout_div);
+        }
+      });
+
+
+      // unwrap the layout-chunk div
+      $(this).children().unwrap();
+    });
+
+    // remove code block used to force  highlighting css
+    $('.distill-force-highlighting-css').parent().remove();
+
+    // remove empty line numbers inserted by pandoc when using a
+    // custom syntax highlighting theme
+    $('code.sourceCode a:empty').remove();
+
+    // load distill framework
+    load_distill_framework();
+
+    // wait for window.distillRunlevel == 4 to do post processing
+    function distill_post_process() {
+
+      if (!window.distillRunlevel || window.distillRunlevel < 4)
+        return;
+
+      // hide author/affiliations entirely if we have no authors
+      var front_matter = JSON.parse($("#distill-front-matter").html());
+      var have_authors = front_matter.authors && front_matter.authors.length > 0;
+      if (!have_authors)
+        $('d-byline').addClass('hidden');
+
+      // article with toc class
+      $('.d-contents').parent().addClass('d-article-with-toc');
+
+      // strip links that point to #
+      $('.authors-affiliations').find('a[href="#"]').removeAttr('href');
+
+      // add orcid ids
+      $('.authors-affiliations').find('.author').each(function(i, el) {
+        var orcid_id = front_matter.authors[i].orcidID;
+        if (orcid_id) {
+          var a = $('<a></a>');
+          a.attr('href', 'https://orcid.org/' + orcid_id);
+          var img = $('<img></img>');
+          img.addClass('orcid-id');
+          img.attr('alt', 'ORCID ID');
+          img.attr('src','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg==');
+          a.append(img);
+          $(this).append(a);
+        }
+      });
+
+      // hide elements of author/affiliations grid that have no value
+      function hide_byline_column(caption) {
+        $('d-byline').find('h3:contains("' + caption + '")').parent().css('visibility', 'hidden');
+      }
+
+      // affiliations
+      var have_affiliations = false;
+      for (var i = 0; i<front_matter.authors.length; ++i) {
+        var author = front_matter.authors[i];
+        if (author.affiliation !== "&nbsp;") {
+          have_affiliations = true;
+          break;
+        }
+      }
+      if (!have_affiliations)
+        $('d-byline').find('h3:contains("Affiliations")').css('visibility', 'hidden');
+
+      // published date
+      if (!front_matter.publishedDate)
+        hide_byline_column("Published");
+
+      // document object identifier
+      var doi = $('d-byline').find('h3:contains("DOI")');
+      var doi_p = doi.next().empty();
+      if (!front_matter.doi) {
+        // if we have a citation and valid citationText then link to that
+        if ($('#citation').length > 0 && front_matter.citationText) {
+          doi.html('Citation');
+          $('<a href="#citation"></a>')
+            .text(front_matter.citationText)
+            .appendTo(doi_p);
+        } else {
+          hide_byline_column("DOI");
+        }
+      } else {
+        $('<a></a>')
+           .attr('href', "https://doi.org/" + front_matter.doi)
+           .html(front_matter.doi)
+           .appendTo(doi_p);
+      }
+
+       // change plural form of authors/affiliations
+      if (front_matter.authors.length === 1) {
+        var grid = $('.authors-affiliations');
+        grid.children('h3:contains("Authors")').text('Author');
+        grid.children('h3:contains("Affiliations")').text('Affiliation');
+      }
+
+      // remove d-appendix and d-footnote-list local styles
+      $('d-appendix > style:first-child').remove();
+      $('d-footnote-list > style:first-child').remove();
+
+      // move appendix-bottom entries to the bottom
+      $('.appendix-bottom').appendTo('d-appendix').children().unwrap();
+      $('.appendix-bottom').remove();
+
+      // hoverable references
+      $('span.citation[data-cites]').each(function() {
+        var refHtml = $('#ref-' + $(this).attr('data-cites')).html();
+        window.tippy(this, {
+          allowHTML: true,
+          content: refHtml,
+          maxWidth: 500,
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'light-border',
+          placement: 'bottom-start'
+        });
+      });
+
+      // clear polling timer
+      clearInterval(tid);
+
+      // show body now that everything is ready
+      on_load_complete();
+    }
+
+    var tid = setInterval(distill_post_process, 50);
+    distill_post_process();
+
+  }
+
+  function init_downlevel() {
+
+    init_common();
+
+     // insert hr after d-title
+    $('.d-title').after($('<hr class="section-separator"/>'));
+
+    // check if we have authors
+    var front_matter = JSON.parse($("#distill-front-matter").html());
+    var have_authors = front_matter.authors && front_matter.authors.length > 0;
+
+    // manage byline/border
+    if (!have_authors)
+      $('.d-byline').remove();
+    $('.d-byline').after($('<hr class="section-separator"/>'));
+    $('.d-byline a').remove();
+
+    // remove toc
+    $('.d-contents').remove();
+
+    // move appendix elements
+    $('h1.appendix, h2.appendix').each(function(i, val) {
+      $(this).changeElementType('h3');
+    });
+    $('h3.appendix').each(function(i, val) {
+      $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('.d-appendix'));
+    });
+
+
+    // inject headers into references and footnotes
+    var refs_header = $('<h3></h3>');
+    refs_header.text('References');
+    $('#refs').prepend(refs_header);
+
+    var footnotes_header = $('<h3></h3');
+    footnotes_header.text('Footnotes');
+    $('.footnotes').children('hr').first().replaceWith(footnotes_header);
+
+    // move appendix-bottom entries to the bottom
+    $('.appendix-bottom').appendTo('.d-appendix').children().unwrap();
+    $('.appendix-bottom').remove();
+
+    // remove appendix if it's empty
+    if ($('.d-appendix').children().length === 0)
+      $('.d-appendix').remove();
+
+    // prepend separator above appendix
+    $('.d-appendix').before($('<hr class="section-separator" style="clear: both"/>'));
+
+    // trim code
+    $('pre>code').each(function(i, val) {
+      $(this).html($.trim($(this).html()));
+    });
+
+    // move posts-container right before article
+    $('.posts-container').insertBefore($('.d-article'));
+
+    $('body').addClass('downlevel');
+
+    on_load_complete();
+  }
+
+
+  function init_common() {
+
+    // jquery plugin to change element types
+    (function($) {
+      $.fn.changeElementType = function(newType) {
+        var attrs = {};
+
+        $.each(this[0].attributes, function(idx, attr) {
+          attrs[attr.nodeName] = attr.nodeValue;
+        });
+
+        this.replaceWith(function() {
+          return $("<" + newType + "/>", attrs).append($(this).contents());
+        });
+      };
+    })(jQuery);
+
+    // prevent underline for linked images
+    $('a > img').parent().css({'border-bottom' : 'none'});
+
+    // mark non-body figures created by knitr chunks as 100% width
+    $('.layout-chunk').each(function(i, val) {
+      var figures = $(this).find('img, .html-widget');
+      if ($(this).attr('data-layout') !== "l-body") {
+        figures.css('width', '100%');
+      } else {
+        figures.css('max-width', '100%');
+        figures.filter("[width]").each(function(i, val) {
+          var fig = $(this);
+          fig.css('width', fig.attr('width') + 'px');
+        });
+
+      }
+    });
+
+    // auto-append index.html to post-preview links in file: protocol
+    // and in rstudio ide preview
+    $('.post-preview').each(function(i, val) {
+      if (window.location.protocol === "file:")
+        $(this).attr('href', $(this).attr('href') + "index.html");
+    });
+
+    // get rid of index.html references in header
+    if (window.location.protocol !== "file:") {
+      $('.distill-site-header a[href]').each(function(i,val) {
+        $(this).attr('href', $(this).attr('href').replace("index.html", "./"));
+      });
+    }
+
+    // add class to pandoc style tables
+    $('tr.header').parent('thead').parent('table').addClass('pandoc-table');
+    $('.kable-table').children('table').addClass('pandoc-table');
+
+    // add figcaption style to table captions
+    $('caption').parent('table').addClass("figcaption");
+
+    // initialize posts list
+    if (window.init_posts_list)
+      window.init_posts_list();
+
+    // implmement disqus comment link
+    $('.disqus-comment-count').click(function() {
+      window.headroom_prevent_pin = true;
+      $('#disqus_thread').toggleClass('hidden');
+      if (!$('#disqus_thread').hasClass('hidden')) {
+        var offset = $(this).offset();
+        $(window).resize();
+        $('html, body').animate({
+          scrollTop: offset.top - 35
+        });
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (is_downlevel_browser())
+      init_downlevel();
+    else
+      window.addEventListener('WebComponentsReady', init_distill);
+  });
+
+  </script>
+
+  <!--/radix_placeholder_distill-->
+  <script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+  <link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+  <script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+  <script src="site_libs/popper-2.6.0/popper.min.js"></script>
+  <link href="site_libs/tippy-6.2.7/tippy.css" rel="stylesheet" />
+  <link href="site_libs/tippy-6.2.7/tippy-light-border.css" rel="stylesheet" />
+  <script src="site_libs/tippy-6.2.7/tippy.umd.min.js"></script>
+  <script src="site_libs/anchor-4.2.2/anchor.min.js"></script>
+  <script src="site_libs/bowser-1.9.3/bowser.min.js"></script>
+  <script src="site_libs/webcomponents-2.0.0/webcomponents.js"></script>
+  <script src="site_libs/distill-2.2.21/template.v2.js"></script>
+  <!--radix_placeholder_site_in_header-->
+  <!--/radix_placeholder_site_in_header-->
+
+
+</head>
+
+<body>
+
+<!--radix_placeholder_front_matter-->
+
+<script id="distill-front-matter" type="text/json">
+{"title":"Part 5: Tidymodels - Classification","description":"On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis.","authors":[]}
+</script>
+
+<!--/radix_placeholder_front_matter-->
+<!--radix_placeholder_navigation_before_body-->
+<header class="header header--fixed" role="banner">
+<nav class="distill-site-nav distill-site-header">
+<div class="nav-left">
+<a class="logo" href="https://era.ccafs.cgiar.org/about/">
+<img src="IMAGES/ERA_logo_circle.png" alt="Logo"/>
+</a>
+<a href="index.html" class="title">Home</a>
+</div>
+<div class="nav-right">
+<a href="ABOUT.html">About this site</a>
+<a href="INTRO.html">PART 1: Introduction</a>
+<a href="ERAANA.html">PART 2: Analysing with ERAAnalyze</a>
+<a href="MLTIDYMODELS.html">PART 3: Analysing with Tidymodels</a>
+<a href="TIDYMODELSWFS.html">PART 4: Analysing with Tidymodels Workflowsets</a>
+<a href="https://github.com/kamaulindhardt/ERA_Agroforestry_destill_website">
+<i class="fab fa-github" aria-hidden="true"></i>
+</a>
+<a href="https://twitter.com/KamauLindhardt">
+<i class="fa fa-twitter" aria-hidden="true"></i>
+</a>
+<a href="https://www.linkedin.com/in/magnus-kamau-lindhardt/">
+<i class="fa fa-linkedin" aria-hidden="true"></i>
+</a>
+<a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
+</div>
+</nav>
+</header>
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+<div class="d-title">
+<h1>Part 5: Tidymodels - Classification</h1>
+<!--radix_placeholder_categories-->
+<!--/radix_placeholder_categories-->
+<p><p>On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis.</p></p>
+</div>
+
+
+<div class="d-article">
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#loading-necessary-r-packages-and-era-data">Loading necessary R packages and ERA data</a>
+<ul>
+<li><a href="#step-1-getting-the-data">STEP 1: Getting the data</a></li>
+<li><a href="#step-1-performing-eqno-and-eqr-discretization">STEP 1: Performing EQNo and EQR discretization</a>
+<ul>
+<li><a href="#eqno-discretization">EQNo discretization</a></li>
+<li><a href="#eqr-discretization">EQR discretization</a></li>
+</ul></li>
+<li><a href="#step-2-splitting-data">STEP 2: Splitting data</a></li>
+<li><a href="#step-3-defining-resampling-techniques-and-global-modelling-metrics">STEP 3: Defining resampling techniques and global modelling metrics</a></li>
+<li><a href="#step-4-defining-models">STEP 4: Defining models</a></li>
+<li><a href="#step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</a>
+<ul>
+<li><a href="#assessing-case-distributions-for-the-two-types-of-discretizations">Assessing case distributions for the two types of discretizations</a></li>
+</ul></li>
+<li><a href="#step-6-prep-and-bake-training-data">STEP 6: Prep and bake training data</a></li>
+<li><a href="#step-7-exploratory-data-analysis">STEP 7: Exploratory Data Analysis</a>
+<ul>
+<li><a href="#checking-the-correlation-of-variables-against-the-response-ratio-groups">Checking the correlation of variables against the response ratio groups</a></li>
+</ul></li>
+<li><a href="#step-8-generate-list-of-recipes">STEP 8: Generate list of recipes</a></li>
+<li><a href="#step-7-generate-list-of-model-types">STEP 7: Generate list of model types</a></li>
+<li><a href="#step-8-combine-into-a-model-workflowset">STEP 8: Combine into a model Workflowset</a></li>
+<li><a href="#step-9-perform-tuning-of-the-model-workflowsets">STEP 9: Perform tuning of the model workflowsets</a>
+<ul>
+<li><a href="#saving-the-workflowset-tuning-results">SAVING THE WORKFLOWSET TUNING RESULTS</a></li>
+<li><a href="#loadingreading-the-workflowset-results">LOADING/READING THE WORKFLOWSET RESULTS</a></li>
+</ul></li>
+<li><a href="#step-10-cleaning-op-the-workflowsets">STEP 10: Cleaning op the Workflowsets</a></li>
+<li><a href="#step-11-evaluate-performance-of-different-model-preprocessing-combinations">STEP 11: Evaluate performance of different model-preprocessing combinations</a></li>
+<li><a href="#step-12-list-mode-preprocessing-combinations">STEP 12: List mode-preprocessing combinations</a></li>
+<li><a href="#step-13-finalize-worfkflow-with-best-model">STEP 13: Finalize worfkflow with best model</a></li>
+<li><a href="#step-14-generate-confusion-matrix-of-predicted-vs-observed-rr-groups">STEP 14: Generate confusion matrix of predicted vs observed RR groups</a>
+<ul>
+<li><a href="#confusion-matrix-of-predicted-vs-observed-rr-groups">Confusion matrix of predicted vs observed RR groups</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+</div>
+<h1 id="loading-necessary-r-packages-and-era-data">Loading necessary R packages and ERA data</h1>
+<p><strong>Loading general R packages</strong></p>
+<p>This part of the document is where we actually get to the nitty-gritty of the ERA agroforestry data and therefore it requires us to load a number of R packages for both general Explorortive Data Analysis and Machine Learning.</p>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># Using the pacman functions to load required packages</span>
+
+        <span class='kw'>if</span><span class='op'>(</span><span class='op'>!</span><span class='kw'><a href='https://rdrr.io/r/base/library.html'>require</a></span><span class='op'>(</span><span class='st'><a href='https://github.com/trinker/pacman'>"pacman"</a></span>, character.only <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+          <span class='fu'><a href='https://rdrr.io/r/utils/install.packages.html'>install.packages</a></span><span class='op'>(</span><span class='st'>"pacman"</span>,dependencies <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>
+          <span class='op'>}</span>
+
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='co'># General packages</span>
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='va'>required.packages</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"tidyverse"</span>, <span class='st'>"tidymodels"</span>, <span class='st'>"finetune"</span>, <span class='st'>"kernlab"</span>, <span class='st'>"here"</span>, <span class='st'>"hablar"</span>, <span class='st'>"spatialsample"</span>, <span class='st'>"GGally"</span>, <span class='st'>"klaR"</span>, <span class='st'>"cowplot"</span>,
+                       <span class='st'>"stacks"</span>, <span class='st'>"rules"</span>, <span class='st'>"baguette"</span>, <span class='st'>"viridis"</span>, <span class='st'>"yardstick"</span>, <span class='st'>"DALEXtra"</span>, <span class='st'>"discrim"</span>, <span class='st'>"themis"</span>, <span class='st'>"corrr"</span>,
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+<span class='co'># Parallel computing packages</span>
+<span class='co'># ------------------------------------------------------------------------------------------</span>
+                      <span class='st'>"parallelMap"</span>, <span class='st'>"parallelly"</span>, <span class='st'>"parallel"</span>, <span class='st'>"doParallel"</span>
+<span class='op'>)</span>
+
+<span class='fu'>p_load</span><span class='op'>(</span>char<span class='op'>=</span><span class='va'>required.packages</span>, install <span class='op'>=</span> <span class='cn'>T</span>,character.only <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<h2 id="step-1-getting-the-data">STEP 1: Getting the data</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>agrofor.biophys.modelling.data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span>file <span class='op'>=</span> <span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"agrofor.biophys.modelling.data.RDS"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p><strong>Discritization of target feature, logRR</strong> i) Boxplots of predictors vs. discritized logRR</p>
+<p>We are now going to discretize our continues outcome feature, logRR into seven categorical/nominal groups. In statistics and machine learning, discretization refers to the process of converting or partitioning continuous features into discretized or nominal features with certain intervals. The goal of discretization is to reduce the number of values a continuous feature have by grouping it into a number of intervals or bins. This can be useful when one wish to perform EDA on a continues feature with no or very little linear (co)-relation to predictors. Hence, we can group the continuous outcome feature, logRR and look at discrete differences on the predictors for each group of logRR. Continuous features have a smaller chance of correlating with the target variable due to infinite degrees of freedom and may have a complex non-linear relationship. After discretizing logRR into groups it it easier to perform test on differences and for these results to be interpreted. The aim of performing the discretization of logRR in our case is to be able to make a pairwise t-test for the different groups of logRR. Thereby getting an understanding of whether there is significant differences between levels of logRR. Discretization, or binning/grouping of a continuous feature is mostly done in two ways, and we are going to evaluate the t-test outcome from both of these methods - because the binning technique is so different:</p>
+<ul>
+<li><p>Equal-Width Discretization: Separating all possible values into ‘N’ number of bins, each having the same width. Formula for interval width: Width = (maximum value - minimum value) / N. Where N is the number of bins or intervals. This method doesn’t improve the value spread and it can handle outliers effectively.</p></li>
+<li><p>Equal-Frequency Discretization: Separating all possible values into ‘N’ number of bins, each having the same amount of observations. These intervals are normally corresponding to ranges or quantile values. This method does improve the value spread and it can handle outliers effectively.</p></li>
+</ul>
+<p>First, we are creating a two new feature columns in our agroforestry modelling data. We are using the functions cut_interval() and cut_number(), to perform the discrete levels of logRR based on the equal-frequency method and the equal-width method, respectfully. For each method seven groups are created. The groups range from 1, extremely low (low logRR values) to 7, extremely high (high logRR values).</p>
+<h2 id="step-1-performing-eqno-and-eqr-discretization">STEP 1: Performing EQNo and EQR discretization</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>agrofor.biophys.modelling.data.class</span> <span class='op'>&lt;-</span>  <span class='va'>agrofor.biophys.modelling.data</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RR"</span>, <span class='st'>"ID"</span>, <span class='st'>"AEZ16s"</span>, <span class='st'>"Country"</span>, <span class='st'>"MeanC"</span>, <span class='st'>"MeanT"</span>, <span class='st'>"PrName.Code"</span>, <span class='st'>"SubPrName"</span><span class='op'>)</span><span class='op'>)</span>
+
+<span class='va'>agrofor.biophys.modelling.data.discretized.logRR</span> <span class='op'>&lt;-</span> <span class='va'>agrofor.biophys.modelling.data.class</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>rationalize</span><span class='op'>(</span><span class='va'>logRR</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>drop_na</span><span class='op'>(</span><span class='va'>logRR</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR_counts_cut_interval <span class='op'>=</span> <span class='fu'>cut_interval</span><span class='op'>(</span><span class='va'>logRR</span>, n <span class='op'>=</span> <span class='fl'>7</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR_EQR_group <span class='op'>=</span> <span class='fu'>case_when</span><span class='op'>(</span>
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"[-4.43,-3.16]"</span>   <span class='op'>~</span> <span class='st'>"1.extremely_low"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(-3.16,-1.9]"</span>    <span class='op'>~</span> <span class='st'>"2.very_low"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(-1.9,-0.627]"</span>   <span class='op'>~</span> <span class='st'>"3.low"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(-0.627,0.642]"</span>  <span class='op'>~</span> <span class='st'>"4.medium"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(0.642,1.91]"</span>    <span class='op'>~</span> <span class='st'>"5.high"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(1.91,3.18]"</span>     <span class='op'>~</span> <span class='st'>"6.very_high"</span>,
+    <span class='va'>logRR_counts_cut_interval</span>   <span class='op'>==</span> <span class='st'>"(3.18,4.45]"</span>     <span class='op'>~</span> <span class='st'>"7.extremely_high"</span>,<span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR_counts_cut_number <span class='op'>=</span> <span class='fu'>cut_number</span><span class='op'>(</span><span class='va'>logRR</span>, n <span class='op'>=</span> <span class='fl'>7</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR_EQNo_group <span class='op'>=</span> <span class='fu'>case_when</span><span class='op'>(</span>
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"[-4.43,-0.31]"</span>     <span class='op'>~</span> <span class='st'>"1.extremly_low"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(-0.31,-0.0195]"</span>   <span class='op'>~</span> <span class='st'>"2.very_low"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(-0.0195,0.155]"</span>   <span class='op'>~</span> <span class='st'>"3.low"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(0.155,0.379]"</span>     <span class='op'>~</span> <span class='st'>"4.medium"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(0.379,0.643]"</span>     <span class='op'>~</span> <span class='st'>"5.high"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(0.643,1.1]"</span>       <span class='op'>~</span> <span class='st'>"6.very_high"</span>,
+    <span class='va'>logRR_counts_cut_number</span>   <span class='op'>==</span> <span class='st'>"(1.1,4.45]"</span>        <span class='op'>~</span> <span class='st'>"7.extremely_high"</span>,<span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Lets compare the newly created factor levels. Are there differences in how logRR was grouped by the two methods..?</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>rmarkdown</span><span class='fu'>::</span><span class='fu'><a href='https://pkgs.rstudio.com/rmarkdown/reference/paged_table.html'>paged_table</a></span><span class='op'>(</span><span class='va'>agrofor.biophys.modelling.data.discretized.logRR</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>sample_n</span><span class='op'>(</span><span class='fl'>25</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># randomly sampling a subset of 25 rows/observations </span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/relocate.html'>relocate</a></span><span class='op'>(</span><span class='va'>logRR_EQNo_group</span>, <span class='va'>logRR_EQR_group</span>, <span class='va'>logRR</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["logRR_EQNo_group"],"name":[1],"type":["chr"],"align":["left"]},{"label":["logRR_EQR_group"],"name":[2],"type":["chr"],"align":["left"]},{"label":["logRR"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["PrName"],"name":[4],"type":["fct"],"align":["left"]},{"label":["Out.SubInd"],"name":[5],"type":["fct"],"align":["left"]},{"label":["Product"],"name":[6],"type":["fct"],"align":["left"]},{"label":["Site.Type"],"name":[7],"type":["fct"],"align":["left"]},{"label":["Tree"],"name":[8],"type":["fct"],"align":["left"]},{"label":["Out.SubInd.Code"],"name":[9],"type":["fct"],"align":["left"]},{"label":["Latitude"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Longitude"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["Bio01_MT_Annu"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["Bio02_MDR"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["Bio03_Iso"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["Bio04_TS"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["Bio05_TWM"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["Bio06_MinTCM"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["Bio07_TAR"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["Bio08_MT_WetQ"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["Bio09_MT_DryQ"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["Bio10_MT_WarQ"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["Bio11_MT_ColQ"],"name":[22],"type":["dbl"],"align":["right"]},{"label":["Bio12_Pecip_Annu"],"name":[23],"type":["dbl"],"align":["right"]},{"label":["Bio13_Precip_WetM"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["Bio14_Precip_DryM"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["Bio15_Precip_S"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["Bio16_Precip_WetQ"],"name":[27],"type":["dbl"],"align":["right"]},{"label":["Bio17_Precip_DryQ"],"name":[28],"type":["dbl"],"align":["right"]},{"label":["iSDA_Depth_to_bedrock"],"name":[29],"type":["dbl"],"align":["right"]},{"label":["iSDA_SAND_conc"],"name":[30],"type":["dbl"],"align":["right"]},{"label":["iSDA_CLAY_conc"],"name":[31],"type":["dbl"],"align":["right"]},{"label":["iSDA_SILT_conc"],"name":[32],"type":["dbl"],"align":["right"]},{"label":["iSDA_FE_Bulk_dens"],"name":[33],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_C_tot"],"name":[34],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_Ca"],"name":[35],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_eCEC"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_Fe"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_K"],"name":[38],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_Mg"],"name":[39],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_N"],"name":[40],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_SOC"],"name":[41],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_P"],"name":[42],"type":["dbl"],"align":["right"]},{"label":["iSDA_log_S"],"name":[43],"type":["dbl"],"align":["right"]},{"label":["iSDA_pH"],"name":[44],"type":["dbl"],"align":["right"]},{"label":["ASTER_Altitude"],"name":[45],"type":["dbl"],"align":["right"]},{"label":["ASTER_Slope"],"name":[46],"type":["dbl"],"align":["right"]},{"label":["logRR_counts_cut_interval"],"name":[47],"type":["fct"],"align":["left"]},{"label":["logRR_counts_cut_number"],"name":[48],"type":["fct"],"align":["left"]}],"data":[{"1":"5.high","2":"4.medium","3":"0.51860776","4":"Agroforestry Pruning-Alleycropping","5":"Crop Yield","6":"Maize","7":"Station","8":"Leucaena leucocephala","9":"CrY","10":"-10.17400","11":"31.22600","12":"16.20833","13":"14.333333","14":"77.47748","15":"88.49329","16":"24.90000","17":"6.400000","18":"18.500000","19":"15.95000","20":"15.13333","21":"17.33333","22":"15.13333","23":"861.0000","24":"161.00000","25":"9.000000","26":"68.87114","27":"418.00000","28":"40.00000","29":"200.00","30":"64.630","31":"22.272","32":"11.628","33":"140.196","34":"28.752","35":"46.782","36":"18.164","37":"36.200","38":"39.292","39":"37.32","40":"38.490","41":"17.904","42":"23.194","43":"13.19","44":"56.422","45":"1377.79","46":"0.92","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"5.high","2":"4.medium","3":"0.58216867","4":"Agroforestry Pruning-Alleycropping","5":"Biomass Yield","6":"Pearl Millet","7":"Station","8":"Piliostigma reticulatum","9":"BiY","10":"13.75850","11":"-15.78700","12":"19.07604","13":"14.910417","14":"73.72242","15":"151.40960","16":"29.05000","17":"8.825000","18":"20.225000","19":"18.67500","20":"17.35417","21":"21.14583","22":"17.35417","23":"626.5000","24":"176.75000","25":"10.250000","26":"111.42568","27":"393.25000","28":"36.75000","29":"200.00","30":"68.104","31":"16.344","32":"11.314","33":"149.300","34":"18.532","35":"61.478","36":"20.418","37":"34.228","38":"40.882","39":"43.78","40":"38.310","41":"14.682","42":"27.782","43":"25.40","44":"60.918","45":"14.48","46":"0.76","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"5.high","2":"4.medium","3":"0.59539086","4":"Agroforestry Pruning-Boundary Planting","5":"Crop Yield","6":"Maize","7":"Station","8":"Senna siamea","9":"CrY","10":"4.71900","11":"7.17800","12":"17.50014","13":"14.328065","14":"77.25521","15":"104.11056","16":"26.45632","17":"7.910345","18":"18.545977","19":"16.99904","20":"16.38333","21":"18.88391","22":"16.38333","23":"886.2184","24":"215.85057","25":"3.264368","26":"97.72829","27":"535.93103","28":"23.91954","29":"200.00","30":"61.368","31":"26.592","32":"10.762","33":"123.932","34":"37.068","35":"49.122","36":"23.388","37":"42.854","38":"40.198","39":"36.56","40":"69.438","41":"22.534","42":"27.794","43":"23.56","44":"52.392","45":"16.18","46":"1.29","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"3.low","2":"4.medium","3":"0.03406655","4":"Alleycropping","5":"Crop Yield","6":"Maize","7":"Station","8":"Acacia albida","9":"CrY","10":"-6.83333","11":"37.63333","12":"25.54583","13":"6.475000","14":"70.38043","15":"104.84747","16":"30.50000","17":"21.299999","18":"9.200001","19":"26.00000","20":"26.23333","21":"26.68333","22":"24.06667","23":"1731.0000","24":"342.00000","25":"37.000000","26":"60.78056","27":"755.00000","28":"178.00000","29":"199.99","30":"44.446","31":"37.264","32":"16.780","33":"133.100","34":"28.268","35":"68.382","36":"27.554","37":"37.264","38":"51.300","39":"54.21","40":"62.976","41":"21.610","42":"22.226","43":"18.06","44":"61.916","45":"498.32","46":"1.14","47":"(-0.627,0.642]","48":"(-0.0195,0.155]"},{"1":"1.extremly_low","2":"4.medium","3":"-0.41716115","4":"Agroforestry Pruning","5":"Crop Yield","6":"Sorghum","7":"Station","8":"Unknown_Tree","9":"CrY","10":"12.40972","11":"-1.35139","12":"22.87083","13":"11.141666","14":"81.92403","15":"67.67093","16":"30.30000","17":"16.700001","18":"13.599998","19":"23.21667","20":"23.50000","21":"23.75000","22":"22.00000","23":"1243.0000","24":"180.00000","25":"41.000000","26":"38.19582","27":"450.00000","28":"171.00000","29":"199.63","30":"57.824","31":"23.144","32":"17.438","33":"156.366","34":"18.460","35":"63.446","36":"21.928","37":"33.998","38":"40.374","39":"48.90","40":"29.052","41":"14.774","42":"18.928","43":"18.28","44":"62.816","45":"278.78","46":"0.54","47":"(-0.627,0.642]","48":"[-4.43,-0.31]"},{"1":"5.high","2":"4.medium","3":"0.47445798","4":"Agroforestry Pruning-Inorganic Fertilizer","5":"Crop Yield","6":"Maize","7":"Station","8":"Leucaena leucocephala","9":"CrY","10":"-13.98300","11":"33.64900","12":"24.42812","13":"10.143750","14":"66.19088","15":"184.91155","16":"31.42500","17":"16.100000","18":"15.324999","19":"25.75833","20":"21.88333","21":"26.32500","22":"21.88333","23":"816.0000","24":"155.00000","25":"8.000000","26":"74.47769","27":"359.25000","28":"35.25000","29":"200.00","30":"58.318","31":"26.846","32":"11.120","33":"139.340","34":"34.908","35":"65.402","36":"24.536","37":"37.352","38":"43.756","39":"47.84","40":"58.286","41":"22.018","42":"19.974","43":"12.97","44":"59.014","45":"1137.86","46":"1.16","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"2.very_low","2":"4.medium","3":"-0.03848126","4":"Agroforestry Pruning-Alleycropping-Inorganic Fertilizer","5":"Crop Yield","6":"Maize","7":"Station","8":"Elaeis guineensis","9":"CrY","10":"6.73500","11":"2.14300","12":"23.02240","13":"8.507812","14":"73.79970","15":"119.03759","16":"29.45000","17":"17.921875","18":"11.528125","19":"23.55833","20":"23.60417","21":"24.38177","22":"21.37552","23":"1265.4688","24":"196.03125","25":"9.562500","26":"57.84903","27":"486.40625","28":"81.84375","29":"200.00","30":"63.862","31":"18.888","32":"9.226","33":"141.594","34":"32.252","35":"62.378","36":"21.762","37":"38.918","38":"42.158","39":"46.57","40":"63.734","41":"19.336","42":"18.498","43":"21.49","44":"56.284","45":"108.81","46":"2.41","47":"(-0.627,0.642]","48":"(-0.31,-0.0195]"},{"1":"5.high","2":"4.medium","3":"0.62659995","4":"Agroforestry Pruning-Alleycropping","5":"Biomass Yield","6":"Maize","7":"Station","8":"Gliricidia sepium","9":"BiY","10":"-15.47300","11":"35.45020","12":"22.12917","13":"11.754167","14":"83.66040","15":"62.61968","16":"29.52500","17":"15.475000","18":"14.050000","19":"22.44167","20":"22.67500","21":"22.90000","22":"21.30833","23":"1629.0000","24":"248.75000","25":"51.500000","26":"41.85934","27":"625.25000","28":"239.25000","29":"200.00","30":"58.164","31":"21.706","32":"14.706","33":"137.686","34":"31.802","35":"69.792","36":"23.772","37":"37.594","38":"46.930","39":"56.42","40":"50.764","41":"18.410","42":"24.036","43":"13.60","44":"55.762","45":"713.24","46":"0.83","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"2.very_low","2":"4.medium","3":"-0.30010459","4":"Agroforestry Pruning-Alleycropping","5":"Crop Yield","6":"Maize","7":"Station","8":"Leucaena leucocephala","9":"CrY","10":"7.49800","11":"3.90300","12":"16.97500","13":"11.216666","14":"51.92901","15":"377.20563","16":"28.40000","17":"6.800000","18":"21.599998","19":"12.31667","20":"21.45000","21":"21.45000","22":"12.31667","23":"737.0000","24":"120.00000","25":"20.000000","26":"62.46448","27":"341.00000","28":"67.00000","29":"199.95","30":"63.186","31":"19.604","32":"13.486","33":"141.138","34":"29.264","35":"61.956","36":"20.284","37":"38.788","38":"41.310","39":"45.69","40":"55.754","41":"17.986","42":"20.144","43":"19.34","44":"60.588","45":"218.75","46":"2.39","47":"(-0.627,0.642]","48":"(-0.31,-0.0195]"},{"1":"2.very_low","2":"4.medium","3":"-0.03278982","4":"Alleycropping-Inorganic Fertilizer","5":"Crop Yield","6":"Maize","7":"Farm","8":"Unknown_Tree","9":"CrY","10":"3.95000","11":"11.80000","12":"21.60123","13":"11.887470","14":"83.21848","15":"68.06362","16":"29.06505","17":"14.780108","18":"14.284946","19":"21.84208","20":"22.18339","21":"22.37437","22":"20.66586","23":"1601.8423","24":"251.24014","25":"62.103943","26":"39.65980","27":"616.87276","28":"262.91398","29":"199.96","30":"44.420","31":"45.570","32":"7.900","33":"122.086","34":"34.250","35":"47.290","36":"23.162","37":"40.394","38":"34.370","39":"34.85","40":"74.170","41":"22.580","42":"17.604","43":"22.90","44":"47.708","45":"752.50","46":"4.39","47":"(-0.627,0.642]","48":"(-0.31,-0.0195]"},{"1":"5.high","2":"4.medium","3":"0.58778666","4":"Agroforestry Pruning-Inorganic Fertilizer","5":"Crop Yield","6":"Maize","7":"Farm","8":"Leucaena leucocephala","9":"CrY","10":"7.49800","11":"3.90300","12":"16.97500","13":"11.216666","14":"51.92901","15":"377.20563","16":"28.40000","17":"6.800000","18":"21.599998","19":"12.31667","20":"21.45000","21":"21.45000","22":"12.31667","23":"737.0000","24":"120.00000","25":"20.000000","26":"62.46448","27":"341.00000","28":"67.00000","29":"199.95","30":"63.186","31":"19.604","32":"13.486","33":"141.138","34":"29.264","35":"61.956","36":"20.284","37":"38.788","38":"41.310","39":"45.69","40":"55.754","41":"17.986","42":"20.144","43":"19.34","44":"60.588","45":"218.75","46":"2.39","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"1.extremly_low","2":"4.medium","3":"-0.41260411","4":"Agroforestry Pruning","5":"Crop Yield","6":"Maize","7":"Station","8":"Unknown_Tree","9":"CrY","10":"-17.60700","11":"31.14100","12":"23.52812","13":"7.752083","14":"76.56482","15":"81.67045","16":"29.20000","17":"19.075000","18":"10.125000","19":"23.10000","20":"24.14583","21":"24.47500","22":"22.43333","23":"1728.7500","24":"313.25000","25":"28.000000","26":"62.39343","27":"691.00000","28":"114.25000","29":"199.98","30":"60.314","31":"25.976","32":"11.726","33":"144.566","34":"28.710","35":"54.206","36":"15.814","37":"36.108","38":"43.468","39":"42.02","40":"43.696","41":"17.834","42":"21.684","43":"13.33","44":"55.260","45":"1545.74","46":"1.64","47":"(-0.627,0.642]","48":"[-4.43,-0.31]"},{"1":"4.medium","2":"4.medium","3":"0.25719070","4":"Alleycropping","5":"Crop Yield","6":"Maize","7":"Farm","8":"Unknown_Tree","9":"CrY","10":"7.65100","11":"3.78500","12":"21.68750","13":"10.655769","14":"44.99018","15":"510.75398","16":"32.89231","17":"9.207692","18":"23.684616","19":"16.78718","20":"27.48205","21":"27.53205","22":"15.21667","23":"112.3846","24":"28.53846","25":"0.000000","26":"106.91842","27":"77.69231","28":"0.00000","29":"200.00","30":"59.830","31":"21.720","32":"13.946","33":"132.984","34":"30.662","35":"63.020","36":"20.824","37":"38.002","38":"40.124","39":"46.29","40":"69.208","41":"19.942","42":"18.652","43":"18.60","44":"57.554","45":"247.67","46":"1.88","47":"(-0.627,0.642]","48":"(0.155,0.379]"},{"1":"5.high","2":"4.medium","3":"0.55426659","4":"Agroforestry Pruning","5":"Crop Yield","6":"Maize","7":"Station","8":"Unknown_Tree","9":"CrY","10":"11.15910","11":"7.63810","12":"17.43229","13":"13.227083","14":"60.74483","15":"314.41125","16":"28.10000","17":"6.325000","18":"21.775001","19":"21.29583","20":"13.96250","21":"21.29583","22":"13.55000","23":"608.2500","24":"77.50000","25":"19.250000","26":"43.76073","27":"218.50000","28":"68.25000","29":"196.77","30":"51.108","31":"23.252","32":"24.364","33":"136.562","34":"21.470","35":"57.532","36":"23.086","37":"36.666","38":"39.566","39":"47.89","40":"38.264","41":"17.404","42":"18.012","43":"18.71","44":"56.658","45":"680.12","46":"0.96","47":"(-0.627,0.642]","48":"(0.379,0.643]"},{"1":"6.very_high","2":"5.high","3":"0.87642613","4":"Agroforestry Pruning-Alleycropping-Inorganic Fertilizer","5":"Biomass Yield","6":"Maize","7":"Station","8":"Gliricidia sepium","9":"BiY","10":"-15.47300","11":"35.45020","12":"22.12917","13":"11.754167","14":"83.66040","15":"62.61968","16":"29.52500","17":"15.475000","18":"14.050000","19":"22.44167","20":"22.67500","21":"22.90000","22":"21.30833","23":"1629.0000","24":"248.75000","25":"51.500000","26":"41.85934","27":"625.25000","28":"239.25000","29":"200.00","30":"58.164","31":"21.706","32":"14.706","33":"137.686","34":"31.802","35":"69.792","36":"23.772","37":"37.594","38":"46.930","39":"56.42","40":"50.764","41":"18.410","42":"24.036","43":"13.60","44":"55.762","45":"713.24","46":"0.83","47":"(0.642,1.91]","48":"(0.643,1.1]"},{"1":"7.extremely_high","2":"5.high","3":"1.27629347","4":"Agroforestry Pruning-Inorganic Fertilizer","5":"Crop Yield","6":"Maize","7":"Farm","8":"Unknown_Tree","9":"CrY","10":"-0.33780","11":"37.61410","12":"26.36250","13":"9.341666","14":"66.72619","15":"132.99223","16":"34.20000","17":"20.200001","18":"14.000000","19":"25.80000","20":"26.91667","21":"28.15000","22":"24.71667","23":"1269.0000","24":"207.00000","25":"7.000000","26":"66.82600","27":"493.00000","28":"42.00000","29":"199.96","30":"25.092","31":"49.898","32":"19.754","33":"116.840","34":"33.546","35":"62.018","36":"27.626","37":"37.970","38":"49.252","39":"48.91","40":"105.946","41":"28.562","42":"24.228","43":"23.00","44":"53.322","45":"1543.53","46":"4.95","47":"(0.642,1.91]","48":"(1.1,4.45]"},{"1":"1.extremly_low","2":"3.low","3":"-0.65392647","4":"Other Agroforestry","5":"Crop Yield","6":"Maize","7":"Farm","8":"Senna spectabilis","9":"CrY","10":"-2.35000","11":"30.25000","12":"19.24167","13":"11.850000","14":"38.47403","15":"686.40314","16":"36.70000","17":"5.900000","18":"30.800001","19":"20.20000","20":"28.10000","21":"28.10000","22":"11.35000","23":"319.0000","24":"38.00000","25":"5.000000","26":"38.59896","27":"103.00000","28":"31.00000","29":"200.00","30":"45.962","31":"33.526","32":"16.534","33":"129.756","34":"29.214","35":"67.030","36":"23.060","37":"36.486","38":"52.394","39":"52.74","40":"68.332","41":"23.876","42":"23.384","43":"20.72","44":"59.556","45":"1414.25","46":"4.15","47":"(-1.9,-0.627]","48":"[-4.43,-0.31]"},{"1":"6.very_high","2":"5.high","3":"0.69171759","4":"Agroforestry Fallow-Agroforestry Pruning","5":"Crop Yield","6":"Maize","7":"Station","8":"Sesbania sesban","9":"CrY","10":"-17.60700","11":"31.14100","12":"23.52812","13":"7.752083","14":"76.56482","15":"81.67045","16":"29.20000","17":"19.075000","18":"10.125000","19":"23.10000","20":"24.14583","21":"24.47500","22":"22.43333","23":"1728.7500","24":"313.25000","25":"28.000000","26":"62.39343","27":"691.00000","28":"114.25000","29":"199.98","30":"60.314","31":"25.976","32":"11.726","33":"144.566","34":"28.710","35":"54.206","36":"15.814","37":"36.108","38":"43.468","39":"42.02","40":"43.696","41":"17.834","42":"21.684","43":"13.33","44":"55.260","45":"1545.74","46":"1.64","47":"(0.642,1.91]","48":"(0.643,1.1]"},{"1":"4.medium","2":"4.medium","3":"0.15916165","4":"Alleycropping","5":"Biomass Yield","6":"Maize","7":"Farm","8":"Unknown_Tree","9":"BiY","10":"7.65100","11":"3.78500","12":"21.68750","13":"10.655769","14":"44.99018","15":"510.75398","16":"32.89231","17":"9.207692","18":"23.684616","19":"16.78718","20":"27.48205","21":"27.53205","22":"15.21667","23":"112.3846","24":"28.53846","25":"0.000000","26":"106.91842","27":"77.69231","28":"0.00000","29":"200.00","30":"59.830","31":"21.720","32":"13.946","33":"132.984","34":"30.662","35":"63.020","36":"20.824","37":"38.002","38":"40.124","39":"46.29","40":"69.208","41":"19.942","42":"18.652","43":"18.60","44":"57.554","45":"247.67","46":"1.88","47":"(-0.627,0.642]","48":"(0.155,0.379]"},{"1":"6.very_high","2":"5.high","3":"0.95551145","4":"Agroforestry Pruning-Reduced Tillage-Water Harvesting","5":"Crop Yield","6":"Maize","7":"Station","8":"Unknown_Tree","9":"CrY","10":"-17.60700","11":"31.14100","12":"23.52812","13":"7.752083","14":"76.56482","15":"81.67045","16":"29.20000","17":"19.075000","18":"10.125000","19":"23.10000","20":"24.14583","21":"24.47500","22":"22.43333","23":"1728.7500","24":"313.25000","25":"28.000000","26":"62.39343","27":"691.00000","28":"114.25000","29":"199.98","30":"60.314","31":"25.976","32":"11.726","33":"144.566","34":"28.710","35":"54.206","36":"15.814","37":"36.108","38":"43.468","39":"42.02","40":"43.696","41":"17.834","42":"21.684","43":"13.33","44":"55.260","45":"1545.74","46":"1.64","47":"(0.642,1.91]","48":"(0.643,1.1]"},{"1":"4.medium","2":"4.medium","3":"0.23841102","4":"Parklands","5":"Crop Yield","6":"Wheat","7":"Farm","8":"Faidherbia albida","9":"CrY","10":"8.50917","11":"39.07111","12":"17.79167","13":"13.000000","14":"57.77778","15":"303.44110","16":"28.00000","17":"5.500000","18":"22.500000","19":"20.30000","20":"13.51667","21":"20.48333","22":"13.51667","23":"783.0000","24":"185.00000","25":"2.000000","26":"103.02647","27":"486.00000","28":"10.00000","29":"200.00","30":"39.984","31":"29.308","32":"27.200","33":"133.494","34":"23.828","35":"79.012","36":"29.964","37":"26.416","38":"60.834","39":"59.07","40":"62.736","41":"20.654","42":"19.768","43":"31.31","44":"70.124","45":"1686.96","46":"0.90","47":"(-0.627,0.642]","48":"(0.155,0.379]"},{"1":"3.low","2":"4.medium","3":"0.13317829","4":"Agroforestry Pruning-Inorganic Fertilizer","5":"Biomass Yield","6":"Wheat","7":"Station","8":"Unknown_Tree","9":"BiY","10":"29.31026","11":"30.84327","12":"20.66667","13":"11.366667","14":"58.59106","15":"283.55963","16":"29.10000","17":"9.700000","18":"19.400002","19":"23.83333","20":"17.00000","21":"23.90000","22":"17.00000","23":"1015.0000","24":"133.00000","25":"33.000000","26":"46.64891","27":"386.00000","28":"106.00000","29":"194.56","30":"50.962","31":"30.184","32":"15.906","33":"146.108","34":"16.332","35":"62.290","36":"19.906","37":"25.040","38":"42.470","39":"47.78","40":"54.530","41":"17.732","42":"15.960","43":"25.46","44":"65.376","45":"19.27","46":"0.69","47":"(-0.627,0.642]","48":"(-0.0195,0.155]"},{"1":"1.extremly_low","2":"4.medium","3":"-0.38776553","4":"Agroforestry Pruning-Alleycropping","5":"Crop Yield","6":"Maize","7":"Station","8":"Sesbania sesban","9":"CrY","10":"-10.17400","11":"31.22600","12":"16.20833","13":"14.333333","14":"77.47748","15":"88.49329","16":"24.90000","17":"6.400000","18":"18.500000","19":"15.95000","20":"15.13333","21":"17.33333","22":"15.13333","23":"861.0000","24":"161.00000","25":"9.000000","26":"68.87114","27":"418.00000","28":"40.00000","29":"200.00","30":"64.630","31":"22.272","32":"11.628","33":"140.196","34":"28.752","35":"46.782","36":"18.164","37":"36.200","38":"39.292","39":"37.32","40":"38.490","41":"17.904","42":"23.194","43":"13.19","44":"56.422","45":"1377.79","46":"0.92","47":"(-0.627,0.642]","48":"[-4.43,-0.31]"},{"1":"3.low","2":"4.medium","3":"0.14008879","4":"Agroforestry Pruning-Alleycropping","5":"Crop Yield","6":"Maize","7":"Station","8":"Leucaena leucocephala.Acioa barteri","9":"CrY","10":"7.49800","11":"3.90300","12":"16.97500","13":"11.216666","14":"51.92901","15":"377.20563","16":"28.40000","17":"6.800000","18":"21.599998","19":"12.31667","20":"21.45000","21":"21.45000","22":"12.31667","23":"737.0000","24":"120.00000","25":"20.000000","26":"62.46448","27":"341.00000","28":"67.00000","29":"199.95","30":"63.186","31":"19.604","32":"13.486","33":"141.138","34":"29.264","35":"61.956","36":"20.284","37":"38.788","38":"41.310","39":"45.69","40":"55.754","41":"17.986","42":"20.144","43":"19.34","44":"60.588","45":"218.75","46":"2.39","47":"(-0.627,0.642]","48":"(-0.0195,0.155]"},{"1":"3.low","2":"4.medium","3":"0.08277229","4":"Agroforestry Fallow-Agroforestry Pruning-Alleycropping","5":"Biomass Yield","6":"Maize","7":"Station","8":"Dactyladenia barteri","9":"BiY","10":"3.46600","11":"11.48700","12":"17.74896","13":"12.022917","14":"79.22848","15":"92.19810","16":"25.65000","17":"10.475000","18":"15.175000","19":"17.73750","20":"18.31667","21":"18.87083","22":"16.60417","23":"1556.2500","24":"204.00000","25":"55.000000","26":"38.29567","27":"540.00000","28":"196.75000","29":"199.97","30":"46.908","31":"45.454","32":"8.420","33":"124.728","34":"34.188","35":"50.748","36":"18.602","37":"41.550","38":"35.414","39":"33.70","40":"71.368","41":"21.090","42":"17.840","43":"23.31","44":"49.474","45":"666.19","46":"3.02","47":"(-0.627,0.642]","48":"(-0.0195,0.155]"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<h3 id="eqno-discretization">EQNo discretization</h3>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>discretized.logRR.EQNo</span> <span class='op'>&lt;-</span> <span class='va'>agrofor.biophys.modelling.data.discretized.logRR</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"logRR"</span>, <span class='st'>"logRR_counts_cut_interval"</span>, <span class='st'>"logRR_EQR_group"</span>, <span class='st'>"logRR_counts_cut_number"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'>#Correlation Matrix Plot</span>
+<span class='va'>ggparis.EQNo</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>ggpairs</span><span class='op'>(</span><span class='va'>discretized.logRR.EQNo</span> <span class='op'>%&gt;%</span> <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='fu'>contains</span><span class='op'>(</span><span class='st'>"SAND"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"iSDA_log_P"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"Bio01_MT_Annu"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"Bio17_Precip_DryQ"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"iSDA_log_C_tot"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"logRR_EQNo_group"</span><span class='op'>)</span><span class='op'>)</span>, 
+        <span class='fu'>ggplot2</span><span class='fu'>::</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='va'>logRR_EQNo_group</span>, alpha <span class='op'>=</span> <span class='fl'>0.3</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>scale_fill_viridis_d</span><span class='op'>(</span>aesthetics <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"color"</span>, <span class='st'>"fill"</span><span class='op'>)</span>, begin <span class='op'>=</span> <span class='fl'>0.1</span>, end <span class='op'>=</span> <span class='fl'>0.8</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Numeric Bivariate Analysis of logRR_EQNo_group"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>ggdraw</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>draw_image</span><span class='op'>(</span><span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"TidyMod_Class_OUTPUT"</span>, <span class='st'>"NumBivAnalysis.EQNo.png"</span><span class='op'>)</span><span class='op'>)</span> 
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-1"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-1-1.png" alt="Numeric Bivariate Analysis of logRR_EQNo_group" width="1920" />
+<p class="caption">
+Figure 1: Numeric Bivariate Analysis of logRR_EQNo_group
+</p>
+</div>
+</div>
+<h3 id="eqr-discretization">EQR discretization</h3>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>discretized.logRR.EQR</span> <span class='op'>&lt;-</span> <span class='va'>agrofor.biophys.modelling.data.discretized.logRR</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"logRR"</span>, <span class='st'>"logRR_counts_cut_interval"</span>, <span class='st'>"logRR_EQNo_group"</span>, <span class='st'>"logRR_counts_cut_number"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'>#Correlation Matrix Plot</span>
+<span class='va'>ggparis.EQR</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>ggpairs</span><span class='op'>(</span><span class='va'>discretized.logRR.EQR</span> <span class='op'>%&gt;%</span> <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='fu'>contains</span><span class='op'>(</span><span class='st'>"SAND"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"iSDA_log_P"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"Bio01_MT_Annu"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"Bio17_Precip_DryQ"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"iSDA_log_C_tot"</span><span class='op'>)</span>,
+                                          <span class='fu'>contains</span><span class='op'>(</span><span class='st'>"logRR_EQR_group"</span><span class='op'>)</span><span class='op'>)</span>, 
+        <span class='fu'>ggplot2</span><span class='fu'>::</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='va'>logRR_EQR_group</span>, alpha <span class='op'>=</span> <span class='fl'>0.3</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>scale_fill_viridis_d</span><span class='op'>(</span>aesthetics <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"color"</span>, <span class='st'>"fill"</span><span class='op'>)</span>, begin <span class='op'>=</span> <span class='fl'>0.1</span>, end <span class='op'>=</span> <span class='fl'>0.8</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Numeric Bivariate Analysis of logRR_EQNo_group"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+</div>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>ggdraw</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'>draw_image</span><span class='op'>(</span><span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"TidyMod_Class_OUTPUT"</span>, <span class='st'>"NumBivAnalysis.EQR.png"</span><span class='op'>)</span><span class='op'>)</span> 
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-2"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-2-1.png" alt="Numeric Bivariate Analysis of logRR_EQR_group" width="1920" />
+<p class="caption">
+Figure 2: Numeric Bivariate Analysis of logRR_EQR_group
+</p>
+</div>
+</div>
+<p>We now proceed with the dataset that has been discretized with the EQR method because this method seems to have the clearest separation of RR groups.</p>
+<h2 id="step-2-splitting-data">STEP 2: Splitting data</h2>
+<p>Split data in training and testing sets</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>456</span><span class='op'>)</span>
+
+<span class='co'># Splitting data</span>
+<span class='va'>af.split.class</span> <span class='op'>&lt;-</span> <span class='fu'>initial_split</span><span class='op'>(</span><span class='va'>discretized.logRR.EQR</span>, prop <span class='op'>=</span> <span class='fl'>0.80</span>, strata <span class='op'>=</span> <span class='va'>logRR_EQR_group</span><span class='op'>)</span>
+
+<span class='va'>af.train.class</span> <span class='op'>&lt;-</span> <span class='fu'>training</span><span class='op'>(</span><span class='va'>af.split.class</span><span class='op'>)</span>
+<span class='va'>af.test.class</span> <span class='op'>&lt;-</span> <span class='fu'>testing</span><span class='op'>(</span><span class='va'>af.split.class</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-3-defining-resampling-techniques-and-global-modelling-metrics">STEP 3: Defining resampling techniques and global modelling metrics</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># Re-sample technique(s)</span>
+<span class='va'>cv_fold</span> <span class='op'>&lt;-</span> <span class='fu'>vfold_cv</span><span class='op'>(</span><span class='va'>af.train.class</span>, v <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># Metrics</span>
+<span class='va'>multi.metric.class</span> <span class='op'>&lt;-</span> <span class='fu'>metric_set</span><span class='op'>(</span><span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/accuracy.html'>accuracy</a></span>, <span class='fu'>yardstick</span><span class='fu'>::</span><span class='va'><a href='https://yardstick.tidymodels.org/reference/roc_auc.html'>roc_auc</a></span><span class='op'>)</span> <span class='co'># yardstick::sensitivity, yardstick::specificity, </span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-4-defining-models">STEP 4: Defining models</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'>#Initialise Seven Models for Screening</span>
+<span class='va'>nb_mod</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>naive_Bayes</span><span class='op'>(</span>smoothness <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, Laplace <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"klaR"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>logistic_mod</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>logistic_reg</span><span class='op'>(</span>penalty <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, mixture <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"glmnet"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>dt_mod</span> <span class='op'>&lt;-</span> <span class='fu'>decision_tree</span><span class='op'>(</span>cost_complexity <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, tree_depth <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"rpart"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>rf_mod</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>rand_forest</span><span class='op'>(</span>mtry <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, trees <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"ranger"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>knn_mod</span> <span class='op'>&lt;-</span> <span class='fu'>nearest_neighbor</span><span class='op'>(</span>neighbors <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, weight_func <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, dist_power <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"kknn"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>svm_mod</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>svm_rbf</span><span class='op'>(</span>cost <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, rbf_sigma <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, margin <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"kernlab"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+
+<span class='va'>xgboost_mod</span> <span class='op'>&lt;-</span> <span class='fu'>boost_tree</span><span class='op'>(</span>mtry <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, trees <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, min_n <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, tree_depth <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, learn_rate <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, loss_reduction <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span>, sample_size <span class='op'>=</span> <span class='fu'>tune</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>  <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_engine</span><span class='op'>(</span><span class='st'>"xgboost"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>set_mode</span><span class='op'>(</span><span class='st'>"classification"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>base_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>recipe</span><span class='op'>(</span>formula <span class='op'>=</span> <span class='va'>logRR_EQR_group</span> <span class='op'>~</span> <span class='va'>.</span>, data <span class='op'>=</span> <span class='va'>af.train.class</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>update_role</span><span class='op'>(</span><span class='va'>Site.Type</span>,
+              <span class='va'>PrName</span>, <span class='co'># or assigns an initial role to variables that do not yet have a declared role.</span>
+              <span class='va'>Out.SubInd</span>,
+              <span class='va'>Out.SubInd.Code</span>,
+              <span class='va'>Product</span>,
+              <span class='va'>Latitude</span>,
+              <span class='va'>Longitude</span>,
+              <span class='va'>Tree</span>,
+              new_role <span class='op'>=</span> <span class='st'>"ID"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_novel</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='co'># assign a previously unseen factor level to a new value.</span>
+<span class='co'># ------------------------------------------------------------------------------------------------------------------------------------------------</span>
+   
+
+<span class='va'>impute_mean_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_mean</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_mode</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># will potentially remove variables that are highly sparse and unbalanced.</span>
+  <span class='fu'>step_smote</span><span class='op'>(</span><span class='va'>logRR_EQR_group</span><span class='op'>)</span> <span class='co'># recipe step that generate new examples of the minority class using nearest neighbors of these cases.</span>
+  
+
+<span class='va'>impute_knn_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_knn</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_mode</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># will potentially remove variables that are highly sparse and unbalanced.</span>
+  <span class='fu'>step_smote</span><span class='op'>(</span><span class='va'>logRR_EQR_group</span><span class='op'>)</span> <span class='co'># recipe step that generate new examples of the minority class using nearest neighbors of these cases. </span>
+
+<span class='va'>normalize_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_impute_mode</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># will potentially remove variables that are highly sparse and unbalanced.</span>
+  <span class='fu'>step_normalize</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='co'># normalize numeric data: standard deviation of one and a mean of zero.</span>
+
+
+<span class='va'>rm_corr_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_impute_mode</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># will potentially remove variables that are highly sparse and unbalanced.</span>
+  <span class='fu'>step_corr</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, threshold <span class='op'>=</span> <span class='fl'>0.8</span>, method <span class='op'>=</span> <span class='st'>"pearson"</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='co'># will potentially remove variables that have large absolute correlations with other</span>
+
+
+<span class='va'>interact_recipe</span> <span class='op'>&lt;-</span> 
+  <span class='va'>base_recipe</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_impute_linear</span><span class='op'>(</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, impute_with <span class='op'>=</span> <span class='fu'>imp_vars</span><span class='op'>(</span><span class='va'>Longitude</span>, <span class='va'>Latitude</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># create linear regression models to impute missing data.</span>
+  <span class='fu'>step_impute_mode</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_dummy</span><span class='op'>(</span><span class='fu'>all_nominal_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>step_zv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove any columns with a single unique value</span>
+  <span class='fu'>step_nzv</span><span class='op'>(</span><span class='fu'>all_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># will potentially remove variables that are highly sparse and unbalanced.</span>
+  <span class='fu'>step_interact</span><span class='op'>(</span><span class='op'>~</span> <span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span><span class='op'>:</span><span class='fu'>all_numeric_predictors</span><span class='op'>(</span><span class='op'>)</span>, skip <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h3 id="assessing-case-distributions-for-the-two-types-of-discretizations">Assessing case distributions for the two types of discretizations</h3>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>impute_mean_recipe_check</span> <span class='op'>&lt;-</span> <span class='va'>impute_mean_recipe</span> <span class='op'>%&gt;%</span> <span class='fu'>prep</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>juice</span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>normalize_recipe_check</span> <span class='op'>&lt;-</span> <span class='va'>normalize_recipe</span> <span class='op'>%&gt;%</span> <span class='fu'>prep</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>juice</span><span class='op'>(</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/table.html'>table</a></span><span class='op'>(</span><span class='va'>impute_mean_recipe_check</span><span class='op'>$</span><span class='va'>logRR_EQR_group</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>
+ 1.extremely_low       2.very_low            3.low         4.medium 
+            2318             2318             2318             2318 
+          5.high      6.very_high 7.extremely_high 
+            2318             2318             2318 </code></pre>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/r/base/table.html'>table</a></span><span class='op'>(</span><span class='va'>normalize_recipe_check</span><span class='op'>$</span><span class='va'>logRR_EQR_group</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>
+ 1.extremely_low       2.very_low            3.low         4.medium 
+              10               38              226             2318 
+          5.high      6.very_high 7.extremely_high 
+             928              118               12 </code></pre>
+</div>
+<h2 id="step-6-prep-and-bake-training-data">STEP 6: Prep and bake training data</h2>
+<p>Prep and bake the training and testing datasets.</p>
+<ul>
+<li><p>The prep() function takes the defined data object and computes everything we defined in the recipe, so that the preprocessing steps can be executed on the actual data. The bake() function.</p></li>
+<li><p>The bake() function (together with the juice() function) both returns a dataset, not a preprocessing recipe object. The bake() function takes a recipe that has been prepped with prep() and applies it to some new data, in the argument “new_data.” That new_data could be the testing data so that we insure both the training and testingset is undergoing same preprocessing.</p></li>
+</ul>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>af_class_train</span> <span class='op'>&lt;-</span> <span class='va'>impute_mean_recipe</span> <span class='op'>%&gt;%</span> <span class='fu'>prep</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>bake</span><span class='op'>(</span>new_data <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+<span class='va'>af_class_test</span> <span class='op'>&lt;-</span> <span class='va'>impute_mean_recipe</span> <span class='op'>%&gt;%</span> <span class='fu'>prep</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>bake</span><span class='op'>(</span><span class='fu'>testing</span><span class='op'>(</span><span class='va'>af.split.class</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-7-exploratory-data-analysis">STEP 7: Exploratory Data Analysis</h2>
+<h3 id="checking-the-correlation-of-variables-against-the-response-ratio-groups">Checking the correlation of variables against the response ratio groups</h3>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'>#Generate Correlation Visualisation</span>
+<span class='va'>coor_plot_EQR</span> <span class='op'>&lt;-</span> 
+  <span class='va'>af_class_train</span> <span class='op'>%&gt;%</span> <span class='fu'>bind_rows</span><span class='op'>(</span><span class='va'>af_class_test</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>mutate</span><span class='op'>(</span>logRR_EQR_group <span class='op'>=</span> <span class='fu'>if_else</span><span class='op'>(</span><span class='va'>logRR_EQR_group</span> <span class='op'>==</span> <span class='st'>"7.extremely_high"</span>, <span class='fl'>1</span>,<span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='fl'>9</span><span class='op'>:</span><span class='fl'>44</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+              <span class='fu'>correlate</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+              <span class='fu'>rearrange</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+              <span class='fu'>shave</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+              <span class='fu'>rplot</span><span class='op'>(</span>print_cor <span class='op'>=</span> <span class='cn'>T</span>,.order <span class='op'>=</span> <span class='st'>"alphabet"</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>theme</span><span class='op'>(</span>axis.text.x <span class='op'>=</span> <span class='fu'>element_text</span><span class='op'>(</span>angle <span class='op'>=</span> <span class='fl'>90</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>scale_color_viridis_c</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Correlation Plot for Trained Dataset"</span><span class='op'>)</span>
+
+<span class='va'>coor_plot_EQR</span>
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-3"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-3-1.png" alt="Correlation of variables against the EQR RR groups" width="960" />
+<p class="caption">
+Figure 3: Correlation of variables against the EQR RR groups
+</p>
+</div>
+</div>
+<h2 id="step-8-generate-list-of-recipes">STEP 8: Generate list of recipes</h2>
+<p>We generate a list of recipes for the Workflowset operations. The list consist of the recipes that wes generated earlier.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>recipe_list</span> <span class='op'>&lt;-</span> 
+  <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>normalize <span class='op'>=</span> <span class='va'>normalize_recipe</span>,
+       removed_corr <span class='op'>=</span> <span class='va'>rm_corr_recipe</span>,
+       interaction <span class='op'>=</span> <span class='va'>interact_recipe</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-7-generate-list-of-model-types">STEP 7: Generate list of model types</h2>
+<p>We generate a list of model types for the Workflowset operations, as several model x recipe combinations will be tested. The model types are defined earlier when we defined our models.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>model_list</span> <span class='op'>&lt;-</span> 
+<span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>Random_Forest <span class='op'>=</span> <span class='va'>rf_mod</span>, 
+     SVM <span class='op'>=</span> <span class='va'>svm_mod</span>, 
+     Naive_Bayes <span class='op'>=</span> <span class='va'>nb_mod</span>, 
+     Decision_Tree <span class='op'>=</span> <span class='va'>dt_mod</span>, 
+     Boosted_Trees <span class='op'>=</span> <span class='va'>xgboost_mod</span>, 
+     KNN <span class='op'>=</span> <span class='va'>knn_mod</span>, 
+     Logistic_Regression <span class='op'>=</span> <span class='va'>logistic_mod</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-8-combine-into-a-model-workflowset">STEP 8: Combine into a model Workflowset</h2>
+<p>Now we can combine the list of recipes and the list of models into a Workflowset - that we can use to tune.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>model_set</span> <span class='op'>&lt;-</span> <span class='fu'>workflow_set</span><span class='op'>(</span>preproc <span class='op'>=</span> <span class='va'>recipe_list</span>, 
+                          models <span class='op'>=</span> <span class='va'>model_list</span>, 
+                          cross <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span> <span class='co'># Setting cross = T instructs workflow_set to create all possible combinations of parsnip model and recipe specification.</span>
+</code></pre>
+</div>
+</div>
+<h2 id="step-9-perform-tuning-of-the-model-workflowsets">STEP 9: Perform tuning of the model workflowsets</h2>
+<p>Now we can tune the Workflowset. Be aware that this operation can take around five hours on a standard laptop with 8 CPU, even when we use parallel processing.</p>
+<p><strong>Note</strong> that here we are using the tune_race_anuva() function/method to tune the Workflowset. There are other tuning methods available. We choose the tune_race_anova() because it is more efficient.</p>
+<p>We define a control grid as a control aspects of the grid search racing process used in the Workflowset tuning.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>race_ctrl_class</span> <span class='op'>&lt;-</span>
+   <span class='fu'>control_race</span><span class='op'>(</span>
+      save_pred <span class='op'>=</span> <span class='cn'>TRUE</span>,
+      parallel_over <span class='op'>=</span> <span class='st'>"everything"</span>,
+      save_workflow <span class='op'>=</span> <span class='cn'>TRUE</span>
+   <span class='op'>)</span>
+
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>234</span><span class='op'>)</span>
+
+<span class='co'># Initializing parallel processing </span>
+<span class='fu'>parallelStartSocket</span><span class='op'>(</span>cpus <span class='op'>=</span> <span class='fu'>detectCores</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> 
+
+<span class='va'>wflwset_class_race_results</span> <span class='op'>&lt;-</span>
+   <span class='va'>model_set</span> <span class='op'>%&gt;%</span>
+   <span class='fu'>workflow_map</span><span class='op'>(</span>fn        <span class='op'>=</span> <span class='st'>"tune_race_anova"</span>, 
+                seed      <span class='op'>=</span> <span class='fl'>3456</span>,
+                resamples <span class='op'>=</span> <span class='va'>cv_fold</span>, 
+                metrics   <span class='op'>=</span> <span class='va'>multi.metric.class</span>, 
+                verbose   <span class='op'>=</span> <span class='cn'>TRUE</span>, 
+                grid      <span class='op'>=</span> <span class='fl'>4</span>,                       <span class='co'># simple and small grid</span>
+                control   <span class='op'>=</span> <span class='va'>race_ctrl_class</span>
+   <span class='op'>)</span>
+
+<span class='co'># Terminating parallel session</span>
+<span class='fu'>parallelStop</span><span class='op'>(</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>We get a series of specific warning and error messages for various combinations of model-preprocessing, during the tuning, such as:</p>
+<p>✓ 1 of 21 tuning: normalize_Random_Forest (4m 15.7s) i 2 of 21 tuning: normalize_SVM ! Fold4: internal: No observations were detected in <code>truth</code> for level(s): ‘1.extremely_low’ Computation will proceed by ignoring those levels.</p>
+<p>✓ 6 of 21 tuning: normalize_KNN (3m 43.6s) i 7 of 21 tuning: normalize_Logistic_Regression x Fold4: preprocessor 1/1, model 1/4: Error: More than two classes; use multinomial family instead in call to glmnet x Fold4: preprocessor 1/1, model 2/4: Error: More than two classes; use multinomial family instead in call to glmnet</p>
+<p>✓ 17 of 21 tuning: interaction_Naive_Bayes (3h 36m 10.5s) i 18 of 21 tuning: interaction_Decision_Tree ! Fold4: internal: No observations were detected in <code>truth</code> for level(s): ‘1.extremely_low’ Computation will proceed by ignoring those levels.</p>
+<p>✓ 20 of 21 tuning: interaction_KNN (21m 19.2s) i 21 of 21 tuning: interaction_Logistic_Regression x Fold4: preprocessor 1/1, model 1/4: Error: More than two classes; use multinomial family instead in call to glmnet</p>
+<h3 id="saving-the-workflowset-tuning-results">SAVING THE WORKFLOWSET TUNING RESULTS</h3>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># SAVING MODEL TUNING RESULTS</span>
+<span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>saveRDS</a></span><span class='op'>(</span><span class='va'>wflwset_class_race_results</span>, <span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"TidyMod_Class_OUTPUT"</span>,<span class='st'>"wflwset_class_race_results.RDS"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h3 id="loadingreading-the-workflowset-results">LOADING/READING THE WORKFLOWSET RESULTS</h3>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>wflwset_class_race_results</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span><span class='fu'>here</span><span class='fu'>::</span><span class='fu'><a href='https://here.r-lib.org//reference/here.html'>here</a></span><span class='op'>(</span><span class='st'>"TidyMod_Class_OUTPUT"</span>,<span class='st'>"wflwset_class_race_results.RDS"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>wflwset_class_race_results</span>
+</code></pre>
+</div>
+<pre><code># A workflow set/tibble: 21 × 4
+   wflow_id                      info             option    result    
+   &lt;chr&gt;                         &lt;list&gt;           &lt;list&gt;    &lt;list&gt;    
+ 1 normalize_Random_Forest       &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 2 normalize_SVM                 &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 3 normalize_Naive_Bayes         &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 4 normalize_Decision_Tree       &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 5 normalize_Boosted_Trees       &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 6 normalize_KNN                 &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 7 normalize_Logistic_Regression &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;try-errr…
+ 8 removed_corr_Random_Forest    &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+ 9 removed_corr_SVM              &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+10 removed_corr_Naive_Bayes      &lt;tibble [1 × 4]&gt; &lt;opts[4]&gt; &lt;race[+]&gt; 
+# … with 11 more rows</code></pre>
+</div>
+<h2 id="step-10-cleaning-op-the-workflowsets">STEP 10: Cleaning op the Workflowsets</h2>
+<p>Cleaning op the Workflowsets so that the model-preprocessing combinations with errors are excluded</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>wflwset_class_race_results_clean</span> <span class='op'>&lt;-</span> <span class='va'>wflwset_class_race_results</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>wflow_id</span> <span class='op'>!=</span> <span class='st'>"normalize_Logistic_Regression"</span>,
+                <span class='va'>wflow_id</span> <span class='op'>!=</span> <span class='st'>"removed_corr_Logistic_Regression"</span>,
+                <span class='va'>wflow_id</span> <span class='op'>!=</span> <span class='st'>"interaction_Logistic_Regression"</span><span class='op'>)</span> 
+</code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>autoplot</span><span class='op'>(</span><span class='va'>wflwset_class_race_results_clean</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-4"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-4-1.png" alt="visualising the performances of the various model-preproccessing combinations" width="1440" />
+<p class="caption">
+Figure 4: visualising the performances of the various model-preproccessing combinations
+</p>
+</div>
+</div>
+<h2 id="step-11-evaluate-performance-of-different-model-preprocessing-combinations">STEP 11: Evaluate performance of different model-preprocessing combinations</h2>
+<p>We can now evaluate, by visualising, the performance and compare the different Workflowsets.</p>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>workflowset_comparisons_accuracy</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>collect_metrics</span><span class='op'>(</span><span class='va'>wflwset_class_race_results_clean</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>separate</span><span class='op'>(</span><span class='va'>wflow_id</span>, into <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Recipe"</span>, <span class='st'>"Model_Type"</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>"_"</span>, remove <span class='op'>=</span> <span class='cn'>F</span>, extra <span class='op'>=</span> <span class='st'>"merge"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/r/stats/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>.metric</span> <span class='op'>==</span> <span class='st'>"accuracy"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>wflow_id</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/r/stats/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>mean</span> <span class='op'>==</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>mean</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>model</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='va'>.config</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>distinct</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>ungroup</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>mutate</span><span class='op'>(</span>Workflow_Rank <span class='op'>=</span>  <span class='fu'>row_number</span><span class='op'>(</span><span class='op'>-</span><span class='va'>mean</span><span class='op'>)</span>,
+         .metric <span class='op'>=</span> <span class='fu'>str_to_upper</span><span class='op'>(</span><span class='va'>.metric</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>ggplot</span><span class='op'>(</span><span class='fu'>aes</span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>Workflow_Rank</span>, y <span class='op'>=</span> <span class='va'>mean</span>, shape <span class='op'>=</span> <span class='va'>Recipe</span>, color <span class='op'>=</span> <span class='va'>Model_Type</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>geom_point</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>geom_errorbar</span><span class='op'>(</span><span class='fu'>aes</span><span class='op'>(</span>ymin <span class='op'>=</span> <span class='va'>mean</span><span class='op'>-</span><span class='va'>std_err</span>, ymax <span class='op'>=</span> <span class='va'>mean</span><span class='op'>+</span><span class='va'>std_err</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span><span class='op'>+</span>
+    <span class='fu'>scale_colour_viridis_d</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Performance Comparison of Workflow Sets, metric: Accuracy"</span>, x <span class='op'>=</span> <span class='st'>"Workflow Rank"</span>, y <span class='op'>=</span> <span class='st'>"Accuracy"</span>, color <span class='op'>=</span> <span class='st'>"Model Types"</span>, shape <span class='op'>=</span> <span class='st'>"Recipes"</span><span class='op'>)</span>
+
+<span class='va'>workflowset_comparisons_accuracy</span>
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-5"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-5-1.png" alt="Evaluate the performance of accuracy and compare the different Workflowsets" width="1440" />
+<p class="caption">
+Figure 5: Evaluate the performance of accuracy and compare the different Workflowsets
+</p>
+</div>
+</div>
+<p>We see that the Random Forest model with a normalized pre-processing recipe is the combination that performs the best, when looking at the Accuracy of the classification model.</p>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>workflowset_comparisons_aucroc</span> <span class='op'>&lt;-</span> 
+  <span class='fu'>collect_metrics</span><span class='op'>(</span><span class='va'>wflwset_class_race_results_clean</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>separate</span><span class='op'>(</span><span class='va'>wflow_id</span>, into <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Recipe"</span>, <span class='st'>"Model_Type"</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>"_"</span>, remove <span class='op'>=</span> <span class='cn'>F</span>, extra <span class='op'>=</span> <span class='st'>"merge"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/r/stats/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>.metric</span> <span class='op'>==</span> <span class='st'>"roc_auc"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>wflow_id</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/r/stats/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>mean</span> <span class='op'>==</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>mean</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>model</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='va'>.config</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>distinct</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>ungroup</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>mutate</span><span class='op'>(</span>Workflow_Rank <span class='op'>=</span>  <span class='fu'>row_number</span><span class='op'>(</span><span class='op'>-</span><span class='va'>mean</span><span class='op'>)</span>,
+         .metric <span class='op'>=</span> <span class='fu'>str_to_upper</span><span class='op'>(</span><span class='va'>.metric</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>ggplot</span><span class='op'>(</span><span class='fu'>aes</span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>Workflow_Rank</span>, y <span class='op'>=</span> <span class='va'>mean</span>, shape <span class='op'>=</span> <span class='va'>Recipe</span>, color <span class='op'>=</span> <span class='va'>Model_Type</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>geom_point</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>geom_errorbar</span><span class='op'>(</span><span class='fu'>aes</span><span class='op'>(</span>ymin <span class='op'>=</span> <span class='va'>mean</span><span class='op'>-</span><span class='va'>std_err</span>, ymax <span class='op'>=</span> <span class='va'>mean</span><span class='op'>+</span><span class='va'>std_err</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span><span class='op'>+</span>
+    <span class='fu'>scale_colour_viridis_d</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Performance Comparison of Workflow Sets, metric: AUC_ROC"</span>, x <span class='op'>=</span> <span class='st'>"Workflow Rank"</span>, y <span class='op'>=</span> <span class='st'>"ROC_AUC"</span>, color <span class='op'>=</span> <span class='st'>"Model Types"</span>, shape <span class='op'>=</span> <span class='st'>"Recipes"</span><span class='op'>)</span>
+
+<span class='va'>workflowset_comparisons_aucroc</span>
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-6"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-6-1.png" alt="Evaluate the performance of AUC-ROC and compare the different Workflowsets" width="1440" />
+<p class="caption">
+Figure 6: Evaluate the performance of AUC-ROC and compare the different Workflowsets
+</p>
+</div>
+</div>
+<p>We see that the Random Forest model also performs best when it comes to the AUC_ROC metric.</p>
+<h2 id="step-12-list-mode-preprocessing-combinations">STEP 12: List mode-preprocessing combinations</h2>
+<p>We can now list the Workflowset (model-preprocessing) combinations from best to worse, based on the AUC_ROC metric.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>rank_results</span><span class='op'>(</span><span class='va'>wflwset_class_race_results_clean</span>, rank_metric <span class='op'>=</span> <span class='st'>"roc_auc"</span>, select_best <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code># A tibble: 34 × 9
+   wflow_id   .config   .metric  mean std_err     n preprocessor model
+   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;        &lt;chr&gt;
+ 1 normalize… Preproce… accura… 0.687 0.00723     5 recipe       rand…
+ 2 normalize… Preproce… roc_auc 0.799 0.0125      5 recipe       rand…
+ 3 removed_c… Preproce… accura… 0.687 0.00723     5 recipe       rand…
+ 4 removed_c… Preproce… roc_auc 0.799 0.0125      5 recipe       rand…
+ 5 interacti… Preproce… accura… 0.685 0.00714     5 recipe       rand…
+ 6 interacti… Preproce… roc_auc 0.796 0.0154      5 recipe       rand…
+ 7 normalize… Preproce… accura… 0.413 0.0287      5 recipe       naiv…
+ 8 normalize… Preproce… roc_auc 0.784 0.0235      5 recipe       naiv…
+ 9 removed_c… Preproce… accura… 0.436 0.0242      5 recipe       naiv…
+10 removed_c… Preproce… roc_auc 0.777 0.0222      5 recipe       naiv…
+# … with 24 more rows, and 1 more variable: rank &lt;int&gt;</code></pre>
+</div>
+<p>The Random Forest model is clearly the winner! It performs best on all the pre-processing recipeis. The Random Forest is closely followed by the Naive_Bayes models.</p>
+<h2 id="step-13-finalize-worfkflow-with-best-model">STEP 13: Finalize worfkflow with best model</h2>
+<p>We can now finalize the Workflowset with the best performing workflow (model-preprocessing combinations)</p>
+<p>Get the best parameters and finalize</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'>#Pull Best Performing Hyperparameter Set From workflow_map Object</span>
+<span class='va'>best_result</span> <span class='op'>&lt;-</span> <span class='va'>wflwset_class_race_results_clean</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>pull_workflow_set_result</span><span class='op'>(</span><span class='st'>"normalize_Random_Forest"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>select_best</span><span class='op'>(</span>metric <span class='op'>=</span> <span class='st'>"accuracy"</span><span class='op'>)</span>
+<span class='co'>#Finalise Workflow Object With Best Parameters</span>
+<span class='va'>dt_wf</span> <span class='op'>&lt;-</span> <span class='va'>wflwset_class_race_results_clean</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>pull_workflow</span><span class='op'>(</span><span class='st'>"normalize_Random_Forest"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>finalize_workflow</span><span class='op'>(</span><span class='va'>best_result</span><span class='op'>)</span>
+
+<span class='co'>#Fit Workflow Object to Training Data and Predict Using Testing Dataset</span>
+
+<span class='va'>dt_res</span> <span class='op'>&lt;-</span> 
+  <span class='va'>dt_wf</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>fit</span><span class='op'>(</span><span class='fu'>training</span><span class='op'>(</span><span class='va'>af.split.class</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span>new_data <span class='op'>=</span> <span class='fu'>testing</span><span class='op'>(</span><span class='va'>af.split.class</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>bind_cols</span><span class='op'>(</span><span class='va'>af.test.class</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>mutate</span><span class='op'>(</span>.pred_class <span class='op'>=</span> <span class='fu'>fct_infreq</span><span class='op'>(</span><span class='va'>.pred_class</span><span class='op'>)</span>,
+         logRR_EQR_group <span class='op'>=</span> <span class='fu'>fct_infreq</span><span class='op'>(</span><span class='va'>logRR_EQR_group</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>rationalize</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>drop_na</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>relocate</span><span class='op'>(</span><span class='va'>logRR_EQR_group</span>, <span class='va'>.pred_class</span><span class='op'>)</span>
+
+<span class='va'>dt_res</span>
+</code></pre>
+</div>
+<pre><code># A tibble: 884 × 45
+   logRR_EQR_group .pred_class PrName    Out.SubInd  Product Site.Type
+   &lt;fct&gt;           &lt;fct&gt;       &lt;fct&gt;     &lt;fct&gt;       &lt;fct&gt;   &lt;fct&gt;    
+ 1 4.medium        4.medium    Parklands Biomass Yi… Pearl … Farm     
+ 2 4.medium        5.high      Agrofore… Biomass Yi… Pearl … Farm     
+ 3 4.medium        5.high      Agrofore… Crop Yield  Pearl … Farm     
+ 4 4.medium        4.medium    Agrofore… Crop Yield  Pearl … Station  
+ 5 4.medium        4.medium    Agrofore… Biomass Yi… Maize   Station  
+ 6 5.high          4.medium    Agrofore… Crop Yield  Maize   Station  
+ 7 4.medium        4.medium    Agrofore… Biomass Yi… Maize   Station  
+ 8 4.medium        4.medium    Alleycro… Crop Yield  Maize   Farm     
+ 9 4.medium        4.medium    Agrofore… Crop Yield  Maize   Farm     
+10 4.medium        4.medium    Agrofore… Crop Yield  Maize   Farm     
+# … with 874 more rows, and 39 more variables: Tree &lt;fct&gt;,
+#   Out.SubInd.Code &lt;fct&gt;, Latitude &lt;dbl&gt;, Longitude &lt;dbl&gt;,
+#   Bio01_MT_Annu &lt;dbl&gt;, Bio02_MDR &lt;dbl&gt;, Bio03_Iso &lt;dbl&gt;,
+#   Bio04_TS &lt;dbl&gt;, Bio05_TWM &lt;dbl&gt;, Bio06_MinTCM &lt;dbl&gt;,
+#   Bio07_TAR &lt;dbl&gt;, Bio08_MT_WetQ &lt;dbl&gt;, Bio09_MT_DryQ &lt;dbl&gt;,
+#   Bio10_MT_WarQ &lt;dbl&gt;, Bio11_MT_ColQ &lt;dbl&gt;, Bio12_Pecip_Annu &lt;dbl&gt;,
+#   Bio13_Precip_WetM &lt;dbl&gt;, Bio14_Precip_DryM &lt;dbl&gt;, …</code></pre>
+</div>
+<p>By visualising the modelled RR groups in a correlation plot we see that the predicted () RR groups are correlated mostly with precipitation of the dry quarter Magnanimous etc.</p>
+<div class="layout-chunk" data-layout="l-screen-inset shaded">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">  <span class='va'>coor_plot_EQR_modelled</span> <span class='op'>&lt;-</span> 
+  <span class='va'>dt_res</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>PrName</span>, <span class='va'>Out.SubInd</span>, <span class='va'>Product</span>, <span class='va'>Site.Type</span>, <span class='va'>Tree</span>, <span class='va'>Out.SubInd.Code</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>.pred_class <span class='op'>=</span> <span class='fu'>if_else</span><span class='op'>(</span><span class='va'>.pred_class</span> <span class='op'>==</span> <span class='st'>"5.high"</span>, <span class='fl'>1</span>,<span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='fl'>2</span><span class='op'>:</span><span class='fl'>38</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+              <span class='fu'>correlate</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+              <span class='fu'>rearrange</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+              <span class='fu'>shave</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+              <span class='fu'>rplot</span><span class='op'>(</span>print_cor <span class='op'>=</span> <span class='cn'>T</span>,.order <span class='op'>=</span> <span class='st'>"alphabet"</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>theme_minimal</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>theme</span><span class='op'>(</span>axis.text.x <span class='op'>=</span> <span class='fu'>element_text</span><span class='op'>(</span>angle <span class='op'>=</span> <span class='fl'>90</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>scale_color_viridis_c</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+                <span class='fu'>labs</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Correlation Plot for Testing Dataset - modelled"</span><span class='op'>)</span>
+
+<span class='va'>coor_plot_EQR_modelled</span>
+</code></pre>
+</div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-7"></span>
+<img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-7-1.png" alt="Correlation of variables against the modelled EQR RR groups" width="1440" />
+<p class="caption">
+Figure 7: Correlation of variables against the modelled EQR RR groups
+</p>
+</div>
+</div>
+<h2 id="step-14-generate-confusion-matrix-of-predicted-vs-observed-rr-groups">STEP 14: Generate confusion matrix of predicted vs observed RR groups</h2>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>final_param</span> <span class='op'>&lt;-</span> 
+  <span class='va'>wflwset_class_race_results_clean</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>pull_workflow_set_result</span><span class='op'>(</span><span class='st'>"normalize_Random_Forest"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>  
+  <span class='fu'>show_best</span><span class='op'>(</span><span class='st'>"roc_auc"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>slice</span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='va'>trees</span>, <span class='va'>mtry</span><span class='op'>)</span>
+
+<span class='va'>wflwset_class_race_results_clean</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>pull_workflow_set_result</span><span class='op'>(</span><span class='st'>"normalize_Random_Forest"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>collect_predictions</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>inner_join</span><span class='op'>(</span><span class='va'>final_param</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>group_by</span><span class='op'>(</span><span class='va'>id</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>conf_mat</span><span class='op'>(</span>truth <span class='op'>=</span> <span class='va'>logRR_EQR_group</span>, estimate <span class='op'>=</span> <span class='va'>.pred_class</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>mutate</span><span class='op'>(</span>tidied <span class='op'>=</span> <span class='fu'>map</span><span class='op'>(</span><span class='va'>conf_mat</span>, <span class='va'>tidy</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>unnest</span><span class='op'>(</span><span class='va'>tidied</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+<pre><code># A tibble: 245 × 4
+   id    conf_mat   name     value
+   &lt;chr&gt; &lt;list&gt;     &lt;chr&gt;    &lt;int&gt;
+ 1 Fold1 &lt;conf_mat&gt; cell_1_1     0
+ 2 Fold1 &lt;conf_mat&gt; cell_2_1     0
+ 3 Fold1 &lt;conf_mat&gt; cell_3_1     0
+ 4 Fold1 &lt;conf_mat&gt; cell_4_1     1
+ 5 Fold1 &lt;conf_mat&gt; cell_5_1     0
+ 6 Fold1 &lt;conf_mat&gt; cell_6_1     0
+ 7 Fold1 &lt;conf_mat&gt; cell_7_1     0
+ 8 Fold1 &lt;conf_mat&gt; cell_1_2     0
+ 9 Fold1 &lt;conf_mat&gt; cell_2_2     0
+10 Fold1 &lt;conf_mat&gt; cell_3_2     1
+# … with 235 more rows</code></pre>
+</div>
+<h3 id="confusion-matrix-of-predicted-vs-observed-rr-groups">Confusion matrix of predicted vs observed RR groups</h3>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>conf_matrix</span> <span class='op'>&lt;-</span>   
+<span class='va'>wflwset_class_race_results_clean</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>pull_workflow_set_result</span><span class='op'>(</span><span class='st'>"normalize_Random_Forest"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>collect_predictions</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>inner_join</span><span class='op'>(</span><span class='va'>final_param</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>conf_mat</span><span class='op'>(</span>truth <span class='op'>=</span> <span class='va'>logRR_EQR_group</span>, estimate <span class='op'>=</span> <span class='va'>.pred_class</span><span class='op'>)</span> 
+
+<span class='va'>conf_matrix</span>
+</code></pre>
+</div>
+<pre><code>                  Truth
+Prediction         1.extremely_low 2.very_low 3.low 4.medium 5.high
+  1.extremely_low                0          0     0        0      0
+  2.very_low                     0          0     0        0      0
+  3.low                          3          5    36       36      1
+  4.medium                       7         29   172     2074    534
+  5.high                         0          4    18      207    385
+  6.very_high                    0          0     0        1      7
+  7.extremely_high               0          0     0        0      1
+                  Truth
+Prediction         6.very_high 7.extremely_high
+  1.extremely_low            0                0
+  2.very_low                 0                0
+  3.low                      0                0
+  4.medium                  69               11
+  5.high                    37                1
+  6.very_high               12                0
+  7.extremely_high           0                0</code></pre>
+</div>
+<p>As we see the classes are highly unbalanced and this makes it “difficult” for the Random Forest model (or any model) to create robust predictions. A way to circumvent this is to use the pre-processing steps from the themis package. The themis package is specifically designed for optimizing machine learning classification modelling by providing extra pre-processing reccipe steps for unbalanced data. themis (<a href="https://github.com/tidymodels/themis" class="uri">https://github.com/tidymodels/themis</a>) contains extra steps for the recipes package for dealing with unbalanced data. The name themis is that of the ancient Greek god who is typically depicted with a balance.</p>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>autoplot</span><span class='op'>(</span><span class='va'>conf_matrix</span>, type <span class='op'>=</span> <span class='st'>"mosaic"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+<p><img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-8-1.png" width="624" /></p>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<details>
+<summary>
+Show code
+</summary>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>autoplot</span><span class='op'>(</span><span class='va'>conf_matrix</span>, type <span class='op'>=</span> <span class='st'>"heatmap"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</details>
+<p><img src="MLTIDYMODELSCLASS_files/figure-html5/unnamed-chunk-9-1.png" width="624" /></p>
+</div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<!--radix_placeholder_article_footer-->
+<!--/radix_placeholder_article_footer-->
+</div>
+
+<div class="d-appendix">
+</div>
+
+
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_appendices-->
+<div class="appendix-bottom">
+<h3 id="references">References</h3>
+<div id="references-listing"></div>
+</div>
+<!--/radix_placeholder_appendices-->
+<!--radix_placeholder_navigation_after_body-->
+<!--/radix_placeholder_navigation_after_body-->
+
+</body>
+
+</html>
