@@ -1,5 +1,5 @@
 ---
-title: "Part 5: Tidymodels - Classification"
+title: "Part 5: Tidymodels Classification"
 favicon: ./IMAGES/ERA_logo_circle.png
 description: |
   On this page we are going to use discritized versions of the logRR values and perform a classification modelling analysis.
@@ -182,7 +182,7 @@ af.test.class <- testing(af.split.class)
 cv_fold <- vfold_cv(af.train.class, v = 5)
 ```
 
-```{r Model metrics , code_folding=FALSE, eval=TRUE}
+```{r Model metrics, code_folding=FALSE, eval=FALSE}
 # Metrics
 multi.metric.class <- metric_set(yardstick::accuracy, yardstick::roc_auc) # yardstick::sensitivity, yardstick::specificity, 
 ```
@@ -440,7 +440,7 @@ x Fold4: preprocessor 1/1, model 1/4: Error: More than two classes; use multinom
 
 ### SAVING THE WORKFLOWSET TUNING RESULTS
 
-```{r AVING THE WORKFLOWSET TUNING RESULTS, eval=FALSE, code_folding=FALSE}
+```{r SAVING THE WORKFLOWSET TUNING RESULTS, eval=FALSE, code_folding=FALSE}
 # SAVING MODEL TUNING RESULTS
 saveRDS(wflwset_class_race_results, here::here("TidyMod_Class_OUTPUT","wflwset_class_race_results.RDS"))
 ```
@@ -583,6 +583,7 @@ By visualising the modelled RR groups in a correlation plot we see that the pred
 
 coor_plot_EQR_modelled
 ```
+
 ## STEP 14: Generate confusion matrix of predicted vs observed RR groups 
 
 ```{r Generate confusion matrix of predicted vs observed RR groups, code_folding=TRUE, eval=TRUE}
@@ -590,7 +591,7 @@ final_param <-
   wflwset_class_race_results_clean %>%
   pull_workflow_set_result("normalize_Random_Forest") %>%  
   show_best("roc_auc") %>%
-  slice(1) %>%
+  dplyr::slice(1) %>%
   dplyr::select(trees, mtry)
 
 wflwset_class_race_results_clean %>%
@@ -605,7 +606,7 @@ wflwset_class_race_results_clean %>%
 
 ### Confusion matrix of predicted vs observed RR groups 
 
-```{r Printing classification cunfusion matrix of predicted vs observed RR groups, code_folding=FALSE, eval=TRUE}
+```{r Generating classification confusion matrix of predicted vs observed RR groups, code_folding=FALSE, eval=FALSE}
 conf_matrix <-   
 wflwset_class_race_results_clean %>%
   pull_workflow_set_result("normalize_Random_Forest") %>%
@@ -613,14 +614,20 @@ wflwset_class_race_results_clean %>%
   inner_join(final_param) %>%
   conf_mat(truth = logRR_EQR_group, estimate = .pred_class) 
 
+saveRDS(conf_matrix, here::here("TidyMod_Class_OUTPUT","conf_matrix.RDS"))
+```
+```{r Printing classification confusion matrix of predicted vs observed RR groups, code_folding=FALSE, eval=TRUE}
+conf_matrix <-  readRDS(here::here("TidyMod_Class_OUTPUT","conf_matrix.RDS"))
 conf_matrix
 ```
+
 As we see the classes are highly unbalanced and this makes it "difficult" for the Random Forest model (or any model) to create robust predictions. A way to circumvent this is to use the pre-processing steps from the themis package. The themis package is specifically designed for optimizing machine learning classification modelling by providing extra pre-processing reccipe steps for unbalanced data. themis (https://github.com/tidymodels/themis) contains extra steps for the recipes package for dealing with unbalanced data. The name themis is that of the ancient Greek god who is typically depicted with a balance. 
 
-```{r}
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=5, fig.cap = "Printing confusion matrix - mosaic"}
 autoplot(conf_matrix, type = "mosaic")
 ```
-```{r}
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=5, fig.cap = "Printing confusion matrix - heatmap"}
 autoplot(conf_matrix, type = "heatmap")
 ```
 
