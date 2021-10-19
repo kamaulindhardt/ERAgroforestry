@@ -39,7 +39,7 @@ required.packages <- c("knitr","data.table", "kableExtra",          #-----------
                        "ggfortify", "DataExplorer", "gstat",
                        "superheat", "patchwork", "Boruta",
                        "stringr", "dplyr", "see", "ggplot2",
-                       "ggfittext", "d3treeR", "grid")
+                       "ggfittext", "d3treeR", "grid", "recipes")
 
 p_load(char=required.packages, install = T,character.only = T)
 ```
@@ -663,6 +663,108 @@ agroforestry.prac.thresh <- ERA.AF %>%
 The threshold reduces the total dataset available for the ERAAnalyze from 6745 to 6361 observations. We did loose a bit of data but hopefully our later analysis will be more powerful and robust. This is a fine-tuning trade-off issue and one has to decide on such a threshold based on the goal of the analysis, the available data to answer the relevant questions and expert knowledge. 
 
 **Note:** Later we will include a second threshold to our data so that the number of studies should be of a minimum of 2 (see section [Calculating response ratios with ERAAnalyze](#Calculating_response_ratios)
+
+
+### CREATING THE NICE RIDGE LINE PLOTS OF EACH PRACTICE
+
+```{r Getting data from from the machine learning workflowsets data, code_folding=TRUE, eval=TRUE}
+ml.data.no.outliers.wf <- readRDS(here::here("ERAAnalyze_OUTPUT", "ml.data.no.outliers.wf.RDS"))
+
+  ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  step_impute_mean(all_numeric()) %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
+  group_by(PrName) %>%
+  summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  arrange(desc(logRR))
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=6, fig.cap = "Agroforestry practices vs sand content"}
+ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  step_impute_mean(all_numeric()) %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") %>%
+  
+  ggplot() +
+  geom_boxplot(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName)) +
+  geom_jitter(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName), height = 0.4, width = 0.1) +
+  theme_lucid(plot.title.size = 25,
+              axis.text.size = 15,
+              legend.title.size = 20,
+              legend.text.size = 20,
+              axis.title.size = 20) +
+  xlab("Agroforestry Practices") +
+  ylab("Sand content") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 60, hjust=1), plot.margin=unit(c(1,6,1,6),"cm"))
+```
+```{r Creating agroforestry ridgeline data, code_folding=TRUE, eval=TRUE}
+agfor_ridgeline_data <- 
+  ml.data.no.outliers.wf %>%
+  rationalize() %>%
+  drop_na() %>%
+  relocate(logRR) %>%
+  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
+  group_by(PrName) %>%
+# summarise(across(everything(), mean)) %>%
+  dplyr::filter(PrName == "Agroforestry Fallow" | 
+                PrName == "Agroforestry Pruning"| 
+                PrName == "Alleycropping"| 
+                PrName == "Parklands") 
+```
+
+**Ridge line plot: Distribution of sand content for the four different agroforestry practices**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=6, fig.cap = "Ridge line plot: Distribution of sand content for the four different agroforestry practicest"}
+agfor_ridgeline_data %>%
+  ggplot(aes(y = PrName, x = iSDA_SAND_conc)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "orange", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 5, height = 0.05), 
+                      point_shape = '|', bandwidth = 6) +
+  theme_lucid() +
+  xlab("Sand concentration %") +
+  ylab("") +
+  ggtitle("SAND concentration (%)")
+```
+
+**Ridge line: Distribution of precipitation of driest month for the four different agroforestry practices**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=6, fig.cap = "Ridge line plot: Distribution of precipitation of driest month for the four different agroforestry practices"}
+agfor_ridgeline_data %>%
+  ggplot(aes(y = PrName, x = Bio14_Precip_DryM)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "midnightblue", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), point_shape = '|',
+                      bandwidth = 3.75) +
+  theme_lucid() +
+  xlab("Precipitation (driest month)") +
+  ylab("") +
+  ggtitle("Precipitation (driest month) [mm]")
+```
+
+
+**Ridge line plot : Distribution of temperature of warmest month for the four different agroforestry practices**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=6, fig.cap = "Ridge line plot : Distribution of temperature of warmest month for the four different agroforestry practices"}
+agfor_ridgeline_data %>%
+  ggplot(aes(y = PrName, x = Bio05_TWM)) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "darkgreen", alpha = 0.5, size = 0.2, scale = 2,
+                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), 
+                      point_shape = '|', bandwidth = 2) +
+  theme_lucid() +
+  xlab("Temperature (max temperature of warmest month)") +
+  ylab("") +
+  ggtitle("Temperature (max temperature of warmest month) [°C]")
+```
+
 
 
 ## Using the PrepareERA function
