@@ -38,7 +38,7 @@ This part of the document is where we actually get to the nitty-gritty of the ER
 # ------------------------------------------------------------------------------------------
 # General packages
 # ------------------------------------------------------------------------------------------
-required.packages <- c("tidyverse", "tidymodels", "finetune", "kernlab", "here", "hablar", "spatialsample", 
+required.packages <- c("tidyverse", "tidymodels", "finetune", "kernlab", "here", "hablar", "spatialsample", "cowplot", 
                        "stacks", "rules", "baguette", "viridis", "yardstick", "DALEXtra", "see", "ggridges",
 # ------------------------------------------------------------------------------------------
 # Parallel computing packages
@@ -81,6 +81,8 @@ Agroforestry data with no outliers
 ml.data.no.outliers.wf <-  ml.data.outliers.wf %>%
   dplyr::filter(logRR.outlier == 9999) %>%
   dplyr::select(-c(ERA_Agroforestry, logRR.outlier))
+
+#saveRDS(ml.data.no.outliers.wf, here::here("ERAAnalyze_OUTPUT", "ml.data.no.outliers.wf.RDS"))
 ```
 
 
@@ -115,7 +117,7 @@ spatial.cv.fold.wf <- spatial_clustering_cv(af.train.wf, coords = c("Longitude",
 
 ## STEP 4: Define model metrics
 
-```{r Model metrics for workflowsets, code_folding=FALSE, eval=TRUE}
+```{r Model metrics for workflowsets, code_folding=FALSE, eval=FALSE}
 # Metrics
 multi.metric.wf <- metric_set(yardstick::rmse, yardstick::rsq, yardstick::ccc, yardstick::mae)
 
@@ -126,7 +128,7 @@ model.control.linear.wf <- control_resamples(save_pred = TRUE)
 
 ## STEP 5: Create pre-processing recipies
 
-```{r code_folding=FALSE, eval=TRUE}
+```{r Create pre-processing recipies, code_folding=FALSE, eval=FALSE}
 base_recipe <- 
   recipe(formula = logRR ~ ., data = af.train.wf) %>%
   update_role(Site.Type, new_role = "predictor") %>% # alters an existing role in the recipe to variables.
@@ -189,19 +191,19 @@ interact_recipe <-
 
 **Note:** To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable. 
 
-```{r  code_folding=FALSE, eval=TRUE}
-impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
-```
+# ```{r  code_folding=FALSE, eval=TRUE}
+# impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
+# ```
 
 A recipe object is of the class "recipe" and can also be viewed using the summary() function. This will show the different feature types:
 
-```{r code_folding=FALSE, eval=TRUE}
-summary(impute_knn_recipe) 
-```
+# ```{r code_folding=FALSE, eval=TRUE}
+# summary(impute_knn_recipe) 
+# ```
 
 ## STEP 6: Defining model specifications
 
-```{r code_folding=FALSE, eval=FALSE}
+```{r Defining model specifications, code_folding=FALSE, eval=FALSE}
 lm_spec <- linear_reg() %>% 
   set_mode("regression") %>% 
   set_engine("lm") 
@@ -268,7 +270,7 @@ xgb_spec <-
 
 ## STEP 7: Integrating pre-processing and model specification into a workflowset
 
-```{r code_folding=FALSE, eval=FALSE}
+```{r Integrating pre-processing and model specification into a workflowset, code_folding=FALSE, eval=FALSE}
 wflwset_setup <- 
    workflow_set(
       preproc = list(impute_mean = impute_mean_recipe,
@@ -289,10 +291,10 @@ wflwset_setup <-
       cross = TRUE
    )
 
-saveRDS( wflwset_setup, file = here::here("TidyModWflSet_OUTPUT", "wflwset_setup.RDS")) 
+saveRDS(wflwset_setup, file = here::here("TidyModWflSet_OUTPUT", "wflwset_setup.RDS")) 
 ```
 
-```{r code_folding=FALSE, eval=FALSE}
+```{r View workflowsetup, code_folding=FALSE, eval=TRUE}
 wflwset_setup <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup.RDS"))
 wflwset_setup
 ```
@@ -307,29 +309,35 @@ A more effecient alternative to tune_grid() is the tune_race_anova() from the fi
 
 ### Using tune_grid()
 
-```{r code_folding=FALSE, eval=FALSE}
- # Initializing parallel processing 
- doParallel::registerDoParallel()
+**Note:** we are not going to do this because it takes too long
 
-set.seed(123)
-
-wflwset_setup_res <- 
-   wflwset_setup %>% 
-   # The first argument is a function name from the {{tune}} package such as `tune_grid()`, `fit_resamples()`, etc.
-   workflow_map(fn        = "tune_grid", 
-                resamples = cv.fold.wf, 
-                grid      = 5, 
-                metrics   = multi.metric.wf, 
-                verbose   = TRUE)
-
-# Terminating parallel session
-parallelStop()
+```{r Tune workflowset with tune_grid, code_folding=FALSE, eval=FALSE}
+#  # Initializing parallel processing 
+#  doParallel::registerDoParallel()
+# 
+# set.seed(123)
+# 
+# wflwset_setup_res <- 
+#    wflwset_setup %>% 
+#    # The first argument is a function name from the {{tune}} package such as `tune_grid()`, `fit_resamples()`, etc.
+#    workflow_map(fn        = "tune_grid", 
+#                 resamples = cv.fold.wf, 
+#                 grid      = 5, 
+#                 metrics   = multi.metric.wf, 
+#                 verbose   = TRUE)
+# 
+# # Terminating parallel session
+# parallelStop()
 ```
 
 
 ### Using tune_race_anova()
 
-```{r code_folding=FALSE, eval=FALSE}
+**Note:** More than 50 model-pre-processing combinations have to be tuned. This tuning takes about 5 hours with a normal 8 CPU computer - even when running in parallel. 
+
+The tune_race_anove() uses an innovative method to speed up the tuning of machine learning models. tune_race_anova() computes a set of performance metrics (e.g. accuracy or RMSE) for a pre-defined set of tuning parameters that correspond to a model or recipe across one or more resamples of the data. After an initial number of resamples have been evaluated, the process eliminates tuning parameter combinations that are unlikely to be the best results using a repeated measure ANOVA model.
+
+```{r Tune Workflowset with tune_race_anova(), code_folding=FALSE, eval=FALSE}
 race_ctrl <-
    control_race(
       save_pred = TRUE,
@@ -340,7 +348,7 @@ race_ctrl <-
  # Initializing parallel processing 
  doParallel::registerDoParallel()
 
-wflwset_setup_race_res <-
+wflwset_setup_race_results <-
    wflwset_setup %>%
    workflow_map(fn        = "tune_race_anova", 
                 seed      = 1503,
@@ -356,49 +364,81 @@ parallelStop()
 
 ```
 
+There are some model - pre-processing combinations that do not successfully manage to get tuned: 
+
+i 46 of 50 tuning:     interaction_svm_p
+Warning in mclapply(argsList, FUN, mc.preschedule = preschedule, mc.set.seed = set.seed,  :
+  scheduled core 2 did not deliver a result, all values of the job will be affected
+x 46 of 50 tuning:     interaction_svm_p failed with: Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) :   contrasts can be applied only to factors with 2 or more levels
+i 47 of 50 tuning:     interaction_cubist
+✓ 47 of 50 tuning:     interaction_cubist (21m 26s)
+i 48 of 50 tuning:     interaction_nnet
+x 48 of 50 tuning:     interaction_nnet failed with: Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) :   contrasts can be applied only to factors with 2 or more levels
+i 49 of 50 tuning:     interaction_RF
+i Creating pre-processing data to finalize unknown parameter: mtry
+✓ 49 of 50 tuning:     interaction_RF (1h 33m 57.8s)
+i 50 of 50 tuning:     interaction_XGB
+✓ 50 of 50 tuning:     interaction_XGB (31m 33.5s)
+
+We will have to delete these from the output.
+
+### SAVING THE WORKFLOWSET TUNING RESULTS
+
+```{r Saving the tuned workflowsets results, code_foling=TRUE, eval=FALSE}
+```
+
+
+```{r Saving the tuned workflowsets results, code_foling=TRUE, eval=FALSE}
+# SAVING MODEL TUNING RESULTS
+saveRDS(wflwset_setup_race_results, here::here("TidyModWflSet_OUTPUT","wflwset_setup_race_results.RDS"))
+```
+
 
 ## STEP 9: Assessing results of the tuned workflowsets
 
 ### From tune_grid()
 
-```{r}
+```{r Assessing results of the tuned workflowsets, code_folding=TRUE, eval=TRUE}
 # -------------------------------------------------------------------
 # LOAD THE TUNED (tune_race_anova) WORKFLOWSET DATA
 
-wflwset_setup_race_res <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup_race_res.RDS"))
-
+wflwset_setup_race_results <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup_race_results.RDS"))
 #Error: There were 1 workflows that had no results.
 
 # Removing the result that caused the error for not having a result
 
-wflwset_setup_race_res_clean <- wflwset_setup_race_res %>%
+wflwset_setup_race_results_clean <- wflwset_setup_race_results %>%
+  dplyr::filter(wflow_id != "interaction_svm_p")  %>%
   dplyr::filter(wflow_id != "interaction_nnet") 
 ```
 
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Results of the tune race anova workflowset tuning"}
 # -------------------------------------------------------------------
-autoplot(wflwset_setup_race_res_clean)
+autoplot(wflwset_setup_race_results_clean)
 ```
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Results of the tune race anova workflowset tuning after lm models have been excluded"}
-wflwset_setup_race_res_clean_no_linear <- wflwset_setup_race_res_clean %>%
+wflwset_setup_race_results_clean_no_linear <- wflwset_setup_race_results_clean %>%
   dplyr::filter(!str_detect(wflow_id, "_lm"))
 
-autoplot(wflwset_setup_race_res_clean_no_linear) 
+autoplot(wflwset_setup_race_results_clean_no_linear) 
 ```
 
+### Ranking Workflowsets results from model-pre-processing combinations
 
-```{r}
-rank_results(wflwset_setup_race_res_clean_no_linear, 
+First removing the linear models, that seems unrealistically poor in predicting the response ratios. The ranking is done for the two metrics; RMSE and CCC
+
+```{r Ranking best performing mode-preprocessing combinations for the RMSE metric, code_folding=FALSE, eval=TRUE}
+rank_results(wflwset_setup_race_results_clean_no_linear, 
              rank_metric = "rmse", 
              select_best = TRUE) %>% 
   select(rank, mean, model, wflow_id, .config) %>%
   arrange(desc(-rank))
 ```
 
-```{r}
-rank_results(wflwset_setup_race_res_clean_no_linear, 
+```{r Ranking best performing mode-preprocessing combinations for the CCC metric, code_folding=FALSE, eval=TRUE}
+rank_results(wflwset_setup_race_results_clean_no_linear, 
              rank_metric = "ccc", 
              select_best = TRUE) %>% 
   select(rank, mean, model, wflow_id, .config) %>%
@@ -407,68 +447,96 @@ rank_results(wflwset_setup_race_res_clean_no_linear,
 
 ## STEP 10: Finalizing models
 
-Similar to what we wnet through in Part 3: Analysing with Tidymodels, we also have to finalize the models from the tuning results using the best performing (hyper)-parameter configurations. We are going to do this last fitting of the models using the training set. The first step is to pick a workflow to finalize. Since random fores models (RF), boosted tree models (XGB), decision tree models (cart) and generalized linier models (glm) worked well, we’ll extract the best configurations from the sets, update the parameters with the numerically best settings, and fit to the training set. 
+Similar to what we went through in Part 3: Analysing with Tidymodels, we also have to finalize the models from the tuning results using the best performing (hyper)-parameter configurations. We are going to do this last fitting of the models using the training set. The first step is to pick a workflow to finalize. Since Random Forest models (RF), boosted tree models (XGB), decision tree models (cart) and generalized linear models (glm) worked well, we’ll extract the best configurations from the sets, update the parameters with the numerically best settings, and fit to the training set. 
 
-### Extracting best performing models configurations
+### Extracting best performing model (hyper)-parameter configurations
 
-```{r}
+```{r Extracting best performing model hyperparameter configuration, code_folding=FALSE, eval=FALSE}
 
 rf_wf_best_rmse_results_of_race <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow_set_result("normalized_RF") %>% 
    select_best(metric = "rmse")
 
 xgb_wf_best_rmse_results_of_race <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow_set_result("interaction_XGB") %>% 
    select_best(metric = "rmse")
 
 cart_wf_best_rmse_results_of_race <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow_set_result("rm_corr_cart") %>% 
    select_best(metric = "rmse")
 
 glm_wf_best_rmse_results_of_race <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow_set_result("interaction_glm") %>% 
    select_best(metric = "rmse")
 ```
 
+### Saving best performing models 
+
+```{r Saving best performing models, code_folding=TRUE, eval=FALSE}
+# SAVING THE BEST PERFORMING MODEL CONFIGURATIONS
+
+saveRDS(rf_wf_best_rmse_results_of_race, here::here("TidyModWflSet_OUTPUT","rf_wf_best_rmse_results_of_race.RDS"))
+saveRDS(xgb_wf_best_rmse_results_of_race, here::here("TidyModWflSet_OUTPUT","xgb_wf_best_rmse_results_of_race.RDS"))
+saveRDS(cart_wf_best_rmse_results_of_race, here::here("TidyModWflSet_OUTPUT","cart_wf_best_rmse_results_of_race.RDS"))
+saveRDS(glm_wf_best_rmse_results_of_race, here::here("TidyModWflSet_OUTPUT","glm_wf_best_rmse_results_of_race.RDS"))
+```
+
+
 ### Performing last fitting on the whole dataset (traningset + testingset)
 
-```{r}
+```{r Last model fitting on the whole dataset, code_folding=FALSE, eval=FALSE}
 
 rf_best_race_last_fit <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("normalized_RF") %>% 
    finalize_workflow(rf_wf_best_rmse_results_of_race) %>% 
    last_fit(split = af.split.wf)
 
 xgb_best_race_last_fit <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("interaction_XGB") %>% 
    finalize_workflow(xgb_wf_best_rmse_results_of_race) %>% 
    last_fit(split = af.split.wf)
 
 cart_best_race_last_fit <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("rm_corr_cart") %>% 
    finalize_workflow(cart_wf_best_rmse_results_of_race) %>% 
    last_fit(split = af.split.wf)
 
 glm_best_race_last_fit <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("interaction_glm") %>% 
    finalize_workflow(glm_wf_best_rmse_results_of_race) %>% 
    last_fit(split = af.split.wf)
-
 ```
 
-```{r}
+### Saving last fitting results of models 
+
+```{r Saving last fitted results of models, code_folding=TRUE, eval=FALSE}
+# SAVING THE BEST PERFORMING MODEL CONFIGURATIONS
+
+saveRDS(rf_best_race_last_fit, here::here("TidyModWflSet_OUTPUT","rf_best_race_last_fit.RDS"))
+saveRDS(xgb_best_race_last_fit, here::here("TidyModWflSet_OUTPUT","xgb_best_race_last_fit.RDS"))
+saveRDS(cart_best_race_last_fit, here::here("TidyModWflSet_OUTPUT","cart_best_race_last_fit.RDS"))
+saveRDS(glm_best_race_last_fit, here::here("TidyModWflSet_OUTPUT","glm_best_race_last_fit.RDS"))
+```
+
+## STEP 11: Assessing/evaluating model performance
+
+### Viewing the performance of the Random Forest model for RMSE and rsq
+
+```{r Evaluating model performance from the RF model on last fitting, code_folding=TRUE, eval=TRUE}
+rf_best_race_last_fit <- readRDS(here::here("TidyModWflSet_OUTPUT", "rf_best_race_last_fit.RDS"))
 collect_metrics(rf_best_race_last_fit)
 ```
+### Contructing predicted vs observed plot for the Random Forest
 
-```{r}
+```{r Predicted vs observed plot for the Random Forest model, code_folding=TRUE, eval=TRUE}
 rf_wflowset_last_fit_plot <- 
   rf_best_race_last_fit %>% 
   collect_predictions() %>% 
@@ -476,22 +544,32 @@ rf_wflowset_last_fit_plot <-
   geom_abline(col = "red", lty = 2) + 
   #geom_smooth(method = "gam", linetype = "dashed", col = "black", size = 1) +
   geom_jitter(width = 0.5, height = 0.2, alpha = 0.5) + 
-  coord_obs_pred(ratio = 1) + 
-  labs(x = "Observed logRR", y = "Predicted logRR")
+  coord_obs_pred(ratio = 1.2) + 
+  labs(x = "Observed RR (log scale)", y = "Predicted RR (log scale)")
+```
 
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=8, fig.cap = "Prediccted vs observed for the Random Forest model"}
 rf_wflowset_last_fit_plot
 ```
-```{r}
+
+### Listing some predicted vs observed values of response ratios 
+
+```{r Listing some predicted vs observed values of response ratios, layout = "l-body-outset", results = 'asis'}
+
+rmarkdown::paged_table(
+  
 rf_best_race_last_fit %>% 
   collect_predictions() %>%
   arrange(desc(.pred))
+
+)
 ```
 
-## STEP 11: Explaining models and predictions
+## STEP 12: Explaining models and predictions (model agnostics) with local break-down plots
 
-We suggested that model performance, as measured by appropriate metrics (like RMSE for regression or area under the ROC curve for classification), can be important for all applications of modeling. Similarly, model explanations, answering why a model makes the predictions it does, can be important whether the purpose of your model is largely descriptive, to test a hypothesis, or to make a prediction. Answering the question “why?” allows modeling practitioners to understand which features were important in predictions and even how model predictions would change under different values for the features.
+We suggested that model performance, as measured by appropriate metrics (like RMSE for regression or area under the ROC curve for classification), can be important for all applications of modelling. Similarly, model explanations, answering why a model makes the predictions it does, can be important whether the purpose of your model is largely descriptive, to test a hypothesis, or to make a prediction. Answering the question “why?” allows modelling practitioners to understand which features were important in predictions and even how model predictions would change under different values for the features.
 
-For some models, like linear regression, it is usually clear how to explain why the model makes the predictions it does. The structure of a linear model contains coefficients for each predictor that are typically straightforward to interpret. For other models, like random forests that can capture non-linear behavior by design, it is less transparent how to explain the model’s predictions from only the structure of the model itself. Instead, we can apply model explainer algorithms to generate understanding of predictions.
+For some models, like linear regression, it is usually clear how to explain why the model makes the predictions it does. The structure of a linear model contains coefficients for each predictor that are typically straightforward to interpret. For other models, like random forests that can capture non-linear behaviour by design, it is less transparent how to explain the model’s predictions from only the structure of the model itself. Instead, we can apply model explainer algorithms to generate understanding of predictions.
 
 **Notes:** There are two types of model explanations, global and local. Global model explanations provide an overall understanding aggregated over a whole set of observations; local model explanations provide information about a prediction for a single observation.
 
@@ -500,51 +578,70 @@ The tidymodels framework does not itself contain software for model explanations
 vip functions when we want to use model-based methods that take advantage of model structure (and are often faster), and
 DALEX functions when we want to use model-agnostic methods that can be applied to any model.
 
-Let’s build model-agnostic explainers for both of these models to find out why they make the predictions they do. We can use the DALEXtra add-on package for DALEX, which provides support for tidymodels. Biecek and Burzykowski (2021) provide a thorough exploration of how to use DALEX for model explanations; this chapter only summarizes some important approaches, specific to tidymodels. To compute any kind of model explanation, global or local, using DALEX, we first create an explainer for each model.
+Let’s build model-agnostic explainers for both of these models to find out why they make the predictions they do. We can use the DALEXtra add-on package for DALEX (https://www.tmwr.org/explain.html), which provides support for tidymodels. Biecek and Burzykowski (2021) provide a thorough exploration of how to use DALEX for model explanations; this chapter only summarizes some important approaches, specific to tidymodels. To compute any kind of model explanation, global or local, using DALEX (https://www.tmwr.org/explain.html), we first create an explainer for each model.
 
-Creating trained workflows for each of the four models 
+### STEP 12a: Creating trained workflows for each of the four models 
 
-```{r}
+```{r Creating trained workflows for each of the four models, code_folding=FALSE, eval=FALSE}
+
 rf_best_race_trained_wf <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("normalized_RF") %>% 
    finalize_workflow(rf_wf_best_rmse_results_of_race) %>% 
    fit(data = af.train.wf)
 
 xgb_best_race_trained_wf <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("interaction_XGB") %>% 
    finalize_workflow(xgb_wf_best_rmse_results_of_race) %>% 
    fit(data = af.train.wf)
 
 cart_best_race_trained_wf <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("rm_corr_cart") %>% 
    finalize_workflow(cart_wf_best_rmse_results_of_race) %>% 
    fit(data = af.train.wf)
 
 glm_best_race_trained_wf <- 
-   wflwset_setup_race_res_clean %>% 
+   wflwset_setup_race_results_clean %>% 
    extract_workflow("interaction_glm") %>% 
    finalize_workflow(glm_wf_best_rmse_results_of_race) %>% 
    fit(data = af.train.wf)
 ```
 
+### Saving trained workflows
 
-Generating explainers for each of the four models 
+```{r Saving trained workflows, code_folding=TRUE, eval=FALSE}
+# SAVING THE BEST PERFORMING MODEL CONFIGURATIONS
 
-```{r}
+saveRDS(rf_best_race_trained_wf, here::here("TidyModWflSet_OUTPUT","rf_best_race_trained_wf.RDS"))
+saveRDS(xgb_best_race_trained_wf, here::here("TidyModWflSet_OUTPUT","xgb_best_race_trained_wf.RDS"))
+saveRDS(cart_best_race_trained_wf, here::here("TidyModWflSet_OUTPUT","cart_best_race_trained_wf.RDS"))
+saveRDS(glm_best_race_trained_wf, here::here("TidyModWflSet_OUTPUT","glm_best_race_trained_wf.RDS"))
+```
+
+## #STEP 12b: Generating explainers for each of the four models 
+
+General explainers
+
+```{r Generating vip explainers for each of the four models, code_folding=FALSE, eval=FALSE}
+
+# Creating the VIP features to be included. It is important here that these features are exactly the same as the one in the dataset
 vip_features <- c("PrName", "Out.SubInd", "Product", "Tree", "Out.SubInd.Code","Site.Type", "Latitude", "Longitude", 
-                  "Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ",
-                  "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc",
-                  "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N",
-                  "iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Altitude", "ASTER_Slope")
+                  "Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ",
+                  "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ",  "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM",
+                  "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc",
+                  "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K",
+                  "iSDA_log_Mg", "iSDA_log_N", "iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Altitude", "ASTER_Slope")
 
+# Generating the trainer VIP
 vip_train <- 
   af.train.wf %>% 
   select(all_of(vip_features))
 
-explainer_rf <- 
+# Finally we can create the vip explainer for the individual models (Random Forest, XGBoost, cart and glm)
+
+explainer_rf <-              
   explain_tidymodels(
     rf_best_race_trained_wf, 
     data = vip_train, 
@@ -580,20 +677,138 @@ explainer_glm <-
     verbose = FALSE
   )
 
+# SAVING THE EXPLAINERS
+saveRDS(explainer_rf, here::here("TidyModWflSet_OUTPUT","explainer_rf.RDS"))
+saveRDS(explainer_xgb, here::here("TidyModWflSet_OUTPUT","explainer_xgb.RDS"))
+saveRDS(explainer_cart, here::here("TidyModWflSet_OUTPUT","explainer_cart.RDS"))
+saveRDS(explainer_glm, here::here("TidyModWflSet_OUTPUT","explainer_glm.RDS"))
 ```
 
 
+Continuous explainers
 
-Local explanations
+```{r Generating vip continuous explainers for each of the four models, code_folding=FALSE, eval=FALSE}
+# Reading/loading best trained model workflows
 
-Observed low logRR
+rf_best_race_trained_wf <- readRDS(here::here("TidyModWflSet_OUTPUT","rf_best_race_trained_wf.RDS"))
+xgb_best_race_trained_wf <- readRDS(here::here("TidyModWflSet_OUTPUT","xgb_best_race_trained_wf.RDS"))
+cart_best_race_trained_wf <- readRDS(here::here("TidyModWflSet_OUTPUT","cart_best_race_trained_wf.RDS"))
+glm_best_race_trained_wf <- readRDS(here::here("TidyModWflSet_OUTPUT","glm_best_race_trained_wf.RDS"))
 
-```{r}
+
+
+# Random Forest model
+explainer_rf_continous <- DALEX::explain(rf_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "Random Forest")
+
+# XGB model
+
+explainer_xgb_continous <- 
+  DALEX::explain(xgb_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "XGBoost")
+  
+# Cart model 
+explainer_cart_continous <- 
+    DALEX::explain(cart_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "Cart")
+
+# glm model 
+explainer_glm_continous <- 
+    DALEX::explain(glm_best_race_trained_wf,
+                        data = af.train.wf,
+                        y = af.train.wf$logRR, 
+                        label = "Glm")
+  
+# SAVING THE EXPLAINERS
+saveRDS(explainer_rf_continous, here::here("TidyModWflSet_OUTPUT","explainer_rf_continous.RDS"))
+saveRDS(explainer_xgb_continous, here::here("TidyModWflSet_OUTPUT","explainer_xgb_continous.RDS"))
+saveRDS(explainer_cart_continous, here::here("TidyModWflSet_OUTPUT","explainer_cart_continous.RDS"))
+saveRDS(explainer_glm_continous, here::here("TidyModWflSet_OUTPUT","explainer_glm_continous.RDS"))
+
+```
+
+Preparation of a new explainer is initiated
+  -> model label       :  Random Forest 
+  -> data              :  3615  rows  44  cols 
+  -> data              :  tibble converted into a data.frame 
+  -> target variable   :  3615  values 
+  -> predict function  :  yhat.workflow  will be used (  default  )
+  -> predicted values  :  No value for predict function target column. (  default  )
+  -> model_info        :  package tidymodels , ver. 0.1.3 , task regression (  default  ) 
+  -> predicted values  :  numerical, min =  -1.018302 , mean =  0.3349902 , max =  2.071988  
+  -> residual function :  difference between y and yhat (  default  )
+  -> residuals         :  numerical, min =  -2.327018 , mean =  -4.570718e-05 , max =  2.509018  
+  A new explainer has been created!  
+Preparation of a new explainer is initiated
+  -> model label       :  XGBoost 
+  -> data              :  3615  rows  44  cols 
+  -> data              :  tibble converted into a data.frame 
+  -> target variable   :  3615  values 
+  -> predict function  :  yhat.workflow  will be used (  default  )
+  -> predicted values  :  No value for predict function target column. (  default  )
+  -> model_info        :  package tidymodels , ver. 0.1.3 , task regression (  default  ) 
+  -> predicted values  :  numerical, min =  -0.9338058 , mean =  0.3374097 , max =  2.034106  
+  -> residual function :  difference between y and yhat (  default  )
+  -> residuals         :  numerical, min =  -2.327787 , mean =  -0.002465183 , max =  2.511293  
+  A new explainer has been created!  
+Preparation of a new explainer is initiated
+  -> model label       :  Cart 
+  -> data              :  3615  rows  44  cols 
+  -> data              :  tibble converted into a data.frame 
+  -> target variable   :  3615  values 
+  -> predict function  :  yhat.workflow  will be used (  default  )
+  -> predicted values  :  No value for predict function target column. (  default  )
+  -> model_info        :  package tidymodels , ver. 0.1.3 , task regression (  default  ) 
+  -> predicted values  :  numerical, min =  -1.229517 , mean =  0.3349445 , max =  2.11079  
+  -> residual function :  difference between y and yhat (  default  )
+  -> residuals         :  numerical, min =  -2.325893 , mean =  -9.650476e-17 , max =  2.508948  
+  A new explainer has been created!  
+Preparation of a new explainer is initiated
+  -> model label       :  Glm 
+  -> data              :  3615  rows  44  cols 
+  -> data              :  tibble converted into a data.frame 
+  -> target variable   :  3615  values 
+  -> predict function  :  yhat.workflow  will be used (  default  )
+  -> predicted values  :  No value for predict function target column. (  default  )
+  -> model_info        :  package tidymodels , ver. 0.1.3 , task regression (  default  ) 
+  -> predicted values  :  numerical, min =  -0.9418886 , mean =  0.3349445 , max =  2.01311  
+  -> residual function :  difference between y and yhat (  default  )
+  -> residuals         :  numerical, min =  -2.325638 , mean =  6.247271e-14 , max =  2.509203  
+  A new explainer has been created!   
+  
+  
+### Local model agnostics 
+
+The model agnostic tools and functions in the DALEX and DALEXtsra packages can roughly be divided in "local model explanations" and "global model explanations". The difference between the two is that for local model explanations they provide information about a prediction for a single observation. Global model explanations provide an overall understanding aggregated over a whole set of observations.
+
+## STEP 12b: Extracting predicted vs observed values of response ratios for high and low values
+
+We would need to first extract the values of each feature in a given observation to perform a local model agnostic/model explanation. Because we are interested in understanding the difference in feature importance between a predicted high response ratio value and a predicted low response ratio value, we need to identify two points in our dataset that has a hig RR value and a low RR value. This is done by identifying what feature combinations are associated with high and low RR values and then extracting those feature values. 
+
+We do this below by first searching across the training dataset for low RR values and then we isolate an observation with low RR based on the feature values combinations. 
+
+### Exstracting observation for **low** and **high** response ratio value
+
+Local model explanations provide information about a prediction for a single observation. For example, let’s consider an observation of Agroforestry Pruning-Alleycropping for the outcome Maize Crop Yield conducted at a Station with the agroforestry tree being Melia azedarach. 
+
+This observation has a relatively low response ratio value:
+
+* **logRR = -1.812378756**
+
+```{r Exstracting observation for low response ratio value, code_folding=FALSE, eval=FALSE}
+# Identifying value that has a low observed RR value
 af.train.wf %>%
   relocate(logRR) %>%
   arrange(desc(-logRR)) %>%
   dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping")
   
+# Extracting the feature combinations (values) that the low RR value is associated with
 vip_train_1 <- vip_train %>% 
   dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping" & 
                   Out.SubInd == "Crop Yield" & 
@@ -603,178 +818,338 @@ vip_train_1 <- vip_train %>%
                   Latitude == -1.58240 & 
                   Longitude == 37.24320)
 
+# Lastly, identifying an observation based on the extracted values. 
 obs_1 <- vip_train_1[1,]
-  
+
+# SAVING THE OBSERVATION
+saveRDS(obs_1, here::here("TidyModWflSet_OUTPUT","obs_1.RDS"))
 ```
 
-```{r}
-ml.data.no.outliers.wf %>%
-  rationalize() %>%
-  step_impute_mean(all_numeric()) %>%
+```{r View observation for low RR, layout = "l-body-outset", results = 'asis'}
+obs_1 <-  readRDS(here::here("TidyModWflSet_OUTPUT","obs_1.RDS"))
+
+rmarkdown::paged_table(obs_1)
+```
+
+Let’s consider another observation of Agroforestry Pruning-Alleycropping with the outcome Maize Crop Yield conducted at a Station with the agroforestry tree being Senna siamea. 
+
+This observation has a relatively high response ratio value:
+
+* **logRR = 3.047025568**
+
+```{r Exstracting observation for high response ratio value, code_folding=FALSE, eval=FALSE}
+# Identifying value that has a high observed RR value
+af.train.wf %>%
   relocate(logRR) %>%
-  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
-  group_by(PrName) %>%
-  summarise(across(everything(), mean)) %>%
-  dplyr::filter(PrName == "Agroforestry Fallow" | 
-                PrName == "Agroforestry Pruning"| 
-                PrName == "Alleycropping"| 
-                PrName == "Parklands") %>%
-  arrange(desc(logRR))
+  arrange(desc(logRR)) %>%
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping")
+
+# Extracting the feature combinations (values) that the high RR value is associated with
+vip_train_2 <- vip_train %>% 
+  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping" & 
+                  Out.SubInd == "Crop Yield" & 
+                  Product == "Maize" & 
+                  Tree == "Senna siamea" & 
+                  Site.Type == "Station" & 
+                  Latitude == 7.49800 & 
+                  Longitude == 3.90300) %>% 
+  mutate(across(where(is.numeric), ~ round(., 8)))
+
+# Lastly, identifying an observation based on the extracted values. 
+obs_2 <- vip_train_2[1,]
+
+# SAVING THE OBSERVATION
+saveRDS(obs_2, here::here("TidyModWflSet_OUTPUT","obs_2.RDS"))
 ```
 
+```{r View observation for high RR, layout = "l-body-outset", results = 'asis'}
+obs_2 <-  readRDS(here::here("TidyModWflSet_OUTPUT","obs_2.RDS"))
 
-```{r}
-ml.data.no.outliers.wf %>%
-  rationalize() %>%
-  step_impute_mean(all_numeric()) %>%
-  relocate(logRR) %>%
-  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Latitude)) %>%
-  group_by(PrName) %>%
-# summarise(across(everything(), mean)) %>%
-  dplyr::filter(PrName == "Agroforestry Fallow" | 
-                PrName == "Agroforestry Pruning"| 
-                PrName == "Alleycropping"| 
-                PrName == "Parklands") %>%
-  
-  ggplot() +
-  geom_boxplot(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName)) +
-  geom_jitter(aes(x = reorder(PrName, iSDA_SAND_conc), y = iSDA_SAND_conc, col = PrName), height = 0.4, width = 0.1) +
-  theme_lucid(plot.title.size = 25,
-              axis.text.size = 15,
-              legend.title.size = 20,
-              legend.text.size = 20,
-              axis.title.size = 20) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 60, hjust=1), plot.margin=unit(c(1,6,1,6),"cm"))
-```
-```{r}
-ml.data.no.outliers.wf %>%
-  rationalize() %>%
-  drop_na() %>%
-  relocate(logRR) %>%
-  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
-  group_by(PrName) %>%
-# summarise(across(everything(), mean)) %>%
-  dplyr::filter(PrName == "Agroforestry Fallow" | 
-                PrName == "Agroforestry Pruning"| 
-                PrName == "Alleycropping"| 
-                PrName == "Parklands") %>%
-  
-  ggplot(aes(y = PrName, x = iSDA_SAND_conc)) +
-  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "orange", alpha = 0.5, size = 0.2, scale = 2,
-                       jittered_points = TRUE, position = position_points_jitter(width = 5, height = 0.05), point_shape = '|', bandwidth = 6) +
-  theme_lucid() +
-  xlab("Sand concentration %") +
-  ylab("") +
-  ggtitle("SAND concentration (%)")
-```
-Bio15_Precip_S
-
-```{r}
-ml.data.no.outliers.wf %>%
-  rationalize() %>%
-  drop_na() %>%
-  relocate(logRR) %>%
-  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
-  group_by(PrName) %>%
-# summarise(across(everything(), mean)) %>%
-  dplyr::filter(PrName == "Agroforestry Fallow" | 
-                PrName == "Agroforestry Pruning"| 
-                PrName == "Alleycropping"| 
-                PrName == "Parklands") %>%
-  
-  ggplot(aes(y = PrName, x = Bio14_Precip_DryM)) +
-  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "midnightblue", alpha = 0.5, size = 0.2, scale = 2,
-                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), point_shape = '|', , bandwidth = 3.75) +
-  theme_lucid() +
-  xlab("Precipitation (driest month)") +
-  ylab("") +
-  ggtitle("Precipitation (driest month) [mm]")
+rmarkdown::paged_table(obs_2)
 ```
 
-Bio02_MDR
+## STEP 12c: Model break-down plots
 
+Probably the most commonly asked question when trying to understand a model’s prediction for a single observation is: which variables contribute to this result the most? There is no single best approach that can be used to answer this question, but the break-down plots come pretty close. They offer a possible solution to present “variable attributions”, e.g., the decomposition of the model’s prediction into contributions that can be attributed to different explanatory variables/features. Break-down plots are very intuitive. The green and red bars indicate, respectively, positive and negative changes in the mean predictions (contributions attributed to explanatory variables).
 
-```{r}
-ml.data.no.outliers.wf %>%
-  rationalize() %>%
-  drop_na() %>%
-  relocate(logRR) %>%
-  dplyr::select(-c(Out.SubInd, Product, Site.Type, Tree, Out.SubInd.Code, Latitude, Longitude)) %>%
-  group_by(PrName) %>%
-# summarise(across(everything(), mean)) %>%
-  dplyr::filter(PrName == "Agroforestry Fallow" | 
-                PrName == "Agroforestry Pruning"| 
-                PrName == "Alleycropping"| 
-                PrName == "Parklands") %>%
-  
-  ggplot(aes(y = PrName, x = Bio05_TWM)) +
-  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.50, 0.975), col = "darkgreen", alpha = 0.5, size = 0.2, scale = 2,
-                       jittered_points = TRUE, position = position_points_jitter(width = 50, height = 0.05), point_shape = '|', bandwidth = 2) +
-  theme_lucid() +
-  xlab("Temperature (max temperature of warmest month)") +
-  ylab("") +
-  ggtitle("Temperature (max temperature of warmest month) [°C]")
+### Generating break-down data  for all the four models
+
+```{r Generating break-down data RF, code_folding=FALSE, eval=FALSE}
+rf_breakdown <- 
+  predict_parts(explainer = explainer_rf, new_observation = obs_1) %>%
+  arrange(desc(-contribution))
+
+# SAVING THE BREAK-DOWN DATA
+saveRDS(rf_breakdown, here::here("TidyModWflSet_OUTPUT","rf_breakdown.RDS"))
 ```
 
-Local model explanations provide information about a prediction for a single observation. For example, let’s consider an observation of Agroforestry Pruning-Alleycropping for the outcome Maize Crop Yield conducted at a Station with the agroforestry tree being Melia azedarach. This observation has:
+```{r Generating break-down data XGB, code_folding=FALSE, eval=FALSE}
+xgb_breakdown <- 
+  predict_parts(explainer = explainer_xgb, new_observation = obs_1) %>% 
+  arrange(desc(-contribution))
 
-* logRR = -1.812378756
-
-
-```{r}
-rf_breakdown <- predict_parts(explainer = explainer_rf, new_observation = obs_1)
-rf_breakdown %>% arrange(desc(-contribution))
+# SAVING THE BREAK-DOWN DATA
+saveRDS(xgb_breakdown, here::here("TidyModWflSet_OUTPUT","xgb_breakdown.RDS"))
 ```
 
-```{r}
-xgb_breakdown <- predict_parts(explainer = explainer_xgb, new_observation = obs_1)
-xgb_breakdown %>% arrange(desc(-contribution))
+```{r Generating break-down data cart, code_folding=FALSE, eval=FALSE}
+cart_breakdown <- 
+  predict_parts(explainer = explainer_cart, new_observation = obs_1) %>% 
+  arrange(desc(-contribution))
+
+# SAVING THE BREAK-DOWN DATA
+saveRDS(cart_breakdown, here::here("TidyModWflSet_OUTPUT","cart_breakdown.RDS"))
 ```
 
-```{r}
-cart_breakdown <- predict_parts(explainer = explainer_cart, new_observation = obs_1)
-cart_breakdown %>% arrange(desc(-contribution))
-```
+```{r Generating break-down data glm, code_folding=FALSE, eval=FALSE}
+glm_breakdown <- 
+  predict_parts(explainer = explainer_glm, new_observation = obs_1) %>% 
+  arrange(desc(-contribution))
 
-
-```{r}
-glm_breakdown <- predict_parts(explainer = explainer_glm, new_observation = obs_1)
-glm_breakdown
+# SAVING THE BREAK-DOWN DATA
+saveRDS(glm_breakdown, here::here("TidyModWflSet_OUTPUT","glm_breakdown.RDS"))
 ```
 
 
 
-Model break-down explanations like these depend on the order of the features.
+### Break-down of individial model parts
 
+Model break-down explanations like these depend on the order of the features. We can use the predict_parts function from the DALEX package again but this time with an ordering argument based on the variable names. We also add the explainer we created in STEP 12b. This will generate a column with information on how much each feature, as dependent on its value, contribute to the actual prediction:
 
-```{r}
+```{r Break-down of individial model parts RF, code_folding=FALSE, eval=FALSE}
+
 predict_parts_rf <- predict_parts(explainer = explainer_rf, 
                                   new_observation = obs_1,
                                   order = rf_breakdown$variable_name)
 
-predict_parts_rf
+# SAVING THE BREAK-DOWN PREDICT PARTS
+saveRDS(predict_parts_rf, here::here("TidyModWflSet_OUTPUT","predict_parts_rf.RDS"))
 ```
+
+```{r Break-down of individial features for the RF model, layout = "l-body-outset", results = 'asis'}
+predict_parts_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","predict_parts_rf.RDS"))
+rmarkdown::paged_table(predict_parts_rf)
+```
+
+### STEP 12d: Visualising break-down of individial model parts for the case of obs_1 (low RR value = -1.82)
+
+**Random Forest model**
+
+```{r Predict parts for break-down plot for RF low RR, code_folding=FALSE, eval=FALSE}
+bd_rf_logRR_low <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_1, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_rf_logRR_low, here::here("TidyModWflSet_OUTPUT","bd_rf_logRR_low.RDS"))
+
+plot(bd_rf_logRR_low,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank())
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the Random Forest model low RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_rf_logRR_low.png")) 
+```
+
+**XGBoost model**
+
+```{r Predict parts for break-down plot for XGB low RR, code_folding=FALSE, eval=FALSE}
+bd_xgb_logRR_low <- 
+  predict_parts(explainer = explainer_xgb_continous,
+                new_observation = obs_1, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_xgb_logRR_low, here::here("TidyModWflSet_OUTPUT","bd_xgb_logRR_low.RDS"))
+
+plot(bd_xgb_logRR_low,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the XGBoost model low RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_xgb_logRR_low.png")) 
+```
+
+**cart model**
+
+```{r Predict parts for break-down plot for cart low RR, code_folding=FALSE, eval=FALSE}
+bd_cart_logRR_low <- 
+  predict_parts(explainer = explainer_cart_continous,
+                new_observation = obs_1, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_cart_logRR_low, here::here("TidyModWflSet_OUTPUT","bd_cart_logRR_low.RDS"))
+
+plot(bd_cart_logRR_low,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the cart model low RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_cart_logRR_low.png")) 
+```
+
+**glm model**
+
+```{r Predict parts for break-down plot for glm low RR, code_folding=FALSE, eval=FALSE}
+bd_glm_logRR_low <- 
+  predict_parts(explainer = explainer_glm_continous,
+                new_observation = obs_1, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_glm_logRR_low, here::here("TidyModWflSet_OUTPUT","bd_glm_logRR_low.RDS"))
+
+plot(bd_glm_logRR_low,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the glm model low RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_cart_logRR_low.png")) 
+```
+
+### STEP 12e: Visualising break-down of individial model parts for the case of obs_2 (high RR value = 3.04)
+
+**Random Forest model**
+
+```{r Predict parts for break-down plot for RF high RR, code_folding=FALSE, eval=FALSE}
+bd_rf_logRR_high <- 
+  predict_parts(explainer = explainer_rf_continous,
+                new_observation = obs_2, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_rf_logRR_high, here::here("TidyModWflSet_OUTPUT","bd_rf_logRR_high.RDS"))
+
+plot(bd_rf_logRR_high,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the Random Forest model high RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_rf_logRR_high.png")) 
+```
+
+**XGBoost model**
+
+```{r Predict parts for break-down plot for XGB high RR, code_folding=FALSE, eval=FALSE}
+bd_xgb_logRR_high <- 
+  predict_parts(explainer = explainer_xgb_continous,
+                new_observation = obs_2, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_xgb_logRR_high, here::here("TidyModWflSet_OUTPUT","bd_xgb_logRR_high.RDS"))
+
+plot(bd_xgb_logRR_high,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the XGBoost model high RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_xgb_logRR_high.png")) 
+```
+
+**cart model**
+
+```{r Predict parts for break-down plot for cart high RR, code_folding=FALSE, eval=FALSE}
+bd_cart_logRR_high <- 
+  predict_parts(explainer = explainer_cart_continous,
+                new_observation = obs_2, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_cart_logRR_high, here::here("TidyModWflSet_OUTPUT","bd_cart_logRR_high.RDS"))
+
+plot(bd_cart_logRR_high,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the cart model high RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_cart_logRR_high.png")) 
+```
+
+**glm model**
+
+```{r Predict parts for break-down plot for glm high RR, code_folding=FALSE, eval=FALSE}
+bd_glm_logRR_high <- 
+  predict_parts(explainer = explainer_glm_continous,
+                new_observation = obs_2, 
+                type = "break_down") 
+
+# SAVING THE BREAK-DOWN PLOT DATA
+# saveRDS(bd_glm_logRR_high, here::here("TidyModWflSet_OUTPUT","bd_glm_logRR_high.RDS"))
+
+plot(bd_glm_logRR_high,
+     max_features = 20) +
+  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (-1.82)") +
+  theme(panel.grid = element_blank()) 
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Break-down plot of individial model parts for the glm model high RR"}
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "bd_glm_logRR_high.png")) 
+```
+
+
+## STEP 13: Explaining models and predictions (model agnostics) with SHAP plots
+
 
 We can use the fact that these break-down explanations change based on order to compute the most important features over all (or many) possible orderings. This is the idea behind Shapley Additive Explanations (Lundberg and Lee 2017), where the average contributions of features are computed under different combinations or “coalitions” of feature orderings. Let’s compute SHAP attributions for our duplex, using B = 20 random orderings. (https://ema.drwhy.ai/breakDown.html).
 
 We could use the default plot method from DALEX by calling plot(shap_obs_1), or we can access the underlying data and create a custom plot. 
 
-```{r}
+### Creating SHAP plot based on the four different models **for the low RR = -1.82**
+
+**Random Forest**
+
+```{r Generating the Random Forest SHAP plot for the low RR low RR, code_folding=TRUE, eval=FALSE}
 shap_obs_1_rf <- predict_parts(explainer = explainer_rf, 
                                new_observation = obs_1, 
                                type = "shap",
                                B = 20)
 
-shap_obs_1_rf
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_1_rf, here::here("TidyModWflSet_OUTPUT","shap_obs_1_rf.RDS"))
 ```
 
 
-
-Accessing the underlying data and creating a custom plot
+Lets access the underlying data and creating a custom plot with ggplot
 
 The box plots display the distribution of contributions across all the orderings we tried, and the bars display the average attribution for each feature.
 
-```{r}
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the Random Forest model for the low RR observation"}
+
+shap_obs_1_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_1_rf.RDS"))
+
 shap_obs_1_rf_plot <- 
   shap_obs_1_rf %>%
   group_by(variable) %>%
@@ -792,47 +1167,140 @@ shap_obs_1_rf_plot <-
 
 shap_obs_1_rf_plot
 ```
+We see that for this case the, and in general, the most important environmental features are silt content, precipitation of driest month and the potassium concentration. The shaded areas indicate the global contribution of the variables. 
 
-What about a different individual observation in our data set? Let’s look at one of our observation that has a relatively high logRR value of 1.458. This observation has Alleycropping practice with the outcome Crop Yield for product Maize conducted at a Station with the agroforestry tree being Desmodium intortum This observation has following biophysical predictor features:
+**XGBoost model**
 
-Observed high logRR
+```{r Generating the XGB model SHAP plot for the low RR, code_folding=TRUE, eval=FALSE}
+shap_obs_1_xgb <- predict_parts(explainer = explainer_xgb, 
+                               new_observation = obs_1, 
+                               type = "shap",
+                               B = 20)
 
-```{r}
-af.train.wf %>%
-  relocate(logRR) %>%
-  arrange(desc(logRR)) %>%
-  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping")
-  
-vip_train_2 <- vip_train %>% 
-  dplyr::filter(PrName == "Agroforestry Pruning-Alleycropping" & 
-                  Out.SubInd == "Crop Yield" & 
-                  Product == "Maize" & 
-                  Tree == "Senna siamea" & 
-                  Site.Type == "Station" & 
-                  Latitude == 7.49800 & 
-                  Longitude == 3.90300) %>% 
-  mutate(across(where(is.numeric), ~ round(., 8)))
-
-obs_2 <- vip_train_2[1,]
-  
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_1_xgb, here::here("TidyModWflSet_OUTPUT","shap_obs_1_xgb.RDS"))
 ```
 
 
-* logRR = 3.047025568
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the XGB model for the low RR observation"}
+
+shap_obs_1_xgb <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_1_xgb.RDS"))
+
+shap_obs_1_xgb_plot <- 
+  shap_obs_1_xgb %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
 
 
-```{r}
-shap_obs_2_rf <- 
-  predict_parts(explainer = explainer_rf, 
-                new_observation = obs_2, 
-                type = "shap",
-                B = 20)
+shap_obs_1_xgb_plot
+```
 
-shap_obs_2_rf
+The box plots display the distribution of contributions across all the orderings we tried, and the bars display the average attribution for each feature. We see that for the XGBoost model many of the most important features (e.g. sand, silt, total carbon in the soil) are actually contributing negatively to the predicted response ratios. Both for this case (box plots) and for the general observations (shaded area).
+
+**Cart model**
+
+```{r Generating the cart model SHAP plot for the low RR, code_folding=TRUE, eval=FALSE}
+shap_obs_1_cart <- predict_parts(explainer = explainer_cart, 
+                               new_observation = obs_1, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_1_cart, here::here("TidyModWflSet_OUTPUT","shap_obs_1_cart.RDS"))
 ```
 
 
-```{r}
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the cart model for the low RR observation"}
+
+shap_obs_1_cart <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_1_cart.RDS"))
+
+shap_obs_1_cart_plot <- 
+  shap_obs_1_cart %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_1_cart_plot
+```
+
+Again we see, similar to the Random Forest model, how silt and precipitation negatively contribute to the predicted response ratio values.
+
+**glm model**
+
+```{r Generating the glm model SHAP plot for the low RR, code_folding=TRUE, eval=FALSE}
+shap_obs_1_glm <- predict_parts(explainer = explainer_glm, 
+                               new_observation = obs_1, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_1_glm, here::here("TidyModWflSet_OUTPUT","shap_obs_1_glm.RDS"))
+```
+
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the glm model for the low RR observation"}
+
+shap_obs_1_glm <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_1_glm.RDS"))
+
+shap_obs_1_glm_plot <- 
+  shap_obs_1_glm %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_1_glm_plot
+```
+
+With the glm model above we see slightly different patterns emerging compared to the three previous models. Most noticeably is that the precipitation of driest wuarter is now contributing positively to the predicted response ratios. 
+
+Lets make similar plots for the other observation with high RR values.
+
+
+### Creating SHAP plot based on the four different models **for the high RR = 3.05**
+
+**Random Forest**
+
+```{r Generating the Random Forest SHAP plot for the high RR, code_folding=TRUE, eval=FALSE}
+shap_obs_2_rf <- predict_parts(explainer = explainer_rf, 
+                               new_observation = obs_2, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_2_rf, here::here("TidyModWflSet_OUTPUT","shap_obs_2_rf.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the Random Forest model for the high RR observation"}
+
+shap_obs_2_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_2_rf.RDS"))
+
 shap_obs_2_rf_plot <- 
   shap_obs_2_rf %>%
   group_by(variable) %>%
@@ -847,40 +1315,158 @@ shap_obs_2_rf_plot <-
   theme(legend.position = "none") +
   labs(y = NULL)
 
+
 shap_obs_2_rf_plot
+```
+
+We see that the lower silt concentration in this observation (13.49 instead of 16.75) results in a shift from silt being a negative contributor to the response ratios to becoming a positive contributor. This indicates that when soil silt content increase there is a decrease in agroforestry response ratios.
+
+**XGBoost model**
+
+```{r Generating the XGB SHAP plot for the high RR, code_folding=TRUE, eval=FALSE}
+shap_obs_2_xgb <- predict_parts(explainer = explainer_xgb, 
+                               new_observation = obs_2, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_2_xgb, here::here("TidyModWflSet_OUTPUT","shap_obs_2_xgb.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the XGB model for the high RR observation"}
+
+shap_obs_2_xgb <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_2_xgb.RDS"))
+
+shap_obs_2_xgb_plot <- 
+  shap_obs_2_xgb %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_2_xgb_plot
+```
+Again the lower clay content and higher sand content contribute positivly to the predicted response ratios
+
+
+**Cart model**
+
+```{r Generating the cart SHAP plot for the high RR, code_folding=TRUE, eval=FALSE}
+shap_obs_2_cart <- predict_parts(explainer = explainer_cart, 
+                               new_observation = obs_2, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_2_cart, here::here("TidyModWflSet_OUTPUT","shap_obs_2_cart.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the cart model for the high RR observation"}
+
+shap_obs_2_cart <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_2_cart.RDS"))
+
+shap_obs_2_cart_plot <- 
+  shap_obs_2_cart %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_2_cart_plot
+```
+
+**Glm model**
+
+```{r Generating the glm SHAP plot for the high RR, code_folding=TRUE, eval=FALSE}
+shap_obs_2_glm <- predict_parts(explainer = explainer_glm, 
+                               new_observation = obs_2, 
+                               type = "shap",
+                               B = 20)
+
+# SAVING THE SHAP PLOT DATA
+saveRDS(shap_obs_2_glm, here::here("TidyModWflSet_OUTPUT","shap_obs_2_glm.RDS"))
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "SHAP plot based on the glm model for the high RR observation"}
+
+shap_obs_2_glm <- readRDS(here::here("TidyModWflSet_OUTPUT","shap_obs_2_glm.RDS"))
+
+shap_obs_2_glm_plot <- 
+  shap_obs_2_glm %>%
+  group_by(variable) %>%
+  mutate(mean_val = mean(contribution)) %>%
+  ungroup() %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(data = ~distinct(., variable, mean_val), 
+           aes(mean_val, variable), 
+           alpha = 0.5) +
+  geom_boxplot(width = 0.5) +
+  theme(legend.position = "none") +
+  labs(y = NULL)
+
+
+shap_obs_2_glm_plot
 ```
 
 
 
-Global explanations
 
+## STEP 14: Global model explorations (global model agnostics)
 
-Global model explanations, also called global feature importance or variable importance, help us understand which features are most important in driving the predictions of these two models overall, aggregated over the whole training set. While the previous section addressed what variables or features are most important in predicting sale price for an individual home, global feature importance addresses what variables are most important for a model in aggregate.
+Global model explanations, also called global feature importance or variable importance, help us understand which features are most important in driving the predictions of these two models overall, aggregated over the whole training set. While the previous section addressed what variables or features are most important in predicting sale price for an individual home, global feature importance addresses what variables are most important for a model in aggregate. (read more here: https://www.tmwr.org/explain.html)
 
 
 **Note:** One way to compute variable importance is to permute the features (Breiman 2001a). We can permute or shuffle the values of a feature, predict from the model, and then measure how much worse the model fits the data compared to before shuffling.
 
-If shuffling a column causes a large degradation in model performance, it is important; if shuffling a column’s values doesn’t make much difference to how the model performs, it must not be an important variable. This approach can be applied to any kind of model (it is model-agnostic) and the results are straightforward to understand.
+If shuffling a column causes a large degradation in model performance, it is important; if shuffling a column’s values doesn’t make much difference to how the model performs, it must not be an important variable. This approach can be applied to any kind of model (it is model-agnostic) and the results are straightforward to understand. Using DALEX, we compute this kind of variable importance via the model_parts() function.
 
-Using DALEX, we compute this kind of variable importance via the model_parts() function.
 
-```{r}
+### Generating vip datasets for each of the four models
+
+```{r Generating vip datasets for each of the four models, code_folding=TRUE, eval=FALSE}
 vip_rf <- DALEX::model_parts(explainer_rf, loss_function = loss_root_mean_square)
 vip_xgb <- DALEX::model_parts(explainer_xgb, loss_function = loss_root_mean_square) 
 vip_cart <- DALEX::model_parts(explainer_cart, loss_function = loss_root_mean_square) 
 vip_glm <- DALEX::model_parts(explainer_glm, loss_function = loss_root_mean_square) 
+
+# SAVING THE VIP DATASET
+saveRDS(vip_rf, here::here("TidyModWflSet_OUTPUT","vip_rf.RDS"))
+saveRDS(vip_xgb, here::here("TidyModWflSet_OUTPUT","vip_xgb.RDS"))
+saveRDS(vip_cart, here::here("TidyModWflSet_OUTPUT","vip_cart.RDS"))
+saveRDS(vip_glm, here::here("TidyModWflSet_OUTPUT","vip_glm.RDS"))
 ```
 
-Again, we could use the default plot method from DALEX by calling e.g. plot(vip_glm) or plot(vip_rf) but the underlying data is available for exploration, analysis, and plotting. Let’s create a function:
+Again, we could use the default plot method from DALEX by calling e.g. plot(vip_glm) or plot(vip_rf) but the underlying data is available for exploration, analysis, and plotting. 
 
-```{r}
-plot(vip_glm)
-```
-```{r}
-plot(vip_rf)
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Standadized plot of vip for the RF model"}
+
+# plot(vip_rf)
+
+ggdraw() + 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "vip_rf.PNG")) 
 ```
 
-```{r}
+Let’s use the underlying data and create a function that automatically plot our vip model dataset in a ggplot: 
+
+```{r Create a function that automatically plot imp of models, code_folding=FALSE, eval=TRUE}
+
 ggplot_imp <- function(...) {
   obj <- list(...)
   metric_name <- attr(obj[[1]], "loss_name")
@@ -903,12 +1489,12 @@ ggplot_imp <- function(...) {
     p <- p + 
       facet_wrap(vars(label)) +
       geom_vline(data = perm_vals, aes(xintercept = dropout_loss, color = label),
-                 size = 1.4, lty = 2, alpha = 0.7) +
+                 size = 1.2, lty = 2, alpha = 0.7, col = "black") +
       geom_boxplot(aes(color = label, fill = label), alpha = 0.2)
   } else {
     p <- p + 
       geom_vline(data = perm_vals, aes(xintercept = dropout_loss),
-                 size = 1.4, lty = 2, alpha = 0.7) +
+                 size = 1.2, lty = 2, alpha = 0.7, col = "black") +
       geom_boxplot(fill = "#91CBD765", alpha = 0.4)
     
   }
@@ -920,75 +1506,41 @@ ggplot_imp <- function(...) {
 }
 ```
 
-```{r}
-pdp_iSDA_SILT <- model_profile(explainer_rf, 
-                               N = 500, 
-                               variables = "iSDA_SILT_conc")
+### Using function to plot the vip datasets for each model
 
-pdp_iSDA_SILT
+Now we can view the vip dataset visually by using the function that was just created. The dashed line in each panel shows the RMSE for the full model, either the linear model or the random forest model. Features further to the right are more important, because permuting them results in higher RMSE. There is quite a lot of interesting information to learn from this plot; for example, neighborhood is quite important in the linear model with interactions/splines but the second least important feature for the random forest model.
+
+**VIP for the tree-based models RF and XGB**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=8, fig.cap = "Costumn plot of the vip using the special ggplot function for the tree-based models"}
+
+vip_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","vip_rf.RDS"))
+vip_xgb <-  readRDS(here::here("TidyModWflSet_OUTPUT","vip_xgb.RDS"))
+
+ggplot_imp(vip_rf, vip_xgb)
 ```
+**VIP for the cart and glm models**
+(even though the cart model is a decision tree model)
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=8, fig.cap = "Costumn plot of the vip using the special ggplot function for the cart and glm models"}
 
-Let’s create another function for plotting the underlying data in this object:
+vip_cart <-  readRDS(here::here("TidyModWflSet_OUTPUT","vip_cart.RDS"))
+vip_glm <-  readRDS(here::here("TidyModWflSet_OUTPUT","vip_glm.RDS"))
 
-```{r}
-ggplot_pdp <- function(obj, x) {
-  
-  p <- 
-    as_tibble(obj$agr_profiles) %>%
-    mutate(`_label_` = stringr::str_remove(`_label_`, "^[^_]*_")) %>%
-    ggplot(aes(`_x_`, `_yhat_`)) +
-    geom_line(data = as_tibble(obj$cp_profiles),
-              aes(x = {{ x }}, group = `_ids_`),
-              size = 0.5, alpha = 0.05, color = "gray50")
-  
-  num_colors <- n_distinct(obj$agr_profiles$`_label_`)
-  
-  if (num_colors > 1) {
-    p <- p + geom_line(aes(color = `_label_`), size = 1.2, alpha = 0.8)
-  } else {
-    p <- p + geom_line(color = "midnightblue", size = 1.2, alpha = 0.8)
-  }
-  
-  p
-}
+ggplot_imp(vip_cart, vip_glm)
 ```
-
-```{r}
-ggplot_imp(vip_rf)
-```
-
-```{r}
-ggplot_imp(vip_xgb)
-```
-
-```{r}
-ggplot_imp(vip_cart)
-```
-
-```{r}
-ggplot_imp(vip_glm)
-```
+The differences are quite substantial!
 
 
-The dashed line in each panel shows the RMSE for the full model, either the linear model or the random forest model. Features further to the right are more important, because permuting them results in higher RMSE. There is quite a lot of interesting information to learn from this plot; for example, neighborhood is quite important in the linear model with interactions/splines but the second least important feature for the random forest model.
+## STEP 15: Model exploration and agnosticcs from partial dependencce plots
 
+BUILDING GLOBAL EXPLANATIONS FROM LOCAL EXPLANATIONS. So far we have focused on local model explanations for a single observation (via Shapley additive explanations) and global model explanations for a data set as a whole (via permuting features). It is also possible to build global model explanations up by aggregating local model explanations, as with partial dependence profiles.
 
-
-
-Building global explanations from local explanations
-
-
-
-So far in this chapter, we have focused on local model explanations for a single observation (via Shapley additive explanations) and global model explanations for a data set as a whole (via permuting features). It is also possible to build global model explanations up by aggregating local model explanations, as with partial dependence profiles.
-
-**Notes:** Partial dependence profiles show how the expected value of a model prediction, like the predicted price of a home in Ames, changes as a function of a feature, like the age or gross living area.
+**Note:** Partial dependence profiles show how the expected value of a model prediction, like the response ratio of agroforestry, changes as a function of a particular feature, like the precipitation of driest quarter or soil sand content.
 
 One way to build such a profile is by aggregating or averaging profiles for individual observations. A profile showing how an individual observation’s prediction changes as a function of a given feature is called an ICE (individual conditional expectation) profile or a CP (ceteris paribus) profile. We can compute such individual profiles (for 500 of the observations in our training set) and then aggregate them using the DALEX function model_profile(). pdp = partial dependency plots
 
-
 Let’s create another function for plotting the underlying data in this object:
 
-```{r}
+```{r Create a function that automatically plot php of models, code_folding=FALSE, eval=TRUE}
 ggplot_pdp <- function(obj, x) {
   
   p <- 
@@ -1012,236 +1564,183 @@ ggplot_pdp <- function(obj, x) {
 ```
 
 
-```{r}
+```{r Data for pdp for silt, code_folding=TRUE, eval=TRUE}
+# LOADING/READING THE EXPLAINERS
+explainer_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_rf.RDS"))
+# explainer_xgb <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_rf.RDS"))
+# explainer_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_rf.RDS"))
+# explainer_rf <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_rf.RDS"))
+
+# Random Forest model
+# -----------------------------------------------------------------------------------
+# Silt content
 pdp_iSDA_SILT <- model_profile(explainer_rf, 
                                N = 500, 
                                variables = "iSDA_SILT_conc")
 
-ggplot_pdp(pdp_iSDA_SILT, iSDA_SILT_conc)  +
-  labs(x = "iSDA_SILT_conc", 
-       y = "logRR", 
-       color = NULL)
-```
-```{r}
+# Sand content
 pdp_iSDA_SAND <- model_profile(explainer_rf, 
                                N = 500, 
                                variables = "iSDA_SAND_conc")
 
-ggplot_pdp(pdp_iSDA_SAND, iSDA_SAND_conc)  +
-  labs(x = "iSDA_SAND_conc", 
-       y = "logRR", 
-       color = NULL)
-```
-```{r}
+# Mean diurnal temperature range
+pdp_Bio02_MDR <- model_profile(explainer_rf, 
+                               N = 500, 
+                               variables = "Bio02_MDR")
+
+# Precipitation of driest quarter
 pdp_Bio09_MT_DryQ <- model_profile(explainer_rf, 
                                N = 500, 
-                               variables = "Bio09_MT_DryQ")
+                               variables = "Bio17_Precip_DryQ")
 
-ggplot_pdp(pdp_Bio09_MT_DryQ, Bio09_MT_DryQ)  +
-  labs(x = "Bio09_MT_DryQ", 
-       y = "logRR", 
-       color = NULL)
-```
-
-Bio04_TS
-
-```{r}
-pdp_Bio04_TS <- model_profile(explainer_rf, 
-                               N = 500, 
-                               variables = "Bio04_TS")
-
-ggplot_pdp(pdp_Bio04_TS, Bio04_TS)  +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-```
-
-```{r}
-pdp_Bio04_TS <- model_profile(explainer_glm, 
-                               N = 500, 
-                               variables = "Bio04_TS")
-
-ggplot_pdp(pdp_Bio04_TS, Bio04_TS)  +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-```
-
-Partial dependence profiles can be computed for any other feature in the model, and also for groups in the data. Let’s use 500 observations for these profiles.
-
-```{r}
+# Temperature Sum
 pdp_Bio04_TS <- model_profile(explainer_rf, 
                               N = 500, 
-                              variables = "Bio04_TS") 
+                              variables = "Bio04_TS")
 
-pdp_Bio04_TS_sitetype <- model_profile(explainer_rf, 
+#GROUPINGS
+
+# Sand content with grouping of Site Type (research station / farm)
+pdp_iSDA_SAND_conc_sitetype <- model_profile(explainer_rf, 
                               N = 500, 
-                              variables = "Bio04_TS",
+                              variables = "iSDA_SAND_conc",
                               groups = "Site.Type") 
 
-pdp_Bio04_TS_tree <- model_profile(explainer_rf, 
+# Sand content with grouping of Tree speies (what species of tree)
+pdp_iSDA_SAND_conc_tree <- model_profile(explainer_rf, 
                               N = 500, 
-                              variables = "Bio04_TS",
-                              groups = "Tree") 
-```
-
-```{r}
-ggplot_pdp(pdp_Bio04_TS, Bio04_TS) +
-  scale_y_log10() +
-  scale_color_brewer(palette = "Dark2") +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-
-ggplot_pdp(pdp_Bio04_TS, Bio04_TS) +
-  scale_color_brewer(palette = "Dark2") +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-
-ggplot_pdp(pdp_Bio04_TS_sitetype, Bio04_TS) +
-  scale_color_brewer(palette = "Dark2") +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-```
-```{r}
-ggplot_pdp(pdp_Bio04_TS_tree, Bio04_TS) +
-  scale_color_brewer(palette = "Dark2") +
-  labs(x = "Bio04_TS", 
-       y = "logRR", 
-       color = NULL)
-```
-
-### Explainer
-
-```{r}
-#random forest model
-explainer_rf_continous <- DALEX::explain(rf_best_race_trained_wf,
-                        data = af.train.wf,
-                        y = af.train.wf$logRR, 
-                        label = "Random Forest")
-
-explainer_xgb_continous <- 
-  DALEX::explain(xgb_best_race_trained_wf,
-                        data = af.train.wf,
-                        y = af.train.wf$logRR, 
-                        label = "XGBoost")
+                              variables = "iSDA_SAND_conc",
+                              groups = "Tree") #%>%
+  #dplyr::filter(Tree == "Faidherbia albida" |
+  #                Tree == "Cassia spectabilis")
   
-
-explainer_cart_continous <- 
-    DALEX::explain(cart_best_race_trained_wf,
-                        data = af.train.wf,
-                        y = af.train.wf$logRR, 
-                        label = "Cart")
-  
-
 ```
 
-```{r}
-rf_hist <- DALEX::model_performance(explainer_rf_continous)
-
-plot(rf_hist)
-```
-Model profile
-
-```{r}
-model_profile_rf1 <- model_profile(explainer_rf_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-plot(model_profile_rf1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+**Partial dependence plot for Silt content**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for silt content"}
+ggplot_pdp(pdp_iSDA_SILT, iSDA_SILT_conc)  +
+  labs(x = "Soil SILT content", 
+       y = "Predicted response ratio (log scale)",
+       color = NULL) +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Silt content")
 ```
 
-```{r}
-model_profile_xgb1 <- model_profile(explainer_xgb_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-plot(model_profile_xgb1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+**Partial dependence plot for Sand content**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for sand content"}
+ggplot_pdp(pdp_iSDA_SAND, iSDA_SAND_conc)  +
+  labs(x = "Soil SAND content", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Sand content")
+```
+**Partial dependence plot for Mean Diurnal Temperature Range**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for Mean Diurnal Temperature Range"}
+ggplot_pdp(pdp_Bio02_MDR, Bio02_MDR)  +
+  labs(x = "Mean Diurnal Temperature Range", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Mean Diurnal Temperature Range")
 ```
 
-
-
-
-```{r}
-model_profile_cart1 <- model_profile(explainer_cart_continous, type = "partial", variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-plot(model_profile_cart1, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+**Partial dependence plot for Precipitation of Driest Quarter**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for Precipitation of Driest Quarter"}
+ggplot_pdp(pdp_Bio09_MT_DryQ, Bio17_Precip_DryQ)  +
+  labs(x = "Precipitation of Driest Quarter", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Precipitation of Driest Quarter")
 ```
 
-
-#Compare models with common important variables 
-
-```{r}
-#Compare models with common important variables 
-model_profile_rf1 <- model_profile(explainer_rf_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-model_profile_xgb1 <- model_profile(explainer_xgb_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-model_profile_cart1 <- model_profile(explainer_cart_continous, variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"))
-
-plot(model_profile_rf1, model_profile_xgb1, model_profile_cart1, 
-    variables = c("Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope")) + ggtitle("Partial dependence profile ", "")
+**Partial dependence plot for Temperature Sum**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for Temperature Sumr"}
+ggplot_pdp(pdp_Bio04_TS, Bio04_TS)  +
+  labs(x = "Temperature Sum", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Temperature Sum")
 ```
 
-"Bio01_MT_Annu", "Bio02_MDR", "Bio03_Iso", "Bio04_TS", "Bio05_TWM", "Bio06_MinTCM", "Bio07_TAR", "Bio08_MT_WetQ", "Bio09_MT_DryQ", "Bio10_MT_WarQ", "Bio11_MT_ColQ", "Bio12_Pecip_Annu", "Bio13_Precip_WetM", "Bio14_Precip_DryM", "Bio15_Precip_S", "Bio16_Precip_WetQ", "Bio17_Precip_DryQ", "iSDA_Depth_to_bedrock", "iSDA_SAND_conc", "iSDA_CLAY_conc", "iSDA_SILT_conc", "iSDA_log_C_tot", "iSDA_FE_Bulk_dens", "iSDA_log_Ca", "iSDA_log_eCEC", "iSDA_log_Fe", "iSDA_log_K", "iSDA_log_Mg", "iSDA_log_N","iSDA_log_SOC", "iSDA_log_P", "iSDA_log_S", "iSDA_pH", "ASTER_Slope"
+Partial dependence profiles can be computed for any other feature in the model, and also for groups in the data. Let's try making a partial dependence plot of the groups of Site Type. In this way we can identify potential differences between response on researcch stations and/or farms. We will use the environmental predictor feature "Sand content":
 
-Instance level
-
-# Random forest
-
-```{r}
-bd_rf_logRR_low <- 
-  predict_parts(explainer = explainer_rf_continous,
-                new_observation = obs_1, 
-                type = "break_down") 
-
-plot(bd_rf_logRR_low,
-     max_features = 20) +
-  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a low observed logRR value (-1.82)") +
-  theme(panel.grid = element_blank()) 
-```
-```{r}
-sharp_rf_logRR_low <- 
-  predict_parts(explainer = explainer_rf_continous,
-                new_observation = obs_1, 
-                type = "shap",
-                B = 25)
-  
-  plot(sharp_rf_logRR_low,
-       max_features = 20) 
+**Partial dependence plot on Sand content with grouping of Tree speccies**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=4, fig.cap = "Partial dependence plot for Grouping of Site Type on Sand content"}
+ggplot_pdp(pdp_iSDA_SAND_conc_sitetype, iSDA_SAND_conc)  +
+  labs(x = "Sand content", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Sand content with grouping of Site Type")
 ```
 
-```{r}
-bd_rf_logRR_high <- 
-  predict_parts(explainer = explainer_rf_continous,
-                new_observation = obs_2, 
-                type = "break_down") 
+We see there is a slight difference with experiments conducted at stations and survey data having generally higher predicted response ratios..? That is interesting!
 
-  plot(bd_rf_logRR_high,
-       max_features = 20) +
-  ggtitle("Break Down profile for Agroforestry Pruning-Alleycropping with a high observed logRR value (3.04)") +
-  theme(panel.grid = element_blank()) 
+Let's see for tree species:
+
+**Partial dependence plot on Sand content with grouping of Tree species**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=20, fig.height=15, fig.cap = "Partial dependence plot for Sand content with grouping of Tree species"}
+ggplot_pdp(pdp_iSDA_SAND_conc_tree, iSDA_SAND_conc)  +
+  labs(x = "Soil SAND content", 
+       y = "Predicted response ratio (log scale)", 
+       color = NULL)  +
+  ggtitle("Partial dependence plot based on the Random Forest model, feature: Sand content with grouping of Tree species") +
+  theme(legend.position="bottom")
 ```
 
-```{r}
-sharp_rf_logRR_high <- 
-  predict_parts(explainer = explainer_rf_continous,
-                new_observation = obs_2, 
-                type = "shap",
-                B = 25)
-  
-  plot(sharp_rf_logRR_high,
-       max_features = 20) 
+## STEP 16: Global model partial dependencce plots
+
+We can show how each model predicts depending on a selected feature using the "type = "partial"" argument and then add all our models. 
+
+```{r Creating global model pdp, code_folding=TRUE, eval=TRUE}
+
+# LOADING/READING EXPLAINERS
+explainer_rf_continous <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_rf_continous.RDS"))
+explainer_xgb_continous <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_xgb_continous.RDS"))
+explainer_cart_continous <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_cart_continous.RDS"))
+explainer_glm_continous <- readRDS(here::here("TidyModWflSet_OUTPUT","explainer_glm_continous.RDS"))
+
+pdp_rf_grade <- model_profile(explainer_rf_continous, variable = "iSDA_SAND_conc", type = "partial")
+pdp_xgb_grade <- model_profile(explainer_xgb_continous, variable = "iSDA_SAND_conc", type = "partial")
+pdp_cart_grade <- model_profile(explainer_cart_continous, variable = "iSDA_SAND_conc", type = "partial")
+pdp_glm_grade <- model_profile(explainer_glm_continous, variable = "iSDA_SAND_conc", type = "partial")
 ```
 
-                                                     
-```{r}
-obs_1
-```
-```{r}
-ml.data.no.outliers.wf %>% 
-  sapply(levels)
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Global model partial dependencce plots for feature; Sand content"}
+
+plot(pdp_rf_grade, pdp_xgb_grade, pdp_cart_grade, pdp_glm_grade)
 ```
 
-```{r}
+## STEP 17: Global model residual evaluation
+
+```{r Generating data for global model residual evaluation, code_folding=TRUE, eval=TRUE}
+rf_modperf <- DALEX::model_performance(explainer_rf_continous)
+xgb_modperf <- DALEX::model_performance(explainer_xgb_continous)
+cart_modperf <- DALEX::model_performance(explainer_cart_continous)
+glm_modperf <- DALEX::model_performance(explainer_glm_continous)
+```
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Global model residual evaluation: Reverse cumulative of the absolute residual plot"}
+plot(rf_modperf, xgb_modperf, cart_modperf, glm_modperf)
+```
+From the reverse cumulative of the absolute residual plot, we can see that the models are extremly similar! It shows a higher number of large residuals in the left hand side compared to right for all the models. 
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Global model residual evaluation: Boxplot of mean residual vavlues"}
+plot(rf_modperf, xgb_modperf, cart_modperf, glm_modperf, geom = "boxplot")
+```
+The boxplot figure above shows that all models have very similar median absolute residual values. We can also plot the distribution of residuals with histograms by using geom=“histogram” and the precision recall curve by using geom=“prc.” Let's use the geom=“histogram” to vvisualise the distribution of residuals of the models:
+
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Global model residual evaluation: Residual distribution histogram"}
+plot(rf_modperf, xgb_modperf, cart_modperf, glm_modperf, geom = "histogram")
+```
+
+The residuals of the models follow to a great deal the normal distribution, which is a good sign!
+
+
+## STEP 18: Global and local model explorotive analysis (agnostics) using Ceteris Paribus Profiles (CPP)
+
+In the previous section, we have discussed the partial dependence plots. The Ceteris Paribus Profiles (CPP) is the single observation level version of the PDP plots. To create this plot, we can use predict_profile() function in the DALEX package. In the following example, we select two predictors for the same observation (i.e., student 1) and create a CPP plot for the RF model. In the plot, blue dots represent the original values for the selected observation.
+
+### Generating new observation for the CPP plot
+
+```{r Generating new observation for the CPP plots, code_folding=TRUE, eval=FALSE}
 new_obs_1 <- data.frame(PrName = factor("Agroforestry Pruning-Alleycropping", levels = c("Parklands", "Agroforestry Pruning-Organic Fertilizer", 
                                                                                           "Agroforestry Pruning", "Agroforestry Pruning-Inorganic Fertilizer", 
                                                                                           "Agroforestry Pruning-Alleycropping", "Alleycropping", 
@@ -1337,50 +1836,83 @@ new_obs_1 <- data.frame(PrName = factor("Agroforestry Pruning-Alleycropping", le
                         iSDA_pH = 59.784,
                         ASTER_Altitude = 1578.35,
                         ASTER_Slope = 4.2)
-
-cp_rf_logRR_low <- 
-  predict(explainer_rf_continous, new_obs_1)
-
-cp_rf_logRR_low
-
-cp_1 <- DALEX::predict_profile(explainer_rf_continous, 
-                               new_obs_1)
-
-cp_1_cart <- DALEX::predict_profile(explainer_cart_continous, 
-                               new_obs_1)
-
-cp_1_xgb <- DALEX::predict_profile(explainer_xgb_continous, 
-                               new_obs_1)
-
 ```
 
-("Bio07_TAR", "Bio17_Precip_DryQ", "iSDA_CLAY_conc"
+### Creating dataset for the CPP for all the four models (with a relatively low RR observation)
 
-```{r}
-plot(cp_1_cart,
+* **logRR = -0.3305098**
+
+```{r Creating dataset for the CPP for all the four models, code_folding=FALSE, eval=FALSE}
+# Random Forest  ---------------------------------------------------------
+
+cpp_newObs_1_rf <- DALEX::predict_profile(explainer_rf_continous, new_obs_1)
+
+# XGBoost  ---------------------------------------------------------
+
+cpp_newObs_1_xgb <- DALEX::predict_profile(explainer_xgb_continous, new_obs_1)
+
+# Cart model  ---------------------------------------------------------
+
+cpp_newObs_1_caret <- DALEX::predict_profile(explainer_cart_continous, new_obs_1)
+
+# Glm model ---------------------------------------------------------
+
+cpp_newObs_1_glm <- DALEX::predict_profile(explainer_glm_continous, new_obs_1)
+
+
+# SAVING THE CPP DATA
+saveRDS(cpp_newObs_1_rf, here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_rf.RDS"))
+saveRDS(cpp_newObs_1_xgb, here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_xgb.RDS"))
+saveRDS(cpp_newObs_1_caret, here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_caret.RDS"))
+saveRDS(cpp_newObs_1_glm, here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_glm.RDS"))
+```
+
+### Visualising the CPP for the Random Forest model for selected environmental predictor features
+
+**SOIL: CPP for RF with clay content, phosphorus concentration and pH**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Ceteris paribus profiles for the Random Forest model, features; clay content, phosphorus concentration, pH"}
+cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_rf.RDS"))
+
+plot(cpp_newObs_1_rf,
      variables = c("iSDA_CLAY_conc", "iSDA_log_P", "iSDA_pH")) 
 ```
-```{r}
-plot(cp_1_xgb,
-     variables = c("iSDA_CLAY_conc", "iSDA_log_P", "iSDA_pH")) 
+
+**SOIL: CPP for RF with silt content, sand content and clay**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Ceteris paribus profiles for the Random Forest model, features; clay content, phosphorus concentration, pH"}
+ #cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_rf.RDS"))
+
+plot(cpp_newObs_1_rf,
+     variables = c("iSDA_SILT_conc", "iSDA_SAND_conc", "iSDA_CLAY_conc")) 
+```
+
+**TEMPERATURE: CPP for RF with mean diurnal temperature range, temperature annual range and mean temperature of driest quarter**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Ceteris paribus profiles for the Random Forest model, features; mean diurnal temperature range, temperature annual range and mean temperature of driest quarter"}
+# cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_rf.RDS"))
+
+plot(cpp_newObs_1_rf,
+     variables = c("Bio02_MDR", "Bio07_TAR", "Bio09_MT_DryQ")) 
+```
+
+**PRECIPITATION: CPP for RF with precipitation seasonality, precipitation driest month and precipitation wettest quarter**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Ceteris paribus profiles for the Random Forest model, features; precipitation seasonality, precipitation driest month and precipitation wettest quarter"}
+# cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","cpp_newObs_1_rf.RDS"))
+
+plot(cpp_newObs_1_rf,
+     variables = c("Bio15_Precip_S", "Bio14_Precip_DryM", "Bio16_Precip_WetQ")) 
 ```
 
 
-```{r}
-plot(cp_1,
-     variables = c("iSDA_SILT_conc", "iSDA_SAND_conc", "iSDA_CLAY_conc")) # "iSDA_SAND_conc", "iSDA_CLAY_conc", "Bio07_TAR"
-```
+There are many intersting functionalities in ther DALEX package. Check out [this website/blog](https://okan.cloud/posts/2021-03-23-visualizing-machine-learning-models/) for more inspiration on the DALEX package 
 
-```{r}
-plot(cp_1,
-     variables = c("Bio02_MDR", "Bio07_TAR", "Bio09_MT_DryQ"))
-```
-```{r}
-plot(cp_1,
-     variables = c("Bio15_Precip_S", "Bio14_Precip_DryM", "Bio16_Precip_WetQ"))
-```
-### Using expand_grid to generate new data af.train.wf
-```{r}
+
+
+## STEP 19: Using the models to predict on new data
+
+Let's now try to use the models to predict on new data generated artificially from the training dataset. The expand_grid() function from the [tidyr package](https://tidyr.tidyverse.org/reference/expand_grid.html) is excellent for this. The function creates a tibble from all combinations of input data, hence it extrapolate the data. We will use this newly generated data to create Marginal Effect plots, therefore it is needed to keep a single feature while keeping all others constant.
+
+### First, removing NA from the predictor feature columns
+
+```{r Removing NA from the predictor feature columns in the training dataset,  code_folding=FALSE, eval=FALSE}
 af.train.wf %>%
   arrange()
 
@@ -1389,8 +1921,12 @@ old_data <- af.train.wf %>%
   drop_na()
 ```
 
+### Using expand_grid to generate new data from the traning data
 
-```{r}
+Seven environmental predictor features are used to generate data for Marginal Effect plots. These predictors are having varied levels, while keeping all other features constant
+
+```{r Creating new data predictors are having varied levels while keeping all other features constant, code_folding=TRUE, eval=FALSE}
+# CLAY ------------------------------------------------------------------------
 new_test_data_var_CLAY <- 
   expand_grid(iSDA_CLAY_conc = c(10, 20, 30, 40), 
             Site.Type = "Station",
@@ -1436,7 +1972,7 @@ new_test_data_var_CLAY <-
             ASTER_Altitude = mean(old_data$ASTER_Altitude),
             ASTER_Slope = mean(old_data$ASTER_Slope))
 
-
+# SAND ------------------------------------------------------------------------
 new_test_data_var_SAND <- 
   expand_grid(iSDA_SAND_conc = c(50, 60, 70, 80), 
             Site.Type = "Station",
@@ -1483,189 +2019,7 @@ new_test_data_var_SAND <-
             ASTER_Slope = mean(old_data$ASTER_Slope))
 
 
-new_test_data_var_Precip_S <- 
-  expand_grid(Bio15_Precip_S = c(40, 50, 60, 70), 
-            Site.Type = "Station",
-            PrName = "Agroforestry Pruning", 
-            Out.SubInd = "Crop Yield", 
-            Product = "Maize", 
-            Tree = "Acacia albida", 
-            Out.SubInd.Code = "CrY", 
-            Latitude = mean(old_data$Latitude),
-            Longitude = mean(old_data$Longitude),
-            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
-            Bio02_MDR = mean(old_data$Bio02_MDR),
-            Bio03_Iso = mean(old_data$Bio03_Iso),
-            Bio04_TS = mean(old_data$Bio04_TS),
-            Bio05_TWM = mean(old_data$Bio05_TWM),
-            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
-            Bio07_TAR = mean(old_data$Bio07_TAR),
-            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
-            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
-            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
-            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
-            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
-            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
-            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
-            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
-            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
-            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
-            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
-            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
-            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
-            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
-            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
-            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
-            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
-            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
-            iSDA_log_K = mean(old_data$iSDA_log_K),
-            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
-            iSDA_log_N = mean(old_data$iSDA_log_N),
-            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
-            iSDA_log_P = mean(old_data$iSDA_log_P),
-            iSDA_log_S = mean(old_data$iSDA_log_S),
-            iSDA_pH = mean(old_data$iSDA_pH),
-            ASTER_Altitude = mean(old_data$ASTER_Altitude),
-            ASTER_Slope = mean(old_data$ASTER_Slope))
-
-
-new_test_data_var_Precip_DryQ <- 
-  expand_grid(Bio17_Precip_DryQ = c(150, 180, 200, 220), 
-            Site.Type = "Station",
-            PrName = "Agroforestry Pruning", 
-            Out.SubInd = "Crop Yield", 
-            Product = "Maize", 
-            Tree = "Acacia albida", 
-            Out.SubInd.Code = "CrY", 
-            Latitude = mean(old_data$Latitude),
-            Longitude = mean(old_data$Longitude),
-            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
-            Bio02_MDR = mean(old_data$Bio02_MDR),
-            Bio03_Iso = mean(old_data$Bio03_Iso),
-            Bio04_TS = mean(old_data$Bio04_TS),
-            Bio05_TWM = mean(old_data$Bio05_TWM),
-            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
-            Bio07_TAR = mean(old_data$Bio07_TAR),
-            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
-            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
-            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
-            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
-            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
-            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
-            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
-            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
-            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
-            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
-            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
-            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
-            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
-            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
-            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
-            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
-            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
-            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
-            iSDA_log_K = mean(old_data$iSDA_log_K),
-            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
-            iSDA_log_N = mean(old_data$iSDA_log_N),
-            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
-            iSDA_log_P = mean(old_data$iSDA_log_P),
-            iSDA_log_S = mean(old_data$iSDA_log_S),
-            iSDA_pH = mean(old_data$iSDA_pH),
-            ASTER_Altitude = mean(old_data$ASTER_Altitude),
-            ASTER_Slope = mean(old_data$ASTER_Slope))
-
-
-new_test_data_var_MDR<- 
-  expand_grid(Bio02_MDR = c(12, 14, 16, 18), 
-            Site.Type = "Station",
-            PrName = "Agroforestry Pruning", 
-            Out.SubInd = "Crop Yield", 
-            Product = "Maize", 
-            Tree = "Acacia albida", 
-            Out.SubInd.Code = "CrY", 
-            Latitude = mean(old_data$Latitude),
-            Longitude = mean(old_data$Longitude),
-            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
-            Bio03_Iso = mean(old_data$Bio03_Iso),
-            Bio04_TS = mean(old_data$Bio04_TS),
-            Bio05_TWM = mean(old_data$Bio05_TWM),
-            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
-            Bio07_TAR = mean(old_data$Bio07_TAR),
-            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
-            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
-            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
-            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
-            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
-            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
-            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
-            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
-            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
-            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
-            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
-            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
-            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
-            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
-            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
-            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
-            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
-            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
-            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
-            iSDA_log_K = mean(old_data$iSDA_log_K),
-            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
-            iSDA_log_N = mean(old_data$iSDA_log_N),
-            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
-            iSDA_log_P = mean(old_data$iSDA_log_P),
-            iSDA_log_S = mean(old_data$iSDA_log_S),
-            iSDA_pH = mean(old_data$iSDA_pH),
-            ASTER_Altitude = mean(old_data$ASTER_Altitude),
-            ASTER_Slope = mean(old_data$ASTER_Slope))
-
-new_test_data_var_TWM <- 
-  expand_grid(Bio05_TWM = c(20, 25, 30, 35), 
-            Site.Type = "Station",
-            PrName = "Agroforestry Pruning", 
-            Out.SubInd = "Crop Yield", 
-            Product = "Maize", 
-            Tree = "Acacia albida", 
-            Out.SubInd.Code = "CrY", 
-            Latitude = mean(old_data$Latitude),
-            Longitude = mean(old_data$Longitude),
-            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
-            Bio02_MDR = mean(old_data$Bio02_MDR),
-            Bio03_Iso = mean(old_data$Bio03_Iso),
-            Bio04_TS = mean(old_data$Bio04_TS),
-            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
-            Bio07_TAR = mean(old_data$Bio07_TAR),
-            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
-            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
-            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
-            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
-            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
-            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
-            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
-            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
-            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
-            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
-            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
-            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
-            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
-            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
-            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
-            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
-            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
-            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
-            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
-            iSDA_log_K = mean(old_data$iSDA_log_K),
-            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
-            iSDA_log_N = mean(old_data$iSDA_log_N),
-            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
-            iSDA_log_P = mean(old_data$iSDA_log_P),
-            iSDA_log_S = mean(old_data$iSDA_log_S),
-            iSDA_pH = mean(old_data$iSDA_pH),
-            ASTER_Altitude = mean(old_data$ASTER_Altitude),
-            ASTER_Slope = mean(old_data$ASTER_Slope))
-
-
+# SOIL pH  --------------------------------------------------------------------
 new_test_data_iSDA_pH <- 
   expand_grid(iSDA_pH = c(50, 60, 70, 80), 
             Site.Type = "Station",
@@ -1712,16 +2066,203 @@ new_test_data_iSDA_pH <-
             ASTER_Slope = mean(old_data$ASTER_Slope))
 
 
+# PRECIPITATION SESONALITY --------------------------------------------------------------------
+new_test_data_var_Precip_S <- 
+  expand_grid(Bio15_Precip_S = c(40, 50, 60, 70), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+# PRECIPITATION DRIEST QUARTER --------------------------------------------------------------------
+new_test_data_var_Precip_DryQ <- 
+  expand_grid(Bio17_Precip_DryQ = c(150, 180, 200, 220), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+# TEMPERATURE MEAN DIURNAL RANGE  --------------------------------------------------------------------
+new_test_data_var_MDR<- 
+  expand_grid(Bio02_MDR = c(12, 14, 16, 18), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio05_TWM = mean(old_data$Bio05_TWM),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
+
+
+# TEMPERATURE OF WETTEST MONTH --------------------------------------------------------------------
+new_test_data_var_TWM <- 
+  expand_grid(Bio05_TWM = c(20, 25, 30, 35), 
+            Site.Type = "Station",
+            PrName = "Agroforestry Pruning", 
+            Out.SubInd = "Crop Yield", 
+            Product = "Maize", 
+            Tree = "Acacia albida", 
+            Out.SubInd.Code = "CrY", 
+            Latitude = mean(old_data$Latitude),
+            Longitude = mean(old_data$Longitude),
+            Bio01_MT_Annu = mean(old_data$Bio01_MT_Annu), 
+            Bio02_MDR = mean(old_data$Bio02_MDR),
+            Bio03_Iso = mean(old_data$Bio03_Iso),
+            Bio04_TS = mean(old_data$Bio04_TS),
+            Bio06_MinTCM = mean(old_data$Bio06_MinTCM),
+            Bio07_TAR = mean(old_data$Bio07_TAR),
+            Bio08_MT_WetQ = mean(old_data$Bio08_MT_WetQ),
+            Bio09_MT_DryQ = mean(old_data$Bio09_MT_DryQ),
+            Bio10_MT_WarQ = mean(old_data$Bio10_MT_WarQ),
+            Bio11_MT_ColQ = mean(old_data$Bio11_MT_ColQ),
+            Bio12_Pecip_Annu = mean(old_data$Bio12_Pecip_Annu),
+            Bio13_Precip_WetM = mean(old_data$Bio13_Precip_WetM),
+            Bio14_Precip_DryM = mean(old_data$Bio14_Precip_DryM),
+            Bio15_Precip_S = mean(old_data$Bio15_Precip_S),
+            Bio17_Precip_DryQ = mean(old_data$Bio17_Precip_DryQ),
+            Bio16_Precip_WetQ = mean(old_data$Bio16_Precip_WetQ),
+            iSDA_Depth_to_bedrock = mean(old_data$iSDA_Depth_to_bedrock),
+            iSDA_SAND_conc = mean(old_data$iSDA_SAND_conc),
+            iSDA_CLAY_conc = mean(old_data$iSDA_CLAY_conc),
+            iSDA_SILT_conc = mean(old_data$iSDA_SILT_conc),
+            iSDA_FE_Bulk_dens = mean(old_data$iSDA_FE_Bulk_dens),
+            iSDA_log_C_tot = mean(old_data$iSDA_log_C_tot),
+            iSDA_log_Ca = mean(old_data$iSDA_log_Ca),
+            iSDA_log_eCEC = mean(old_data$iSDA_log_eCEC),
+            iSDA_log_Fe = mean(old_data$iSDA_log_Fe),
+            iSDA_log_K = mean(old_data$iSDA_log_K),
+            iSDA_log_Mg = mean(old_data$iSDA_log_Mg),
+            iSDA_log_N = mean(old_data$iSDA_log_N),
+            iSDA_log_SOC = mean(old_data$iSDA_log_SOC),
+            iSDA_log_P = mean(old_data$iSDA_log_P),
+            iSDA_log_S = mean(old_data$iSDA_log_S),
+            iSDA_pH = mean(old_data$iSDA_pH),
+            ASTER_Altitude = mean(old_data$ASTER_Altitude),
+            ASTER_Slope = mean(old_data$ASTER_Slope))
 ```
 
-### Predict on this new data
+### Predicting with the Random Forest model on the new data
 
-```{r}
+```{r Predicting with the Random Forest model on the new data, code_folding=FALSE, eval=FALSE}
 pred_new_data_CLAY <- predict(rf_best_race_trained_wf,
                       new_data = new_test_data_var_CLAY)
 
 pred_new_data_SAND <- predict(rf_best_race_trained_wf,
                       new_data = new_test_data_var_SAND)
+
+pred_new_data_pH <- predict(rf_best_race_trained_wf,
+                      new_data = new_test_data_iSDA_pH)
 
 pred_new_data_Precip_S <- predict(rf_best_race_trained_wf,
                       new_data = new_test_data_var_Precip_S)
@@ -1735,16 +2276,24 @@ pred_new_data_MDR <- predict(rf_best_race_trained_wf,
 pred_new_data_TWM <- predict(rf_best_race_trained_wf,
                       new_data = new_test_data_var_TWM)
 
-pred_new_data_pH <- predict(rf_best_race_trained_wf,
-                      new_data = new_test_data_iSDA_pH)
+# We get a few warnings we can ignore
+# Warning: Novel levels found in column 'Tree': 'Acacia albidam'. The levels have been removed, and values have been coerced to 'NA'.
+# Warning: Novel levels found in column 'Tree': 'Acacia albidam'. The levels have been removed, and values have been coerced to 'NA'.
 ```
 
-```{r}
+### Creating the dataset of predicted response ratio values for each of the predictors
+
+These dataframes/tibbles will be used to generate ggplots of marginal effects for each of the variables.
+
+```{r Creating the dataset of predicted response ratio values for each of the predictors, code_folding=TRUE, eval=FALSE}
 pred_new_data_CLAY <- tibble(iSDA_CLAY_conc = c(10, 20, 30, 40),
                           .pred = c(0.5355357, 0.5281725, 0.4982191, 0.5128507))
 
 pred_new_data_SAND <- tibble(iSDA_SAND_conc = c(50, 60, 70, 80),
                           .pred = c(0.4994193, 0.4955434, 0.5159416, 0.5159416))
+
+pred_new_data_pH <- tibble(iSDA_pH = c(50, 60, 70, 80),
+                          .pred = c(0.5760564	, 0.4931747, 0.4762354, 0.4695003))
 
 pred_new_data_Precip_S <- tibble(Bio15_Precip_S = c(40, 50, 60, 70),
                           .pred = c(0.5320894	, 0.5322152, 0.5507409, 0.4489401))
@@ -1759,12 +2308,25 @@ pred_new_data_TWM <- tibble(Bio05_TWM = c(20, 25, 30, 35),
                           .pred = c(0.4372342	, 0.4372342, 0.4981338, 0.3629274))
 
 
-pred_new_data_pH <- tibble(iSDA_pH = c(50, 60, 70, 80),
-                          .pred = c(0.5760564	, 0.4931747, 0.4762354, 0.4695003))
+# SAVING THE PREDICTED DATASETS FOR EACH OF THE PREDICTOR FEATURES
+
+saveRDS(pred_new_data_CLAY, here::here("TidyModWflSet_OUTPUT","pred_new_data_CLAY.RDS"))
+saveRDS(pred_new_data_SAND, here::here("TidyModWflSet_OUTPUT","pred_new_data_SAND.RDS"))
+saveRDS(pred_new_data_pH, here::here("TidyModWflSet_OUTPUT","pred_new_data_pH.RDS"))
+
+saveRDS(pred_new_data_Precip_S, here::here("TidyModWflSet_OUTPUT","pred_new_data_Precip_S.RDS"))
+saveRDS(pred_new_data_Precip_DryQ, here::here("TidyModWflSet_OUTPUT","pred_new_data_Precip_DryQ.RDS"))
+
+saveRDS(pred_new_data_MDR, here::here("TidyModWflSet_OUTPUT","pred_new_data_MDR.RDS"))
+saveRDS(pred_new_data_TWM, here::here("TidyModWflSet_OUTPUT","pred_new_data_TWM.RDS"))
 ```
 
 
-```{r}
+**CLAY: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for clay content based on the RF model"}
+pred_new_data_CLAY <- cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_CLAY.RDS"))
+
+
 ggplot(pred_new_data_CLAY, aes(x =iSDA_CLAY_conc, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
   geom_point(size = 4) +
@@ -1775,7 +2337,10 @@ ggplot(pred_new_data_CLAY, aes(x =iSDA_CLAY_conc, y = .pred)) +
 ```
 
 
-```{r}
+**SAND: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for sand content based on the RF model"}
+pred_new_data_SAND <- cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_SAND.RDS"))
+
 ggplot(pred_new_data_SAND, aes(x =iSDA_SAND_conc, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
   geom_point(size = 4) +
@@ -1785,7 +2350,23 @@ ggplot(pred_new_data_SAND, aes(x =iSDA_SAND_conc, y = .pred)) +
   xlab("Sand content")
 ```
 
-```{r}
+**pH: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for pH based on the RF model"}
+pred_new_data_pH <- cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_pH.RDS"))
+
+ggplot(pred_new_data_pH, aes(x =iSDA_pH, y = .pred)) +
+  geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
+  geom_point(size = 4) +
+  theme_bw() +
+  ggtitle("Soil pH: Marginal effect plot") +
+  ylab("Predicted response ratio") +
+  xlab("pH")
+```
+
+**PRECIPITATION SEASONALITY: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for precipitation seasonality based on the RF model"}
+pred_new_data_Precip_S <- cpp_newObs_1_rf <-  readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_Precip_S.RDS"))
+
 ggplot(pred_new_data_Precip_S, aes(x = Bio15_Precip_S, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "midnightblue") +
   geom_point(size = 4) +
@@ -1796,7 +2377,10 @@ ggplot(pred_new_data_Precip_S, aes(x = Bio15_Precip_S, y = .pred)) +
 ```
 
 
-```{r}
+**PRECIPITATION OF DRIEST QUATER: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for precipitation of driest quarter based on the RF model"}
+pred_new_data_Precip_DryQ <- readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_Precip_DryQ.RDS"))
+
 ggplot(pred_new_data_Precip_DryQ, aes(x =Bio17_Precip_DryQ, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "midnightblue") +
   geom_point(size = 4) +
@@ -1808,7 +2392,10 @@ ggplot(pred_new_data_Precip_DryQ, aes(x =Bio17_Precip_DryQ, y = .pred)) +
 
 
 
-```{r}
+**TEMPERATURE MEAN DIURNAL RANGE: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for temperature mean diurnal range based on the RF model"}
+pred_new_data_MDR <- readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_MDR.RDS"))
+
 ggplot(pred_new_data_MDR, aes(x =Bio02_MDR, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "darkgreen") +
   geom_point(size = 4) +
@@ -1817,7 +2404,13 @@ ggplot(pred_new_data_MDR, aes(x =Bio02_MDR, y = .pred)) +
   ylab("Predicted response ratio") +
   xlab("Temperature (Mean Diurnal Range)")
 ```
-```{r}
+
+
+**TEMPERATURE OF WARMEST MONTH: Marginal effects plot for the RF model**
+```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Marginal effects plot for temperature of warmest month based on the RF model"}
+pred_new_data_TWM <- readRDS(here::here("TidyModWflSet_OUTPUT","pred_new_data_TWM.RDS"))
+
+
 ggplot(pred_new_data_TWM, aes(x = Bio05_TWM, y = .pred)) +
   geom_line(alpha = .5, lty = 2, size = 2, col = "darkgreen") +
   geom_point(size = 4) +
@@ -1825,14 +2418,4 @@ ggplot(pred_new_data_TWM, aes(x = Bio05_TWM, y = .pred)) +
   ggtitle("Temperature (Max of Warmest Month): Marginal effect plot") +
   ylab("Predicted response ratio") +
   xlab("Temperature (Max of Warmest Month)")
-```
-
-```{r}
-ggplot(pred_new_data_pH, aes(x =iSDA_pH, y = .pred)) +
-  geom_line(alpha = .5, lty = 2, size = 2, col = "darkorange") +
-  geom_point(size = 4) +
-  theme_bw() +
-  ggtitle("Soil pH: Marginal effect plot") +
-  ylab("Predicted response ratio") +
-  xlab("pH")
 ```
