@@ -3,7 +3,7 @@ title: "Part 3: Tidymodels"
 favicon: ./IMAGES/ERA_logo_circle.png
 description: |
   On this page we are going to take a different approach to analysing the agroforestry data from ERA. We are going apply the tidymodels machine learning framework on the 'raw' agroforestry subset dataset from ERA. This process will therefore start, like 'Part 2: Agroforestry ERAAnalyze', with a preliminary explorertive data analysis (EDA) in order to understand what necessary data wrangling cleaninig and pre-processing steps are needed prior to running the machine lerning algorithms. In the EDA we will make use of data visualisations to undestand our agroforestry data better. For the actual machine learning analysis we will follow the predifined steps of the tidymodels workflow. Press the "Show code" to view the R codes used to perform a given analysis or visualise a analysis output.
-bibliography: library.bib
+bibliography: Mylibrary.bib
 csl: frontiers-in-ecology-and-the-environment.csl
 output: 
   distill::distill_article:

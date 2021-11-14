@@ -19,7 +19,7 @@ author:
     affiliation: CIFOR-ICRAF research associate at The World Agroforestry Centre, Nairobi 
     affiliation_url: https://www.linkedin.com/in/namita-joshi-848ab1133/?originalSubdomain=ke
 date: "`r Sys.Date()`"
-bibliography: library.bib
+bibliography: Mylibrary.bib
 csl: frontiers-in-ecology-and-the-environment.csl
 output: 
   distill::distill_article:
