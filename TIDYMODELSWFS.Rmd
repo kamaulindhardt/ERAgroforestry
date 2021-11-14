@@ -3,7 +3,7 @@ title: "Part 4: Tidymodels Workflowsets"
 favicon: ./IMAGES/ERA_logo_circle.png
 description: |
   On this Part 4 page we will analyse the same agroforestry data from ERA, as in Part 3, but we are going to make use of the relatively new tidymodels package called "Workflowsets". We are going to skip the preliminary explorertive data analysis (EDA) and jump straight to the modelling setup.  "Show code" to view the R codes used to perform a given analysis or visualise a analysis output. As you have seen in Part 3, tidymodels builds on the integration of model specifications from the parsnip package and data pre-processing steps using the recipe package. These are integrated into a workflow using the workflows package, and finally tuned using the tune package. What is revolutionary about the latest member in the tidymodels family is the workflowsets package that can create a workflow set that holds multiple workflow objects (integrated model specifications and pre-processing steps). This object, or set, can then easily be tuned or fitted based on resamples by using a set of simple commands. Workflowsets is a powerful concept for modelling as researchers often are interested in test and compare the performance of multiple models specified under different pre-processing settings. 
-bibliography: library.bib
+bibliography: Mylibrary.bib
 csl: frontiers-in-ecology-and-the-environment.csl
 output: 
   distill::distill_article:
@@ -1458,9 +1458,10 @@ Again, we could use the default plot method from DALEX by calling e.g. plot(vip_
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=6, fig.height=5, fig.cap = "Standadized plot of vip for the RF model"}
 
 # plot(vip_rf)
+# library(cowplot)
 
 ggdraw() + 
-  draw_image(here::here("TidyModWflSet_OUTPUT", "vip_rf.PNG")) 
+  draw_image(here::here("TidyModWflSet_OUTPUT", "vip_rf.png")) 
 ```
 
 Let’s use the underlying data and create a function that automatically plot our vip model dataset in a ggplot: 
