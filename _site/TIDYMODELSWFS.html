@@ -2114,10 +2114,6 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><a href="#step-3-define-resampling-techniques-on-training-data">STEP 3: Define resampling techniques on training data</a></li>
 <li><a href="#step-4-define-model-metrics">STEP 4: Define model metrics</a></li>
 <li><a href="#step-5-create-pre-processing-recipies">STEP 5: Create pre-processing recipies</a></li>
-</ul></li>
-<li><a href="#r-code_foldingfalse-evaltrue-impute_knn_recipe-prep-juice-glimpse"><code>{r  code_folding=FALSE, eval=TRUE} # impute_knn_recipe %&gt;% prep() %&gt;% juice() %&gt;% glimpse() #</code></a></li>
-<li><a href="#r-code_foldingfalse-evaltrue-summaryimpute_knn_recipe"><code>{r code_folding=FALSE, eval=TRUE} # summary(impute_knn_recipe)  #</code></a>
-<ul>
 <li><a href="#step-6-defining-model-specifications">STEP 6: Defining model specifications</a></li>
 <li><a href="#step-7-integrating-pre-processing-and-model-specification-into-a-workflowset">STEP 7: Integrating pre-processing and model specification into a workflowset</a></li>
 <li><a href="#step-8-tuning-workflowsets-using-tune_grid-or-tune_race_anova">STEP 8: Tuning workflowsets using tune_grid() or tune_race_anova()</a>
@@ -2369,9 +2365,6 @@ Show code
 </div>
 </div>
 <p><strong>Note:</strong> To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable.</p>
-<h1 id="r-code_foldingfalse-evaltrue-impute_knn_recipe-prep-juice-glimpse"><code>{r  code_folding=FALSE, eval=TRUE} # impute_knn_recipe %&gt;% prep() %&gt;% juice() %&gt;% glimpse() #</code></h1>
-<p>A recipe object is of the class “recipe” and can also be viewed using the summary() function. This will show the different feature types:</p>
-<h1 id="r-code_foldingfalse-evaltrue-summaryimpute_knn_recipe"><code>{r code_folding=FALSE, eval=TRUE} # summary(impute_knn_recipe)  #</code></h1>
 <h2 id="step-6-defining-model-specifications">STEP 6: Defining model specifications</h2>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">

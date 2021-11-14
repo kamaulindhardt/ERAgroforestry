@@ -191,16 +191,6 @@ interact_recipe <-
 
 **Note:** To view how the recipe pre-process the data simply pipe it into a prep() function to prepare it, then a juice() function to extract it and then its a good idea to make use of the glimpse() function to easily see each variable. 
 
-# ```{r  code_folding=FALSE, eval=TRUE}
-# impute_knn_recipe %>% prep() %>% juice() %>% glimpse()
-# ```
-
-A recipe object is of the class "recipe" and can also be viewed using the summary() function. This will show the different feature types:
-
-# ```{r code_folding=FALSE, eval=TRUE}
-# summary(impute_knn_recipe) 
-# ```
-
 ## STEP 6: Defining model specifications
 
 ```{r Defining model specifications, code_folding=FALSE, eval=FALSE}
