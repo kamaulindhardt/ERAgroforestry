@@ -1517,6 +1517,7 @@ Defining a custom colours range for the parallel coordinate plots
 
 ```{r Defining a custom colours range for the parallel coordinate plots, code_folding=TRUE, eval=FALSE}
 # Defining a custom colours range
+#library(RColorBrewer)
 nb.cols.25 <- 25
 era.af.colors.25 <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols.25)
 ```
@@ -1553,6 +1554,7 @@ par.coord.EQNo.plot <-
 ```
 
 ```{r Prepare parallel coordinate plot of EQNo discretized logRR vs biophysical predictors, code_folding=TRUE, eval=FALSE}
+# library(GGally)
 par.coord.EQNo.plot.means <- 
   par.coord.data.EQNo %>%
   dplyr::group_by(logRR_EQNo_group) %>% 
@@ -1643,7 +1645,7 @@ saveRDS(par.coord.EQNo.combined, here::here("TidyMod_OUTPUT","par.coord.EQNo.com
 Final parallel coordinate plot for the equal number discritized logRR
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=10, fig.height=10, fig.cap = "Parallel coordinate plots of discritized logRR against biophysical predictors, method: Equal number"}
-par.coord.EQNo.combined <- readRDS( here::here("TidyMod_OUTPUT","par.coord.EQNo.combined.RDS"))
+par.coord.EQNo.combined <- readRDS(here::here("TidyMod_OUTPUT","par.coord.EQNo.combined.RDS"))
 par.coord.EQNo.combined
 ```
 

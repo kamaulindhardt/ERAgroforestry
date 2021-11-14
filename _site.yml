@@ -33,7 +33,7 @@ navbar:
     - text: "PART 4: with Tidymodels Workflowsets"
       href: TIDYMODELSWFS.html
     - text: "PART 5: with Tidymodels Classification"
-      href: TIDYMODELCLASS.html
+      href: MLTIDYMODELSCLASS.html
     - icon: fab fa-github
       href: https://github.com/kamaulindhardt/ERA_Agroforestry_destill_website
     - icon: fa fa-twitter

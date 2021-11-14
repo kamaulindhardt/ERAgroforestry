@@ -398,7 +398,7 @@ saveRDS(wflwset_setup_race_results, here::here("TidyModWflSet_OUTPUT","wflwset_s
 
 ### From tune_grid()
 
-```{r Assessing results of the tuned workflowsets, code_folding=TRUE, eval=TRUE}
+```{r Assessing results of the tuned workflowsets, code_folding=TRUE, eval=FALSE}
 # -------------------------------------------------------------------
 # LOAD THE TUNED (tune_race_anova) WORKFLOWSET DATA
 
@@ -410,11 +410,15 @@ wflwset_setup_race_results <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwse
 wflwset_setup_race_results_clean <- wflwset_setup_race_results %>%
   dplyr::filter(wflow_id != "interaction_svm_p")  %>%
   dplyr::filter(wflow_id != "interaction_nnet") 
+
+saveRDS(wflwset_setup_race_results_clean, here::here("TidyModWflSet_OUTPUT","wflwset_setup_race_results_clean.RDS"))
 ```
 
 
 ```{r layout="l-screen-inset shaded", code_folding=TRUE, fig.width=8, fig.height=5, fig.cap = "Results of the tune race anova workflowset tuning"}
 # -------------------------------------------------------------------
+wflwset_setup_race_results_clean <- readRDS(here::here("TidyModWflSet_OUTPUT", "wflwset_setup_race_results_clean.RDS"))
+
 autoplot(wflwset_setup_race_results_clean)
 ```
 
